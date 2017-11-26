@@ -1,0 +1,6 @@
+all right reserved.
+
+This license will be replaced with a more permissive license later, when the code is more stable.
+
+Until then, please don't use this code for anything.
+Thank you.

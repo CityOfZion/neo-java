@@ -1,0 +1,9 @@
+{
+	"good-peers": [
+		{
+			"address": "127.0.0.1",
+			"port": 10333,
+			"name": "localhost"
+		}
+	]
+}

@@ -1,0 +1,48 @@
+{
+	"good-peers": [
+		{
+			"address": "seed1.neo.org",
+			"port": 10333
+		},
+		{
+			"address": "seed2.neo.org",
+			"port": 10333
+		},
+		{
+			"address": "seed2.neo.org",
+			"port": 10333
+		},
+		{
+			"address": "seed3.neo.org",
+			"port": 10333
+		},
+		{
+			"address": "seed4.neo.org",
+			"port": 10333
+		},
+		{
+			"address": "seed5.neo.org",
+			"port": 10333
+		},
+		{
+			"address": "seed1.cityofzion.io",
+			"port": 10333
+		},
+		{
+			"address": "seed2.cityofzion.io",
+			"port": 10333
+		},
+		{
+			"address": "seed3.cityofzion.io",
+			"port": 10333
+		},
+		{
+			"address": "seed4.cityofzion.io",
+			"port": 10333
+		},
+		{
+			"address": "seed5.cityofzion.io",
+			"port": 10333
+		}
+	]
+}

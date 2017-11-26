@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE log4j:configuration SYSTEM "log4j.dtd">
+
+<log4j:configuration xmlns:log4j="http://jakarta.apache.org/log4j/" debug="false">
+  <appender name="CONSOLE_LOG" class="org.apache.log4j.ConsoleAppender">
+    <param name="Threshold" value="trace" />
+    <layout class="org.apache.log4j.PatternLayout">
+      <param name="ConversionPattern" value="%d\t%r\t%-5p\t%m%n" />
+    </layout>
+  </appender>
+
+  <appender name="FILE_LOG" class="org.apache.log4j.RollingFileAppender">
+    <param name="append" value="false" />
+    <param name="maxFileSize" value="10GB" />
+    <param name="maxBackupIndex" value="0" />
+    <param name="file" value="neo-java-test.log" />
+    <layout class="org.apache.log4j.PatternLayout">
+      <param name="ConversionPattern" value="%d{yyyy-MM-dd HH:mm:ss} %-5p %c{1}:%L - %m%n" />
+    </layout>
+  </appender>
+
+  <logger name="neo">
+    <level value="info" />
+  </logger>
+
+  <logger name="neo.model.util">
+    <level value="info" />
+  </logger>
+
+  <logger name="neo.model.util.Base58Util">
+    <level value="info" />
+  </logger>
+
+  <root>
+    <level value="error" />
+    <appender-ref ref="CONSOLE_LOG" />
+    <appender-ref ref="FILE_LOG" />
+  </root>
+</log4j:configuration>
