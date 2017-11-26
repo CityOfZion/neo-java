@@ -1,0 +1,87 @@
+{
+	"local": {
+		"seed-node-file": "seedNodes.json",
+		"good-node-file": "goodNodes.json",
+		"magic": 7630401,
+		"port": 10333,
+		"thread-pool-count": 200,
+		"active-thread-count": 2,
+		"timers": {
+			"verify": {
+				"blocks": {
+					"send-interval": {
+						"seconds": 30
+					},
+					"response-wait-timeout": {
+						"seconds": 0
+					}
+				},
+				"headers": {
+					"send-interval": {
+						"seconds": 30
+					},
+					"response-wait-timeout": {
+						"seconds": 0
+					}
+				}
+			},
+			"refresh": {
+				"block-file-size": {
+					"send-interval": {
+						"seconds": 10
+					},
+					"response-wait-timeout": {
+						"seconds": 0
+					}
+				},
+				"block-height-city-of-zion": {
+					"send-interval": {
+						"seconds": 60
+					},
+					"response-wait-timeout": {
+						"seconds": 0
+					}
+				}
+			}
+		}
+	},
+	"remote": {
+		"sleep-interval": {
+			"seconds": 2
+		},
+		"recycle-interval": {
+			"minutes": 30
+		},
+		"timers": {
+			"send": {
+				"getaddr": {
+					"send-interval": {
+						"seconds": 30
+					},
+					"response-wait-timeout": {
+						"seconds": 60
+					},
+					"response-command": "addr"
+				},
+				"getdata-block": {
+					"send-interval": {
+						"seconds": 60
+					},
+					"response-wait-timeout": {
+						"seconds": 120
+					},
+					"response-command": "block"
+				},
+				"getheaders": {
+					"send-interval": {
+						"seconds": 15
+					},
+					"response-wait-timeout": {
+						"seconds": 30
+					},
+					"response-command": "headers"
+				}
+			}
+		}
+	}
+}

@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE log4j:configuration SYSTEM "log4j.dtd">
+
+<log4j:configuration xmlns:log4j="http://jakarta.apache.org/log4j/" debug="false">
+  <appender name="CONSOLE_LOG" class="org.apache.log4j.ConsoleAppender">
+    <param name="Threshold" value="trace" />
+    <layout class="org.apache.log4j.PatternLayout">
+      <param name="ConversionPattern" value="%d\t%r\t%-5p\t%c{1} \t%m%n" />
+    </layout>
+    <!-- <filter class="org.apache.log4j.varia.LevelMatchFilter"> <param name="LevelToMatch" value="ERROR" /> <param name="AcceptOnMatch" value="false" /> </filter> -->
+  </appender>
+
+  <appender name="FILE_LOG" class="org.apache.log4j.RollingFileAppender">
+    <param name="append" value="false" />
+    <param name="maxFileSize" value="10GB" />
+    <param name="maxBackupIndex" value="0" />
+    <param name="file" value="neo-java.log" />
+    <layout class="org.apache.log4j.PatternLayout">
+      <param name="ConversionPattern" value="%d{yyyy-MM-dd HH:mm:ss} %-5p %c{1}:%L - %m%n" />
+    </layout>
+    <!-- <filter class="org.apache.log4j.varia.LevelMatchFilter"> <param name="LevelToMatch" value="ERROR" /> <param name="AcceptOnMatch" value="false" /> </filter> -->
+  </appender>
+
+
+  <logger name="neo.rpc.client">
+    <level value="error" />
+  </logger>
+
+  <logger name="neo.network.model">
+    <level value="error" />
+  </logger>
+
+  <logger name="neo.network.RemoteNodeControllerRunnable">
+    <level value="error" />
+  </logger>
+
+  <logger name="neo.network.LocalControllerNode">
+    <level value="error" />
+  </logger>
+
+  <logger name="neo.network.LocalControllerNodeRefreshRunnable">
+    <level value="error" />
+  </logger>
+
+  <logger name="neo.model.db">
+    <level value="error" />
+  </logger>
+
+  <logger name="neo.network.LocalNodeDataSynchronizedUtil">
+    <level value="error" />
+  </logger>
+
+  <logger name="neo.network.MessageUtil">
+    <level value="error" />
+  </logger>
+
+  <logger name="neo.network.TimerUtil">
+    <level value="error" />
+  </logger>
+
+  <logger name="neo.network.TimerData">
+    <level value="error" />
+  </logger>
+
+  <logger name="neo">
+    <level value="error" />
+  </logger>
+
+  <root>
+    <level value="error" />
+    <appender-ref ref="CONSOLE_LOG" />
+    <appender-ref ref="FILE_LOG" />
+    <!-- -->
+  </root>
+</log4j:configuration>
