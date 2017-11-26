@@ -27,11 +27,17 @@ public class BlockDb {
 	 */
 	private static final Logger LOG = LoggerFactory.getLogger(BlockDb.class);
 
+	private static final BlockDb INSTANCE = new BlockDb();
+
+	public static final BlockDb getInstance() {
+		return INSTANCE;
+	}
+
 	private final JDBCDataSource ds;
 
 	private boolean closed = false;
 
-	public BlockDb() {
+	private BlockDb() {
 		ds = new JDBCDataSource();
 		ds.setUrl("jdbc:hsqldb:file:java-chain/db/db");
 

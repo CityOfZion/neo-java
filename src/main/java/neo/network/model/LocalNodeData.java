@@ -15,9 +15,11 @@ import neo.model.db.BlockDb;
 
 public class LocalNodeData {
 
+	public static final Map<String, Long> API_CALL_MAP = Collections.synchronizedMap(new TreeMap<>());
+
 	private final Map<String, TimerData> timersMap;
 
-	private final BlockDb blockDb = new BlockDb();
+	private final BlockDb blockDb = BlockDb.getInstance();
 
 	private Date highestBlockTime;
 
@@ -30,8 +32,6 @@ public class LocalNodeData {
 	private final long magic;
 
 	private final int activeThreadCount;
-
-	private final Map<String, Long> apiCallMap = Collections.synchronizedMap(new TreeMap<>());
 
 	private final SortedMap<Long, Header> verifiedHeaderPoolMap = new TreeMap<>();
 
@@ -49,10 +49,6 @@ public class LocalNodeData {
 
 	public int getActiveThreadCount() {
 		return activeThreadCount;
-	}
-
-	public Map<String, Long> getApiCallMap() {
-		return apiCallMap;
 	}
 
 	public int getBlockchainBlockCount() {

@@ -16,8 +16,13 @@ import neo.model.core.GenesisBlockData;
 import neo.model.core.Header;
 import neo.model.util.MapUtil;
 import neo.network.model.LocalNodeData;
+import neo.network.model.RemoteNodeData;
 
 public class LocalNodeDataSynchronizedUtil {
+
+	private static final String TOO_HIGH_IN_BLOCK = "too-high-in-block";
+
+	private static final String DUPLICATE_IN_BLOCK = "duplicate-in-block";
 
 	/**
 	 * the logger.
@@ -45,7 +50,7 @@ public class LocalNodeDataSynchronizedUtil {
 						"SUCCESS addBlockIfNewAndParentExistsUnsynchronized adding block to db : index:{}; hash:{}; prev:{};",
 						blockIndex, block.hash, block.prevHash);
 			} else {
-				MapUtil.increment(localNodeData.getApiCallMap(), "duplicate-in-block");
+				MapUtil.increment(LocalNodeData.API_CALL_MAP, DUPLICATE_IN_BLOCK);
 				LOG.trace(
 						"FAILURE addBlockIfNewAndParentExistsUnsynchronized hash exists in db : index:{}; hash:{}; prev:{};",
 						blockIndex, block.hash, block.prevHash);
@@ -54,7 +59,7 @@ public class LocalNodeDataSynchronizedUtil {
 			LOG.trace(
 					"FAILURE addBlockIfNewAndParentExistsUnsynchronized prevHash does not exist in db : index:{}; hash:{}; prev:{};",
 					blockIndex, block.hash, block.prevHash);
-			MapUtil.increment(localNodeData.getApiCallMap(), "too-high-in-block");
+			MapUtil.increment(LocalNodeData.API_CALL_MAP, TOO_HIGH_IN_BLOCK);
 		}
 		return blockChanged;
 	}
@@ -185,13 +190,13 @@ public class LocalNodeDataSynchronizedUtil {
 		}
 	}
 
-	public static void requestAddresses(final LocalNodeData localNodeData, final RemoteNodeControllerRunnable r) {
+	public static void requestAddresses(final LocalNodeData localNodeData, final RemoteNodeData r) {
 		synchronized (localNodeData) {
 			MessageUtil.sendGetAddresses(r, localNodeData);
 		}
 	}
 
-	public static void requestBlocks(final LocalNodeData localNodeData, final RemoteNodeControllerRunnable peer) {
+	public static void requestBlocks(final LocalNodeData localNodeData, final RemoteNodeData peer) {
 		synchronized (localNodeData) {
 			try {
 				BlockControlUtil.requestBlocksUnsynchronized(localNodeData, peer);
@@ -201,7 +206,7 @@ public class LocalNodeDataSynchronizedUtil {
 		}
 	}
 
-	public static void requestHeaders(final LocalNodeData localNodeData, final RemoteNodeControllerRunnable peer) {
+	public static void requestHeaders(final LocalNodeData localNodeData, final RemoteNodeData peer) {
 		synchronized (localNodeData) {
 			final UInt256 hashRaw;
 			if (localNodeData.getUnverifiedBlockPoolSet().isEmpty()

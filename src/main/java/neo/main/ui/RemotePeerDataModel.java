@@ -1,6 +1,5 @@
 package neo.main.ui;
 
-import java.text.NumberFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -36,7 +35,7 @@ public final class RemotePeerDataModel extends AbstractRefreshingModel {
 	@Override
 	public int getColumnCount() {
 		synchronized (RemotePeerDataModel.this) {
-			return 8;
+			return 4;
 		}
 	}
 
@@ -54,12 +53,6 @@ public final class RemotePeerDataModel extends AbstractRefreshingModel {
 				return "Version";
 			case 4:
 				return "Index";
-			case 5:
-				return "In Bytes";
-			case 6:
-				return "Out Bytes";
-			case 7:
-				return "API Calls";
 			}
 		}
 		throw new RuntimeException("unknown column index:" + columnIndex);
@@ -95,12 +88,6 @@ public final class RemotePeerDataModel extends AbstractRefreshingModel {
 				return tableDataList.get(rowIndex).getVersion();
 			case 4:
 				return rowIndex + 1;
-			case 5:
-				return NumberFormat.getIntegerInstance().format(tableDataList.get(rowIndex).getInBytes());
-			case 6:
-				return NumberFormat.getIntegerInstance().format(tableDataList.get(rowIndex).getOutBytes());
-			case 7:
-				return tableDataList.get(rowIndex).getApiCallMap();
 			}
 		}
 		throw new RuntimeException("unknown column index:" + columnIndex);

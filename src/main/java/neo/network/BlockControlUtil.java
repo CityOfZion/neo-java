@@ -16,6 +16,7 @@ import neo.model.core.GenesisBlockData;
 import neo.model.core.Header;
 import neo.model.network.InvPayload;
 import neo.network.model.LocalNodeData;
+import neo.network.model.RemoteNodeData;
 import neo.rpc.client.CityOfZionUtil;
 import neo.rpc.client.RpcUtil;
 
@@ -38,8 +39,8 @@ public class BlockControlUtil {
 		localNodeData.setBlockchainBlockCount(blockchainHeight);
 	}
 
-	public static final void requestBlocksUnsynchronized(final LocalNodeData localNodeData,
-			final RemoteNodeControllerRunnable r) throws ClientProtocolException, IOException, DecoderException {
+	public static final void requestBlocksUnsynchronized(final LocalNodeData localNodeData, final RemoteNodeData r)
+			throws ClientProtocolException, IOException, DecoderException {
 		if (!localNodeData.getVerifiedHeaderPoolMap().isEmpty()) {
 			final List<UInt256> hashs = new ArrayList<>();
 

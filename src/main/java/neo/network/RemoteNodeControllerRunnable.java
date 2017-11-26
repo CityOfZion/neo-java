@@ -4,17 +4,10 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.ConnectException;
-import java.net.InetSocketAddress;
 import java.net.Socket;
 import java.net.SocketException;
 import java.net.SocketTimeoutException;
-import java.util.Collections;
-import java.util.Map;
-import java.util.TreeMap;
-import java.util.concurrent.ConcurrentLinkedQueue;
 
-import org.apache.commons.io.input.CountingInputStream;
-import org.apache.commons.io.output.CountingOutputStream;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -24,6 +17,7 @@ import neo.model.network.InvPayload;
 import neo.model.network.Message;
 import neo.model.util.MapUtil;
 import neo.model.util.PayloadUtil;
+import neo.network.model.LocalNodeData;
 import neo.network.model.RemoteNodeData;
 
 public class RemoteNodeControllerRunnable implements Runnable {
@@ -33,49 +27,20 @@ public class RemoteNodeControllerRunnable implements Runnable {
 	 */
 	private static final Logger LOG = LoggerFactory.getLogger(RemoteNodeControllerRunnable.class);
 
-	private final ConcurrentLinkedQueue<Message> sendQueue = new ConcurrentLinkedQueue<>();
-
 	private final LocalControllerNode localControllerNode;
 
 	private final RemoteNodeData data;
-
-	private boolean isGoodPeer = false;
-
-	private boolean isAcknowledgedPeer = false;
-
-	private Thread sendThread;
-
-	private Thread receiveThread;
-
-	private long inBytes = 0;
-
-	private long outBytes = 0;
-
-	private final Map<String, Long> apiCallMap = Collections.synchronizedMap(new TreeMap<>());
 
 	public RemoteNodeControllerRunnable(final LocalControllerNode localControllerNode, final RemoteNodeData data) {
 		this.localControllerNode = localControllerNode;
 		this.data = data;
 	}
 
-	public Map<String, Long> getApiCallMap() {
-		return apiCallMap;
-	}
-
 	public RemoteNodeData getData() {
 		return data;
 	}
 
-	public String getHostAddress() {
-		final InetSocketAddress peer = data.getTcpAddressAndPort();
-		return peer.getAddress().getHostAddress();
-	}
-
-	public long getInBytes() {
-		return inBytes;
-	}
-
-	public Message getMessageOrTimeOut(final CountingInputStream in) throws IOException {
+	public Message getMessageOrTimeOut(final InputStream in) throws IOException {
 		Message messageRecieved;
 		try {
 			messageRecieved = new Message(in);
@@ -85,25 +50,9 @@ public class RemoteNodeControllerRunnable implements Runnable {
 		return messageRecieved;
 	}
 
-	public long getOutBytes() {
-		return outBytes;
-	}
-
-	public int getQueueDepth() {
-		return sendQueue.size();
-	}
-
-	public boolean isAcknowledgedPeer() {
-		return isAcknowledgedPeer;
-	}
-
-	public boolean isGoodPeer() {
-		return isGoodPeer;
-	}
-
 	@Override
 	public void run() {
-		LOG.debug("STARTED RemoteNodeControllerRunnable run {}", getHostAddress());
+		LOG.debug("STARTED RemoteNodeControllerRunnable run {}", data.getHostAddress());
 
 		final long startTimeMs = System.currentTimeMillis();
 
@@ -118,35 +67,31 @@ public class RemoteNodeControllerRunnable implements Runnable {
 			startHeight = maxStartHeightBlock.getIndexAsLong();
 		}
 
-		sendQueue.add(new Message(magic, "version",
+		data.getSendQueue().add(new Message(magic, "version",
 				PayloadUtil.getVersionPayload(localPort, nonce, startHeight).toByteArray()));
-		sendQueue.add(new Message(magic, "verack"));
+		data.getSendQueue().add(new Message(magic, "verack"));
 		try {
 			try (Socket s = new Socket();) {
 				s.setSoTimeout(2000);
 				s.connect(data.getTcpAddressAndPort(), 2000);
 
-				try (OutputStream sOut = s.getOutputStream();
-						InputStream sIn = s.getInputStream();
-						CountingOutputStream out = new CountingOutputStream(sOut);
-						CountingInputStream in = new CountingInputStream(sIn);) {
-					isGoodPeer = true;
+				try (OutputStream out = s.getOutputStream(); InputStream in = s.getInputStream();) {
+					data.setGoodPeer(true);
 
-					while (isGoodPeer) {
-						outBytes = out.getByteCount();
-						inBytes = in.getByteCount();
-						Message messageToSend = sendQueue.poll();
+					while (data.isGoodPeer()) {
+						Message messageToSend = data.getSendQueue().poll();
 						while (messageToSend != null) {
 							final byte[] outBa = messageToSend.toByteArray();
 							out.write(outBa);
 							if (messageToSend.commandEnum != null) {
 								final long apiCallCount;
-								apiCallCount = MapUtil.increment(getApiCallMap(),
+								apiCallCount = MapUtil.increment(LocalNodeData.API_CALL_MAP,
 										"out-" + messageToSend.commandEnum.name().toLowerCase());
-								MapUtil.increment(getApiCallMap(), "out-bytes", outBa.length);
-								LOG.debug("request to {}:{} {}", getHostAddress(), messageToSend.command, apiCallCount);
+								MapUtil.increment(LocalNodeData.API_CALL_MAP, RemoteNodeData.OUT_BYTES, outBa.length);
+								LOG.debug("request to {}:{} {}", data.getHostAddress(), messageToSend.command,
+										apiCallCount);
 							}
-							messageToSend = sendQueue.poll();
+							messageToSend = data.getSendQueue().poll();
 						}
 						out.flush();
 						Thread.sleep(data.getSleepIntervalMs());
@@ -155,9 +100,9 @@ public class RemoteNodeControllerRunnable implements Runnable {
 						while (messageRecieved != null) {
 							if (messageRecieved.magic != magic) {
 								LOG.debug(" magic was {} expected {} closing peer.", messageRecieved.magic, magic);
-								isGoodPeer = false;
+								data.setGoodPeer(false);
 							} else {
-								MapUtil.increment(getApiCallMap(), "in-bytes",
+								MapUtil.increment(LocalNodeData.API_CALL_MAP, RemoteNodeData.IN_BYTES,
 										messageRecieved.getPayloadByteArray().length + 24);
 								if (messageRecieved.commandEnum != null) {
 									final long apiCallCount;
@@ -166,11 +111,11 @@ public class RemoteNodeControllerRunnable implements Runnable {
 										final InvPayload payload = messageRecieved.getPayload(InvPayload.class);
 										final String apiCall = apiCallRoot + "-"
 												+ payload.getType().name().toLowerCase();
-										apiCallCount = MapUtil.increment(getApiCallMap(), apiCall);
+										apiCallCount = MapUtil.increment(LocalNodeData.API_CALL_MAP, apiCall);
 									} else {
-										apiCallCount = MapUtil.increment(getApiCallMap(), apiCallRoot);
+										apiCallCount = MapUtil.increment(LocalNodeData.API_CALL_MAP, apiCallRoot);
 									}
-									LOG.debug("response from {}:{} {}", getHostAddress(), messageRecieved.command,
+									LOG.debug("response from {}:{} {}", data.getHostAddress(), messageRecieved.command,
 											apiCallCount);
 								}
 
@@ -182,39 +127,39 @@ public class RemoteNodeControllerRunnable implements Runnable {
 						final long currTimeMs = System.currentTimeMillis();
 						final long recycleTimeMs = startTimeMs + data.getRecycleIntervalMs();
 						if (recycleTimeMs < currTimeMs) {
-							LOG.debug("recycling remote node {}", getHostAddress());
-							isGoodPeer = false;
+							LOG.debug("recycling remote node {}", data.getHostAddress());
+							data.setGoodPeer(false);
 						}
 
-						if (isGoodPeer) {
+						if (data.isGoodPeer()) {
 							Thread.sleep(data.getSleepIntervalMs());
 						}
 					}
 				}
 			} catch (final SocketTimeoutException e) {
-				LOG.trace("SocketTimeoutException from {}, closing peer", getHostAddress());
+				LOG.trace("SocketTimeoutException from {}, closing peer", data.getHostAddress());
 				LOG.trace("SocketTimeoutException", e);
-				isGoodPeer = false;
+				data.setGoodPeer(false);
 			} catch (final ConnectException e) {
-				LOG.trace("ConnectException from {}, closing peer", getHostAddress());
+				LOG.trace("ConnectException from {}, closing peer", data.getHostAddress());
 				LOG.trace("ConnectException", e);
-				isGoodPeer = false;
+				data.setGoodPeer(false);
 			} catch (final SocketException e) {
 				if (e.getMessage().equals("Broken pipe (Write failed)")) {
-					LOG.trace("SocketException from {}, closing peer", getHostAddress());
+					LOG.trace("SocketException from {}, closing peer", data.getHostAddress());
 				} else if (e.getMessage().equals("Operation timed out (Read failed)")) {
-					LOG.trace("SocketException from {}, closing peer", getHostAddress());
+					LOG.trace("SocketException from {}, closing peer", data.getHostAddress());
 				} else if (e.getMessage().equals("Connection reset")) {
-					LOG.trace("SocketException from {}, closing peer", getHostAddress());
+					LOG.trace("SocketException from {}, closing peer", data.getHostAddress());
 				} else if (e.getMessage().equals("Network is unreachable (connect failed)")) {
-					LOG.trace("SocketException from {}, closing peer", getHostAddress());
+					LOG.trace("SocketException from {}, closing peer", data.getHostAddress());
 				} else if (e.getMessage().equals("Protocol wrong type for socket (Write failed)")) {
-					LOG.trace("SocketException from {}, closing peer", getHostAddress());
+					LOG.trace("SocketException from {}, closing peer", data.getHostAddress());
 				} else {
-					LOG.error("SocketException from {}, closing peer", getHostAddress());
+					LOG.error("SocketException from {}, closing peer", data.getHostAddress());
 					LOG.error("SocketException", e);
 				}
-				isGoodPeer = false;
+				data.setGoodPeer(false);
 			}
 		} catch (
 
@@ -228,25 +173,9 @@ public class RemoteNodeControllerRunnable implements Runnable {
 		LOG.debug("SUCCESS RemoteNodeControllerRunnable run");
 	}
 
-	public void send(final Message message) {
-		if (LOG.isTraceEnabled()) {
-			LOG.trace("send to {}:{}", getHostAddress(), message.command);
-		}
-		sendQueue.add(message);
-	}
-
-	public void setAcknowledgedPeer(final boolean isAcknowledgedPeer) {
-		this.isAcknowledgedPeer = isAcknowledgedPeer;
-	}
-
 	public void stop() throws InterruptedException {
-		isGoodPeer = false;
-		if (sendThread != null) {
-			sendThread.join();
-		}
-		if (receiveThread != null) {
-			receiveThread.join();
-		}
+		data.setGoodPeer(false);
+		data.getSendQueue().clear();
 	}
 
 }

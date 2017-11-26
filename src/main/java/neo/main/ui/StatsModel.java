@@ -141,15 +141,16 @@ public final class StatsModel extends AbstractRefreshingModel {
 				statsValueList.clear();
 
 				final Map<String, Long> apiCallMap = new TreeMap<>();
-				MapUtil.increment(apiCallMap, localNodeData.getApiCallMap());
 
 				final Map<NodeConnectionPhaseEnum, Integer> statsMap = new EnumMap<>(NodeConnectionPhaseEnum.class);
 				for (final NodeConnectionPhaseEnum connectionPhase : NodeConnectionPhaseEnum.values()) {
 					statsMap.put(connectionPhase, 0);
 
 				}
+
+				MapUtil.increment(apiCallMap, LocalNodeData.API_CALL_MAP);
+
 				for (final RemoteNodeData data : peerDataSet) {
-					MapUtil.increment(apiCallMap, data.getApiCallMap());
 					final int oldCount = statsMap.get(data.getConnectionPhase());
 					statsMap.put(data.getConnectionPhase(), oldCount + 1);
 				}

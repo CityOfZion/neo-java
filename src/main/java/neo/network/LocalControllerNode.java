@@ -36,6 +36,10 @@ import neo.network.model.TimerData;
 
 public class LocalControllerNode {
 
+	private static final String IN_HEADERS_ALL_DUPLICATES = "in-headers-all-duplicates";
+
+	private static final String DUPLICATE_IN_HEADER = "duplicate-in-header";
+
 	public static final String GOOD_NODE_FILE = "good-node-file";
 
 	public static final String MIN_RETRY_TIME_MS = "min-retry-time-ms";
@@ -257,7 +261,7 @@ public class LocalControllerNode {
 			}
 
 			if (!headerNew) {
-				MapUtil.increment(localNodeData.getApiCallMap(), "duplicate-in-header");
+				MapUtil.increment(LocalNodeData.API_CALL_MAP, DUPLICATE_IN_HEADER);
 			}
 		}
 		LOG.debug("INTERIM onHeaders headerChanged:{}", headerChanged);
@@ -265,7 +269,7 @@ public class LocalControllerNode {
 			LocalNodeDataSynchronizedUtil.verifyUnverifiedHeaders(localNodeData);
 			notifyNodeDataChangeListeners();
 		} else {
-			MapUtil.increment(localNodeData.getApiCallMap(), "in-headers-all-duplicates");
+			MapUtil.increment(LocalNodeData.API_CALL_MAP, IN_HEADERS_ALL_DUPLICATES);
 			LOG.debug("header message received with {} headers, but all were duplicates.",
 					headersPayload.getHeaderList().size());
 		}
@@ -302,42 +306,42 @@ public class LocalControllerNode {
 				onVersion(peer, message);
 				break;
 			case VERACK:
-				peer.setAcknowledgedPeer(true);
+				peer.getData().setAcknowledgedPeer(true);
 				onVerack(peer, message);
 			case ADDR:
-				peer.setAcknowledgedPeer(true);
+				peer.getData().setAcknowledgedPeer(true);
 				onAddr(peer, message);
 				break;
 			case INV:
-				peer.setAcknowledgedPeer(true);
+				peer.getData().setAcknowledgedPeer(true);
 				onInv(peer, message);
 				break;
 			case GETBLOCKS:
-				peer.setAcknowledgedPeer(true);
+				peer.getData().setAcknowledgedPeer(true);
 				onGetBlocks(peer, message);
 				break;
 			case GETADDR:
-				peer.setAcknowledgedPeer(true);
+				peer.getData().setAcknowledgedPeer(true);
 				onGetAddr(peer, message);
 				break;
 			case HEADERS:
-				peer.setAcknowledgedPeer(true);
+				peer.getData().setAcknowledgedPeer(true);
 				onHeaders(peer, message);
 				break;
 			case BLOCK:
-				peer.setAcknowledgedPeer(true);
+				peer.getData().setAcknowledgedPeer(true);
 				onBlock(peer, message);
 				break;
 			case MEMPOOL:
-				peer.setAcknowledgedPeer(true);
+				peer.getData().setAcknowledgedPeer(true);
 				onMempool(peer, message);
 				break;
 			case GETDATA:
-				peer.setAcknowledgedPeer(true);
+				peer.getData().setAcknowledgedPeer(true);
 				onGetdata(peer, message);
 				break;
 			case GETHEADERS:
-				peer.setAcknowledgedPeer(true);
+				peer.getData().setAcknowledgedPeer(true);
 				onGetheaders(peer, message);
 				break;
 			}
@@ -357,11 +361,7 @@ public class LocalControllerNode {
 				LOG.debug("OnSocketClose {} {}", peer.getData().getTcpAddressAndPortString(),
 						peer.getData().getVersion());
 			}
-			synchronized (localNodeData) {
-				MapUtil.increment(localNodeData.getApiCallMap(), peer.getApiCallMap());
-			}
 
-			peer.getData().setPeerRunnable(null);
 			if (peer.getData().getVersion() != null) {
 				peer.getData().setConnectionPhase(NodeConnectionPhaseEnum.INACTIVE);
 			} else {
@@ -408,13 +408,9 @@ public class LocalControllerNode {
 							data.getConnectionPhase());
 					data.setConnectionPhase(NodeConnectionPhaseEnum.TRY_START);
 
-					if (data.getPeerRunnable() != null) {
-						data.getPeerRunnable().stop();
-					}
 					final RemoteNodeControllerRunnable r = new RemoteNodeControllerRunnable(this, data);
-					data.setPeerRunnable(r);
 
-					threadPool.execute(data.getPeerRunnable());
+					threadPool.execute(r);
 					anyChanged = true;
 				}
 			}

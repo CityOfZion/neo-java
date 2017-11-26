@@ -2,19 +2,30 @@ package neo.network.model;
 
 import java.net.InetSocketAddress;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.function.Function;
 
 import org.json.JSONObject;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
+import neo.model.network.Message;
 import neo.model.util.JsonUtil;
-import neo.network.RemoteNodeControllerRunnable;
 import neo.network.TimerUtil;
 
 public class RemoteNodeData {
+
+	public static final String OUT_BYTES = "out-bytes";
+
+	public static final String IN_BYTES = "in-bytes";
+
+	/**
+	 * the logger.
+	 */
+	private static final Logger LOG = LoggerFactory.getLogger(RemoteNodeData.class);
 
 	public static final Function<RemoteNodeData, Object> TCP_ADDRESS_AND_PORT = (final RemoteNodeData data) -> {
 		return data.getTcpAddressAndPortString();
@@ -58,7 +69,11 @@ public class RemoteNodeData {
 
 	private final Map<String, TimerData> timersMap;
 
-	private RemoteNodeControllerRunnable peerRunnable;
+	private final ConcurrentLinkedQueue<Message> sendQueue = new ConcurrentLinkedQueue<>();
+
+	private boolean isGoodPeer = false;
+
+	private boolean isAcknowledgedPeer = false;
 
 	public RemoteNodeData(final JSONObject config) {
 		final JSONObject timersJson = config.getJSONObject("timers");
@@ -67,37 +82,21 @@ public class RemoteNodeData {
 		recycleIntervalMs = JsonUtil.getTime(config, "recycle-interval");
 	}
 
-	public Map<String, Long> getApiCallMap() {
-		if (peerRunnable == null) {
-			return Collections.emptyMap();
-		}
-		return peerRunnable.getApiCallMap();
-	}
-
 	public NodeConnectionPhaseEnum getConnectionPhase() {
 		return connectionPhase;
 	}
 
-	public long getInBytes() {
-		if (peerRunnable == null) {
-			return 0L;
-		}
-		return peerRunnable.getInBytes();
+	public String getHostAddress() {
+		final InetSocketAddress peer = getTcpAddressAndPort();
+		return peer.getAddress().getHostAddress();
 	}
 
 	public Long getLastMessageTimestamp() {
 		return lastMessageTimestamp;
 	}
 
-	public long getOutBytes() {
-		if (peerRunnable == null) {
-			return 0L;
-		}
-		return peerRunnable.getOutBytes();
-	}
-
-	public RemoteNodeControllerRunnable getPeerRunnable() {
-		return peerRunnable;
+	public int getQueueDepth() {
+		return sendQueue.size();
 	}
 
 	public String getRcpAddressAndPortString() {
@@ -113,6 +112,10 @@ public class RemoteNodeData {
 
 	public InetSocketAddress getRpcAddressAndPort() {
 		return rpcAddressAndPort;
+	}
+
+	public ConcurrentLinkedQueue<Message> getSendQueue() {
+		return sendQueue;
 	}
 
 	public long getSleepIntervalMs() {
@@ -138,16 +141,39 @@ public class RemoteNodeData {
 		return version;
 	}
 
+	public boolean isAcknowledgedPeer() {
+		return isAcknowledgedPeer;
+	}
+
+	public boolean isGoodPeer() {
+		return isGoodPeer;
+	}
+
+	public void send(final Message message) {
+		if (LOG.isTraceEnabled()) {
+			LOG.trace("send to {}:{}", getHostAddress(), message.command);
+		}
+		if (!isGoodPeer()) {
+			LOG.error("sending message to closed peer : {}", message.command);
+			return;
+		}
+		sendQueue.add(message);
+	}
+
+	public void setAcknowledgedPeer(final boolean isAcknowledgedPeer) {
+		this.isAcknowledgedPeer = isAcknowledgedPeer;
+	}
+
 	public void setConnectionPhase(final NodeConnectionPhaseEnum connectionPhase) {
 		this.connectionPhase = connectionPhase;
 	}
 
-	public void setLastMessageTimestamp(final Long lastMessageTimestamp) {
-		this.lastMessageTimestamp = lastMessageTimestamp;
+	public void setGoodPeer(final boolean isGoodPeer) {
+		this.isGoodPeer = isGoodPeer;
 	}
 
-	public void setPeerRunnable(final RemoteNodeControllerRunnable peerRunnable) {
-		this.peerRunnable = peerRunnable;
+	public void setLastMessageTimestamp(final Long lastMessageTimestamp) {
+		this.lastMessageTimestamp = lastMessageTimestamp;
 	}
 
 	public void setRpcAddressAndPort(final InetSocketAddress rpcAddressAndPort) {

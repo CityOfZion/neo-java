@@ -11,20 +11,21 @@ import neo.model.network.InventoryType;
 import neo.model.network.Message;
 import neo.model.util.MapUtil;
 import neo.network.model.LocalNodeData;
+import neo.network.model.RemoteNodeData;
 
 public class MessageUtil {
 
+	private static final String DUPLICATE_OUT_BLOCK = "duplicate-out-block";
 	/**
 	 * the logger.
 	 */
 	private static final Logger LOG = LoggerFactory.getLogger(MessageUtil.class);
 
-	public static void sendGetAddresses(final RemoteNodeControllerRunnable r, final LocalNodeData localNodeData) {
+	public static void sendGetAddresses(final RemoteNodeData r, final LocalNodeData localNodeData) {
 		r.send(new Message(LocalNodeDataSynchronizedUtil.getMagic(localNodeData), CommandEnum.GETADDR.getName()));
 	}
 
-	public static void sendGetData(final RemoteNodeControllerRunnable r, final LocalNodeData localNodeData,
-			final UInt256... hashs) {
+	public static void sendGetData(final RemoteNodeData r, final LocalNodeData localNodeData, final UInt256... hashs) {
 		boolean hasDuplicates = false;
 		for (final UInt256 hash : hashs) {
 			if (localNodeData.getBlockDb().containsHash(hash)) {
@@ -33,15 +34,14 @@ public class MessageUtil {
 			}
 		}
 		if (hasDuplicates) {
-			MapUtil.increment(localNodeData.getApiCallMap(), "duplicate-out-block");
+			MapUtil.increment(LocalNodeData.API_CALL_MAP, DUPLICATE_OUT_BLOCK);
 		}
 
 		r.send(new Message(localNodeData.getMagic(), CommandEnum.GETDATA.getName(),
 				new InvPayload(InventoryType.BLOCK, hashs).toByteArray()));
 	}
 
-	public static void sendGetHeaders(final RemoteNodeControllerRunnable r, final LocalNodeData localNodeData,
-			final UInt256 hash) {
+	public static void sendGetHeaders(final RemoteNodeData r, final LocalNodeData localNodeData, final UInt256 hash) {
 		r.send(new Message(localNodeData.getMagic(), CommandEnum.GETHEADERS.getName(),
 				new GetBlocksPayload(hash, null).toByteArray()));
 	}

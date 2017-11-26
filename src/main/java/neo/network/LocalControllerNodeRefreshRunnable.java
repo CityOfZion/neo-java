@@ -62,25 +62,22 @@ public class LocalControllerNodeRefreshRunnable implements Runnable {
 				}
 
 				for (final RemoteNodeData data : peerDataList) {
-					final RemoteNodeControllerRunnable r = data.getPeerRunnable();
-					if (r != null) {
-						LOG.trace("refreshThread {} isGoodPeer:{}, isAcknowledgedPeer {}, getQueueDepth {}",
-								data.getTcpAddressAndPortString(), r.isGoodPeer(), r.isAcknowledgedPeer(),
-								r.getQueueDepth());
-						if (r.isGoodPeer()) {
-							if (r.isAcknowledgedPeer()) {
-								if (r.getQueueDepth() == 0) {
-									if (isReadyForSend(data, CommandEnum.GETADDR)) {
-										LocalNodeDataSynchronizedUtil.requestAddresses(localNodeData, r);
-									}
-									if (TimerUtil.getTimerData(data.getTimersMap(), CommandEnum.GETDATA,
-											InventoryType.BLOCK.name().toLowerCase()).isReadyForSend()) {
-										LocalNodeDataSynchronizedUtil.requestBlocks(localNodeData, r);
-									}
-									if (isReadyForSend(data, CommandEnum.GETHEADERS)) {
-										LocalNodeDataSynchronizedUtil.requestHeaders(localNodeData, r);
-										sent(data, CommandEnum.GETHEADERS);
-									}
+					LOG.trace("refreshThread {} isGoodPeer:{}, isAcknowledgedPeer {}, getQueueDepth {}",
+							data.getTcpAddressAndPortString(), data.isGoodPeer(), data.isAcknowledgedPeer(),
+							data.getQueueDepth());
+					if (data.isGoodPeer()) {
+						if (data.isAcknowledgedPeer()) {
+							if (data.getQueueDepth() == 0) {
+								if (isReadyForSend(data, CommandEnum.GETADDR)) {
+									LocalNodeDataSynchronizedUtil.requestAddresses(localNodeData, data);
+								}
+								if (TimerUtil.getTimerData(data.getTimersMap(), CommandEnum.GETDATA,
+										InventoryType.BLOCK.name().toLowerCase()).isReadyForSend()) {
+									LocalNodeDataSynchronizedUtil.requestBlocks(localNodeData, data);
+								}
+								if (isReadyForSend(data, CommandEnum.GETHEADERS)) {
+									LocalNodeDataSynchronizedUtil.requestHeaders(localNodeData, data);
+									sent(data, CommandEnum.GETHEADERS);
 								}
 							}
 						}

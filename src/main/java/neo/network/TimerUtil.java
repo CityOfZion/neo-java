@@ -13,6 +13,8 @@ import neo.network.model.TimerTypeEnum;
 
 public class TimerUtil {
 
+	private static final String SEND = "send";
+
 	/**
 	 * the logger.
 	 */
@@ -20,9 +22,29 @@ public class TimerUtil {
 
 	private static final String RESPONSE_COMMAND = "response-command";
 
+	private static final Map<String, String> timersKeyMap = new TreeMap<>();
+
+	private static final Map<String, String> responseCommandKeyMap = new TreeMap<>();
+
+	private static final Map<CommandEnum, String> sendKeyMap = new TreeMap<>();
+
+	public static String getResponseCommandKey(final String responseCommand) {
+		if (!responseCommandKeyMap.containsKey(responseCommand)) {
+			responseCommandKeyMap.put(responseCommand, RESPONSE_COMMAND + "-" + responseCommand);
+		}
+		return responseCommandKeyMap.get(responseCommand);
+	}
+
+	public static String getSendKey(final CommandEnum command) {
+		if (!sendKeyMap.containsKey(command)) {
+			sendKeyMap.put(command, SEND + "-" + command.getName());
+		}
+		return sendKeyMap.get(command);
+	}
+
 	public static TimerData getTimerData(final Map<String, TimerData> timersMap, final CommandEnum command,
 			final String subtype) {
-		return getTimerData(timersMap, "send-" + command.getName(), subtype);
+		return getTimerData(timersMap, getSendKey(command), subtype);
 	}
 
 	public static TimerData getTimerData(final Map<String, TimerData> timersMap, final String command,
@@ -31,7 +53,7 @@ public class TimerUtil {
 		if (subtype == null) {
 			key = command;
 		} else {
-			key = command + "-" + subtype;
+			key = getTimerKey(command, subtype);
 		}
 
 		if (!timersMap.containsKey(key)) {
@@ -46,19 +68,27 @@ public class TimerUtil {
 		return getTimerData(timersMap, timerType.getName(), subtype);
 	}
 
+	public static String getTimerKey(final String timerType, final String key) {
+		final String timerKey = timerType + "-" + key;
+		if (!timersKeyMap.containsKey(timerKey)) {
+			timersKeyMap.put(timerKey, timerKey);
+		}
+		return timersKeyMap.get(timerKey);
+	}
+
 	public static Map<String, TimerData> getTimerMap(final JSONObject timersJson) {
 		final Map<String, TimerData> timersMap = new TreeMap<>();
 		for (final String timerType : timersJson.keySet()) {
 			final JSONObject timerTypeJson = timersJson.getJSONObject(timerType);
 			for (final String key : timerTypeJson.keySet()) {
 				final JSONObject timerJson = timerTypeJson.getJSONObject(key);
-				final String timersMapKey = timerType + "-" + key;
+				final String timersMapKey = getTimerKey(timerType, key);
 				final TimerData timerData = new TimerData(timersMapKey, timerJson);
 				timersMap.put(timersMapKey, timerData);
 
 				if (timerJson.has(RESPONSE_COMMAND)) {
 					final String responseCommand = timerJson.getString(RESPONSE_COMMAND);
-					timersMap.put(RESPONSE_COMMAND + "-" + responseCommand, timerData);
+					timersMap.put(getResponseCommandKey(responseCommand), timerData);
 				}
 			}
 		}

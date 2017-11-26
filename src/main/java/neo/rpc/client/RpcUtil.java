@@ -30,7 +30,7 @@ public class RpcUtil {
 	 */
 	private static final Logger LOG = LoggerFactory.getLogger(RpcUtil.class);
 
-	private static final int TIMEOUT_MILLIS = 1000;
+	private static final int TIMEOUT_MILLIS = 2000;
 
 	private static void addPeer(final JSONObject nodeListJson, final String key, final Set<String> nodeSet) {
 		final JSONArray listJson = nodeListJson.getJSONObject("result").getJSONArray(key);
