@@ -64,6 +64,7 @@ public class TestPayload {
 	}
 
 	@Test
+	@Ignore
 	public void test002GenesisHeadersPayload()
 			throws ClientProtocolException, IOException, DecoderException, InterruptedException {
 		final String rpcNode = CityOfZionUtil.getMainNetRpcNode();
