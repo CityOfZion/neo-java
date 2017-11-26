@@ -59,6 +59,7 @@ public class Message {
 		magic = magicObj.toPositiveBigInteger().intValue();
 		LOG.trace("interim inSocket magicObj:{} magic:{}", magicObj, magic);
 		command = ModelUtil.getString(headerBb, 12).trim();
+		commandEnum = CommandEnum.fromName(command);
 		LOG.trace("interim inSocket command:{}", command);
 		final UInt32 lengthObj = ModelUtil.getUInt32(headerBb);
 		final int lengthRaw = lengthObj.toPositiveBigInteger().intValue();
@@ -71,12 +72,21 @@ public class Message {
 		}
 		final UInt32 checksum = ModelUtil.getUInt32(headerBb);
 		LOG.trace("interim inSocket checksum:{}", checksum);
-		final byte[] payloadBa = new byte[length];
-		readUntilFull(in, payloadBa);
+		final byte[] payloadBa;
+		if (commandEnum == null) {
+			throw new SocketTimeoutException();
+		} else {
+			try {
+				payloadBa = new byte[length];
+			} catch (final OutOfMemoryError e) {
+				LOG.error("OutOfMemoryError getting command \"{}\" payload of size:{}", command, length);
+				throw e;
+			}
+			readUntilFull(in, payloadBa);
+		}
 		final ByteBuffer payloadBb = ByteBuffer.wrap(payloadBa);
 		this.payloadBa = ModelUtil.getByteArray(payloadBb, length, false);
 		payload = createPayload();
-		commandEnum = CommandEnum.fromName(command);
 	}
 
 	public Message(final long magic, final String command, final byte... payloadBa) {
