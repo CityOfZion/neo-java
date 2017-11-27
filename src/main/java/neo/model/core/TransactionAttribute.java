@@ -11,14 +11,32 @@ import neo.model.keystore.ByteArraySerializable;
 import neo.model.util.ModelUtil;
 import neo.model.util.NetworkUtil;
 
-public class TransactionAttribute implements ToJsonObject, ByteArraySerializable, Serializable {
+/**
+ * the transaction attributes.
+ *
+ * @author coranos
+ *
+ */
+public final class TransactionAttribute implements ToJsonObject, ByteArraySerializable, Serializable {
 
 	private static final long serialVersionUID = 1L;
 
+	/**
+	 * the usage of the transaction attribute.
+	 */
 	public final TransactionAttributeUsage usage;
 
+	/**
+	 * the data for the transaction attribute.
+	 */
 	private final byte[] data;
 
+	/**
+	 * the constructor.
+	 *
+	 * @param bb
+	 *            the ByteBuffer to read.
+	 */
 	public TransactionAttribute(final ByteBuffer bb) {
 		usage = TransactionAttributeUsage.valueOf(ModelUtil.getByte(bb));
 

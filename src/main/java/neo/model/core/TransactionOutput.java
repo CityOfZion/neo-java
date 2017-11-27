@@ -14,14 +14,37 @@ import neo.model.keystore.ByteArraySerializable;
 import neo.model.util.ModelUtil;
 import neo.model.util.NetworkUtil;
 
-public class TransactionOutput implements ToJsonObject, ByteArraySerializable, Serializable {
+/**
+ * the transaction output.
+ *
+ * @author coranos
+ *
+ */
+public final class TransactionOutput implements ToJsonObject, ByteArraySerializable, Serializable {
 
 	private static final long serialVersionUID = 1L;
 
+	/**
+	 * the asset id.
+	 */
 	public final UInt256 assetId;
+
+	/**
+	 * the value.
+	 */
 	public final Fixed8 value;
+
+	/**
+	 * the script hash.
+	 */
 	public final UInt160 scriptHash;
 
+	/**
+	 * the constructor.
+	 *
+	 * @param bb
+	 *            the ByteBuffer to read.
+	 */
 	public TransactionOutput(final ByteBuffer bb) {
 		assetId = ModelUtil.getUInt256(bb);
 		value = ModelUtil.getFixed8(bb);

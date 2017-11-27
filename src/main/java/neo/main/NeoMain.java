@@ -1,7 +1,5 @@
 package neo.main;
 
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.io.File;
@@ -10,7 +8,6 @@ import java.sql.SQLException;
 import java.util.concurrent.ThreadLocalRandom;
 
 import javax.swing.BoxLayout;
-import javax.swing.JButton;
 import javax.swing.JFrame;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
@@ -26,7 +23,6 @@ import org.slf4j.LoggerFactory;
 import neo.main.ui.RemotePeerDataModel;
 import neo.main.ui.StatsModel;
 import neo.network.LocalControllerNode;
-import neo.network.LocalNodeDataSynchronizedUtil;
 
 /**
  * The main class for the neo-java application.
@@ -99,24 +95,9 @@ public final class NeoMain {
 			final JScrollPane scrollPane = new JScrollPane(table);
 			tabbedPane.add("Connection Details", scrollPane);
 		}
-		{
-			final JPanel panel = new JPanel();
-			{
-				final JButton button = new JButton("Compress Db");
-				button.addActionListener(new ActionListener() {
-					@Override
-					public void actionPerformed(final ActionEvent evt) {
-						LocalNodeDataSynchronizedUtil.compressDb(controller.getLocalNodeData());
-					}
-				});
-				panel.add(button);
-			}
-
-			tabbedPane.add("Controls", panel);
-		}
 
 		frame.getContentPane().add(mainPanel);
-		frame.setSize(512, 1024);
+		frame.setSize(480, 960);
 		frame.setVisible(true);
 
 		controller.startThreadPool();

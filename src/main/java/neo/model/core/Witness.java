@@ -12,14 +12,32 @@ import neo.model.keystore.ByteArraySerializable;
 import neo.model.util.ModelUtil;
 import neo.model.util.NetworkUtil;
 
-public class Witness implements ToJsonObject, ByteArraySerializable, Serializable, Comparable<Witness> {
+/**
+ * the witness.
+ *
+ * @author coranos
+ *
+ */
+public final class Witness implements ToJsonObject, ByteArraySerializable, Serializable, Comparable<Witness> {
 
 	private static final long serialVersionUID = 1L;
 
+	/**
+	 * the invocation script.
+	 */
 	private final byte[] invocationScript;
 
+	/**
+	 * the verification script.
+	 */
 	private final byte[] verificationScript;
 
+	/**
+	 * the constructor.
+	 *
+	 * @param bb
+	 *            the ByteBuffer to read.
+	 */
 	public Witness(final ByteBuffer bb) {
 		invocationScript = ModelUtil.getByteArray(bb);
 		verificationScript = ModelUtil.getByteArray(bb);
