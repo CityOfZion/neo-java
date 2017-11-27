@@ -64,6 +64,12 @@ public class LocalControllerNodeRefreshRunnable implements Runnable {
 					activePeerDataList.subList(localNodeData.getActiveThreadCount(), activePeerDataList.size()).clear();
 				}
 
+				if (!activePeerDataList.isEmpty()) {
+					if (activePeerDataList.size() == localNodeData.getActiveThreadCount()) {
+						activePeerDataList.remove(0).setGoodPeer(false);
+					}
+				}
+
 				for (final RemoteNodeData data : activePeerDataList) {
 					LOG.trace("refreshThread {} isGoodPeer:{}, isAcknowledgedPeer {}, getQueueDepth {}",
 							data.getTcpAddressAndPortString(), data.isGoodPeer(), data.isAcknowledgedPeer(),
@@ -87,19 +93,13 @@ public class LocalControllerNodeRefreshRunnable implements Runnable {
 					}
 				}
 
-				if (!activePeerDataList.isEmpty()) {
-					if (activePeerDataList.size() == localNodeData.getActiveThreadCount()) {
-						activePeerDataList.get(0).setGoodPeer(false);
-					}
-				}
-
 				for (final RemoteNodeData data : allPeerDataList) {
 					boolean retry = false;
 					if (data.getConnectionPhase().equals(NodeConnectionPhaseEnum.UNKNOWN)) {
 						retry = true;
 					}
 					if (data.getConnectionPhase().equals(NodeConnectionPhaseEnum.INACTIVE)) {
-						if (activePeerDataList.size() < localNodeData.getActiveThreadCount()) {
+						if (activePeerDataList.size() < (localNodeData.getActiveThreadCount() - 1)) {
 							retry = true;
 						}
 					}

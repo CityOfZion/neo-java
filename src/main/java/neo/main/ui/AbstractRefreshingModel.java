@@ -61,6 +61,8 @@ public abstract class AbstractRefreshingModel extends AbstractTableModel impleme
 	}
 
 	/**
+	 * returns the thread name.
+	 *
 	 * @return the thread name.
 	 */
 	public abstract String getThreadName();

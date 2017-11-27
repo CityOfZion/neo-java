@@ -80,6 +80,8 @@ public abstract class AbstractByteArray implements KeySerializable, ValueSeriali
 	}
 
 	/**
+	 * returns the byte length.
+	 *
 	 * @return the length of the byte array.
 	 */
 	public final int getByteLength() {
@@ -87,6 +89,8 @@ public abstract class AbstractByteArray implements KeySerializable, ValueSeriali
 	}
 
 	/**
+	 * returns a copy of the byte array.
+	 *
 	 * @return a copy of the byte array. A copy preserves immutability.
 	 */
 	public final byte[] getBytesCopy() {
@@ -96,6 +100,8 @@ public abstract class AbstractByteArray implements KeySerializable, ValueSeriali
 	}
 
 	/**
+	 * returns the size of the byte array.
+	 *
 	 * @return the byte size of this array. This value should not change for the
 	 *         life of the object.
 	 */
@@ -140,6 +146,8 @@ public abstract class AbstractByteArray implements KeySerializable, ValueSeriali
 	}
 
 	/**
+	 * returns a base58 string.
+	 *
 	 * @return this array as a string in base58.
 	 */
 	public final String toBase58String() {
@@ -147,6 +155,8 @@ public abstract class AbstractByteArray implements KeySerializable, ValueSeriali
 	}
 
 	/**
+	 * returns a base64 string.
+	 *
 	 * @return this array as a string in base64.
 	 */
 	public final String toBase64String() {
@@ -159,6 +169,8 @@ public abstract class AbstractByteArray implements KeySerializable, ValueSeriali
 	}
 
 	/**
+	 * returns a hex string.
+	 *
 	 * @return this array as a hex string.
 	 */
 	public final String toHexString() {
@@ -171,6 +183,8 @@ public abstract class AbstractByteArray implements KeySerializable, ValueSeriali
 	}
 
 	/**
+	 * returns a positive BigInteger.
+	 *
 	 * @return this array as a BigInteger, assuming the bytes represent a signed
 	 *         int.
 	 */
@@ -179,6 +193,8 @@ public abstract class AbstractByteArray implements KeySerializable, ValueSeriali
 	}
 
 	/**
+	 * returns a positive BigInteger, in reverse byte order.
+	 *
 	 * @return this array as a BigInteger, assuming the bytes represent a signed int
 	 *         in reverse byte order.
 	 */
@@ -189,6 +205,8 @@ public abstract class AbstractByteArray implements KeySerializable, ValueSeriali
 	}
 
 	/**
+	 * returns a hex string, in reverse byte order.
+	 *
 	 * @return this array as a hex string, in reverse byte order.
 	 */
 	public final String toReverseHexString() {
@@ -201,6 +219,8 @@ public abstract class AbstractByteArray implements KeySerializable, ValueSeriali
 	}
 
 	/**
+	 * returns this array as a timestamp.
+	 *
 	 * @return this array as a Timestamp, assuming the bytes represent the number of
 	 *         seconds in the timestamp, as a unsigned long.
 	 */

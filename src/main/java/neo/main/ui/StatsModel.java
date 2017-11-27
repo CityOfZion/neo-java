@@ -48,18 +48,6 @@ public final class StatsModel extends AbstractRefreshingModel {
 	private final List<String> statsValueList = new ArrayList<>();
 
 	/**
-	 * adds the name and a blank value.
-	 *
-	 * @param name
-	 *            the name to add.
-	 */
-	private void addNameAndBlankValue(final String name) {
-		statsNameList.add(name);
-		statsValueList.add("");
-
-	}
-
-	/**
 	 * adds the name and value to the stats list, calling toString() on the value.
 	 *
 	 * @param name
@@ -195,31 +183,6 @@ public final class StatsModel extends AbstractRefreshingModel {
 
 				if (!localNodeData.getVerifiedHeaderPoolMap().isEmpty()) {
 					addNameAndValue("Max Header Height", localNodeData.getVerifiedHeaderPoolMap().lastKey());
-				}
-
-				if (!localNodeData.getUnverifiedBlockPoolSet().isEmpty()) {
-					addNameAndValue("Min Unverified Block Height",
-							localNodeData.getUnverifiedBlockPoolSet().first().getIndexAsLong());
-					addNameAndValue("Max Unverified Block Height",
-							localNodeData.getUnverifiedBlockPoolSet().last().getIndexAsLong());
-					addNameAndValue("Count Unverified Block Height", localNodeData.getUnverifiedBlockPoolSet().size());
-				} else {
-					addNameAndBlankValue("Min Unverified Block Height");
-					addNameAndBlankValue("Max Unverified Block Height");
-					addNameAndBlankValue("Count Unverified Block Height");
-				}
-
-				if (!localNodeData.getUnverifiedHeaderPoolSet().isEmpty()) {
-					addNameAndValue("Min Unverified Header Height",
-							localNodeData.getUnverifiedHeaderPoolSet().first().getIndexAsLong());
-					addNameAndValue("Max Unverified Header Height",
-							localNodeData.getUnverifiedHeaderPoolSet().last().getIndexAsLong());
-					addNameAndValue("Count Unverified Header Height",
-							localNodeData.getUnverifiedHeaderPoolSet().size());
-				} else {
-					addNameAndBlankValue("Min Unverified Header Height");
-					addNameAndBlankValue("Max Unverified Header Height");
-					addNameAndBlankValue("Count Unverified Header Height");
 				}
 
 				if (localNodeData.getHighestHeaderTime() != null) {

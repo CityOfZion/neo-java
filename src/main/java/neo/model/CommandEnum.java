@@ -34,6 +34,8 @@ public enum CommandEnum {
 	;
 
 	/**
+	 * returns a command with th given name.
+	 *
 	 * @param name
 	 *            the name to look up.
 	 *
@@ -64,6 +66,8 @@ public enum CommandEnum {
 	}
 
 	/**
+	 * returns the name.
+	 *
 	 * @return the name.
 	 */
 	public String getName() {

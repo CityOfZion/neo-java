@@ -10,6 +10,8 @@ import org.json.JSONObject;
  */
 public interface ToJsonObject {
 	/**
+	 * returns a JSONObject.
+	 *
 	 * @return a JSONObject representing this object.
 	 */
 	JSONObject toJSONObject();
