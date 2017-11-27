@@ -112,7 +112,7 @@ public class ECPoint {
 
 	public static boolean isEven(final BigInteger number) {
 		return number.getLowestSetBit() != 0;
-	};
+	}
 
 	private static byte[] reverse(final byte[] ba) {
 		ArrayUtils.reverse(ba);

@@ -41,6 +41,72 @@ public final class NeoMain {
 	private static final Logger LOG = LoggerFactory.getLogger(NeoMain.class);
 
 	/**
+	 * adds the connection details panel.
+	 *
+	 * @param controller
+	 *            the controller to use.
+	 * @param peerTableModel
+	 *            the table model to use.
+	 * @param tabbedPane
+	 *            the tabbed pane to use.
+	 */
+	private static void addConnectionDetailsPanel(final LocalControllerNode controller,
+			final RemotePeerDataModel peerTableModel, final JTabbedPane tabbedPane) {
+		controller.addPeerChangeListener(peerTableModel);
+		final JTable table = new JTable(peerTableModel);
+		final JScrollPane scrollPane = new JScrollPane(table);
+		tabbedPane.add("Connection Details", scrollPane);
+	}
+
+	/**
+	 * adds the connection statistics panel.
+	 *
+	 * @param controller
+	 *            the controller to use.
+	 * @param statsTableModel
+	 *            the table model to use.
+	 * @param tabbedPane
+	 *            the tabbed pane to use.
+	 */
+	private static void addConnectionStatsPanel(final LocalControllerNode controller, final StatsModel statsTableModel,
+			final JTabbedPane tabbedPane) {
+		controller.addPeerChangeListener(statsTableModel);
+		final JTable table = new JTable(statsTableModel);
+		final JScrollPane scrollPane = new JScrollPane(table);
+		tabbedPane.add("Connection Stats", scrollPane);
+	}
+
+	/**
+	 * gets the window closing adapter.
+	 *
+	 * @param controller
+	 *            the controller.
+	 * @param statsTableModel
+	 *            the stats table model.
+	 * @param peerTableModel
+	 *            the peers table model.
+	 * @return the WindowAdapter.
+	 */
+	private static WindowAdapter getWindowClosingAdapter(final LocalControllerNode controller,
+			final StatsModel statsTableModel, final RemotePeerDataModel peerTableModel) {
+		return new WindowAdapter() {
+			@Override
+			public void windowClosing(final WindowEvent evt) {
+				try {
+					statsTableModel.stop();
+					peerTableModel.stop();
+					LOG.info("STARTED SHUTTING DOWN DB");
+					controller.getLocalNodeData().getBlockDb().close();
+					LOG.info("SUCCESS SHUTTING DOWN DB");
+				} catch (final SQLException | InterruptedException ex) {
+					LOG.error("error closing", ex);
+				}
+				System.exit(0);
+			}
+		};
+	}
+
+	/**
 	 * the main method.
 	 *
 	 * @param args
@@ -64,37 +130,14 @@ public final class NeoMain {
 
 		final JFrame frame = new JFrame("NEO Main");
 		frame.setDefaultCloseOperation(WindowConstants.DO_NOTHING_ON_CLOSE);
-		frame.addWindowListener(new WindowAdapter() {
-			@Override
-			public void windowClosing(final WindowEvent evt) {
-				try {
-					statsTableModel.stop();
-					peerTableModel.stop();
-					LOG.info("STARTED SHUTTING DOWN DB");
-					controller.getLocalNodeData().getBlockDb().close();
-					LOG.info("SUCCESS SHUTTING DOWN DB");
-				} catch (final SQLException | InterruptedException ex) {
-					LOG.error("error closing", ex);
-				}
-				System.exit(0);
-			}
-		});
+		frame.addWindowListener(getWindowClosingAdapter(controller, statsTableModel, peerTableModel));
 		final JPanel mainPanel = new JPanel();
 		final JTabbedPane tabbedPane = new JTabbedPane();
 		mainPanel.setLayout(new BoxLayout(mainPanel, BoxLayout.X_AXIS));
 		mainPanel.add(tabbedPane);
-		{
-			controller.addPeerChangeListener(statsTableModel);
-			final JTable table = new JTable(statsTableModel);
-			final JScrollPane scrollPane = new JScrollPane(table);
-			tabbedPane.add("Connection Stats", scrollPane);
-		}
-		{
-			controller.addPeerChangeListener(peerTableModel);
-			final JTable table = new JTable(peerTableModel);
-			final JScrollPane scrollPane = new JScrollPane(table);
-			tabbedPane.add("Connection Details", scrollPane);
-		}
+
+		addConnectionStatsPanel(controller, statsTableModel, tabbedPane);
+		addConnectionDetailsPanel(controller, peerTableModel, tabbedPane);
 
 		frame.getContentPane().add(mainPanel);
 		frame.setSize(480, 960);
