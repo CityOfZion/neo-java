@@ -13,16 +13,39 @@ import neo.model.keystore.ByteArraySerializable;
 import neo.model.util.ModelUtil;
 import neo.model.util.NetworkUtil;
 
-public class InvocationExclusiveData implements ExclusiveData, ToJsonObject, ByteArraySerializable, Serializable {
+/**
+ * exclusive data for enrollment transactions.
+ *
+ * @author coranos
+ */
+public final class InvocationExclusiveData implements ExclusiveData, ToJsonObject, ByteArraySerializable, Serializable {
 
 	private static final long serialVersionUID = 1L;
 
-	public byte[] script;
+	/**
+	 * the script.
+	 */
+	public final byte[] script;
 
-	public Fixed8 gas;
+	/**
+	 * the gas.
+	 */
+	public final Fixed8 gas;
 
+	/**
+	 * the version.
+	 */
 	private final byte version;
 
+	/**
+	 * the constructor.
+	 * 
+	 * @param version
+	 *            the trsansaction version.
+	 * 
+	 * @param bb
+	 *            the byte buffer to read.
+	 */
 	public InvocationExclusiveData(final byte version, final ByteBuffer bb) {
 		this.version = version;
 		script = ModelUtil.getByteArray(bb);

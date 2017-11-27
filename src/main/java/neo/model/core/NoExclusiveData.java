@@ -8,10 +8,21 @@ import org.json.JSONObject;
 import neo.model.ToJsonObject;
 import neo.model.keystore.ByteArraySerializable;
 
+/**
+ * exclusive data for transactions that have no exclusive data..
+ *
+ * @author coranos
+ */
 public class NoExclusiveData implements ExclusiveData, ToJsonObject, ByteArraySerializable, Serializable {
 
 	private static final long serialVersionUID = 1L;
 
+	/**
+	 * the constructor.
+	 * 
+	 * @param bb
+	 *            the ByteBuffer to read.
+	 */
 	public NoExclusiveData(final ByteBuffer bb) {
 	}
 

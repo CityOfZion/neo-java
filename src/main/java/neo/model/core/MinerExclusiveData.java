@@ -12,12 +12,30 @@ import neo.model.keystore.ByteArraySerializable;
 import neo.model.util.ModelUtil;
 import neo.model.util.NetworkUtil;
 
-public class MinerExclusiveData implements ExclusiveData, ToJsonObject, ByteArraySerializable, Serializable {
+/**
+ * exclusive data for miner transactions.
+ *
+ * @author coranos
+ */
+public final class MinerExclusiveData implements ExclusiveData, ToJsonObject, ByteArraySerializable, Serializable {
 
 	private static final long serialVersionUID = 1L;
 
+	/**
+	 * the nonce.
+	 * <p>
+	 * https://en.wikipedia.org/wiki/Cryptographic_nonce
+	 * <p>
+	 * In cryptography, a nonce is an arbitrary number that can only be used once.
+	 */
 	public final UInt32 nonce;
 
+	/**
+	 * the constructor.
+	 * 
+	 * @param bb
+	 *            the ByteBuffer to read.
+	 */
 	public MinerExclusiveData(final ByteBuffer bb) {
 		nonce = ModelUtil.getUInt32(bb);
 	}

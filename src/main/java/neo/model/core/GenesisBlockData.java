@@ -6,10 +6,22 @@ import org.apache.commons.lang.ArrayUtils;
 
 import neo.model.bytes.UInt256;
 
-public class GenesisBlockData {
+/**
+ * data about the genesis block.
+ *
+ * @author coranos
+ *
+ */
+public final class GenesisBlockData {
 
+	/**
+	 * the hash of the genesis block, in hex.
+	 */
 	public static final String GENESIS_HASH_HEX_STR = "d42561e3d30e15be6400b6df2f328e02d2bf6354c41dce433bc57687c82144bf";
 
+	/**
+	 * the hash of the genesis block.
+	 */
 	public static final UInt256 GENESIS_HASH;
 
 	static {
@@ -22,4 +34,10 @@ public class GenesisBlockData {
 		}
 	}
 
+	/**
+	 * the constructor.
+	 */
+	private GenesisBlockData() {
+
+	}
 }

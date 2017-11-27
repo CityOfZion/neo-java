@@ -38,6 +38,8 @@ public abstract class AbstractBlockBase
 	private static final Comparator<AbstractBlockBase> ABSTRACT_BLOCK_BASE_COMPARATOR = getAbstractBlockBaseComparator();
 
 	/**
+	 * return the comparator for sorting AbstractBlockBase objects.
+	 *
 	 * @return the comparator for sorting AbstractBlockBase objects.
 	 */
 	public static Comparator<AbstractBlockBase> getAbstractBlockBaseComparator() {
@@ -142,6 +144,8 @@ public abstract class AbstractBlockBase
 	}
 
 	/**
+	 * return the hash, as calculated from the other parameters.
+	 *
 	 * @return the hash, as calculated from the other parameters.
 	 */
 	private UInt256 calculateHash() {
@@ -172,6 +176,8 @@ public abstract class AbstractBlockBase
 	}
 
 	/**
+	 * return the index, as a long.
+	 *
 	 * @return the index, as a long.
 	 */
 	public final long getIndexAsLong() {
@@ -182,6 +188,8 @@ public abstract class AbstractBlockBase
 	public abstract byte[] toByteArray();
 
 	/**
+	 * write the object to an output stream.
+	 *
 	 * @param out
 	 *            the output stream to write to.
 	 *

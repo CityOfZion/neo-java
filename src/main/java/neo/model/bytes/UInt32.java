@@ -26,6 +26,8 @@ public final class UInt32 extends AbstractByteArray {
 	}
 
 	/**
+	 * return the value as a long.
+	 *
 	 * @return the value as a long.
 	 */
 	public long asLong() {
