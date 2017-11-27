@@ -19,7 +19,10 @@ public final class Header extends AbstractBlockBase {
 	private static final long serialVersionUID = 1L;
 
 	/**
-	 * @return the Comparator used to sort headers, by index (as a long).
+	 * return the Comparator used to sort headers, by index as a long.
+	 *
+	 * @return the Comparator used to sort headers, by index (converted to a
+	 *         positive long value).
 	 */
 	public static Comparator<Header> getComparator() {
 		final Comparator<Header> c = Comparator.comparing(Header::getIndexAsLong).reversed();

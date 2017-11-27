@@ -38,6 +38,8 @@ public final class Block extends AbstractBlockBase implements ToJsonObject, Payl
 	}
 
 	/**
+	 * return the transaction list.
+	 *
 	 * @return the transaction list.
 	 */
 	public List<Transaction> getTransactionList() {

@@ -184,7 +184,9 @@ public final class StatsModel extends AbstractRefreshingModel {
 				if (!localNodeData.getVerifiedHeaderPoolMap().isEmpty()) {
 					addNameAndValue("Max Header Height", localNodeData.getVerifiedHeaderPoolMap().lastKey());
 				} else {
-					addNameAndValue("Max Header Height", highestBlock.getIndexAsLong());
+					if (highestBlock != null) {
+						addNameAndValue("Max Header Height", highestBlock.getIndexAsLong());
+					}
 				}
 
 				if (localNodeData.getHighestHeaderTime() != null) {

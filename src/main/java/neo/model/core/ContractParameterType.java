@@ -33,10 +33,12 @@ public enum ContractParameterType {
 	;
 
 	/**
+	 * return the ContractParameterType with the given typeByte, or throws an error
+	 * if the typeBytes has no ContractParameterType.
+	 *
 	 * @param typeByte
 	 *            the type byte to use.
-	 * @return the ContractParameterType with the given typeByte, or throws an error
-	 *         if the typeBytes has no ContractParameterType.
+	 * @return the ContractParameterType with the given typeByte.
 	 */
 	public static ContractParameterType valueOf(final byte typeByte) {
 		for (final ContractParameterType it : ContractParameterType.values()) {
@@ -48,12 +50,12 @@ public enum ContractParameterType {
 	}
 
 	/**
+	 * return an array of ContractParameterTypes corresponding to the typeBytes, or
+	 * throws an error if one of the typeBytes has no ContractParameterType.
 	 *
 	 * @param byteArray
 	 *            the array of type bytes to use.
-	 * @return an array of ContractParameterTypes corresponding tto the typeBytes,
-	 *         or throws an error if one of the typeBytes has no
-	 *         ContractParameterType.
+	 * @return an array of ContractParameterTypes corresponding to the typeBytes.
 	 */
 	public static ContractParameterType[] valuesOf(final byte[] byteArray) {
 		final ContractParameterType[] typeArray = new ContractParameterType[byteArray.length];
@@ -79,6 +81,8 @@ public enum ContractParameterType {
 	}
 
 	/**
+	 * return the type byte.
+	 *
 	 * @return the type byte.
 	 */
 	public byte getTypeByte() {
