@@ -9,7 +9,7 @@ import java.util.List;
 
 import org.apache.commons.lang.ArrayUtils;
 
-import neo.model.keystore.ByteArraySerializable;
+import neo.model.ByteArraySerializable;
 
 public class NetworkUtil {
 

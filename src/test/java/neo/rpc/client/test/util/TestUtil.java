@@ -24,7 +24,7 @@ import org.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import neo.model.keystore.ByteArraySerializable;
+import neo.model.ByteArraySerializable;
 import neo.model.network.Message;
 import neo.model.util.PayloadUtil;
 

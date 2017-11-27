@@ -5,8 +5,8 @@ import java.nio.ByteBuffer;
 
 import org.json.JSONObject;
 
+import neo.model.ByteArraySerializable;
 import neo.model.ToJsonObject;
-import neo.model.keystore.ByteArraySerializable;
 
 /**
  * exclusive data for transactions that have no exclusive data..

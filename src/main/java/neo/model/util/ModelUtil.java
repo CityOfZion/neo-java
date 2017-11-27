@@ -15,6 +15,7 @@ import org.json.JSONArray;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import neo.model.ByteArraySerializable;
 import neo.model.ToJsonObject;
 import neo.model.bytes.Fixed8;
 import neo.model.bytes.UInt128;
@@ -24,7 +25,6 @@ import neo.model.bytes.UInt256;
 import neo.model.bytes.UInt32;
 import neo.model.bytes.UInt64;
 import neo.model.bytes.UInt8;
-import neo.model.keystore.ByteArraySerializable;
 
 public class ModelUtil {
 

@@ -2,8 +2,7 @@ package neo.model.bytes;
 
 import java.nio.ByteBuffer;
 
-import neo.model.keystore.ByteArraySerializable;
-import neo.model.keystore.ValueSerializable;
+import neo.model.ByteArraySerializable;
 import neo.model.util.ModelUtil;
 
 /**
@@ -13,7 +12,7 @@ import neo.model.util.ModelUtil;
  * @author coranos
  *
  */
-public final class Fixed8 implements ValueSerializable, ByteArraySerializable {
+public final class Fixed8 implements ByteArraySerializable {
 
 	/**
 	 * the value.
@@ -39,11 +38,6 @@ public final class Fixed8 implements ValueSerializable, ByteArraySerializable {
 	@Override
 	public byte[] toByteArray() {
 		return valueObj.toByteArray();
-	}
-
-	@Override
-	public Object toValue() {
-		return value;
 	}
 
 }

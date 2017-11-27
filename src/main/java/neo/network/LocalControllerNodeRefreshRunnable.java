@@ -2,6 +2,7 @@ package neo.network;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Iterator;
 import java.util.List;
 
 import org.slf4j.Logger;
@@ -38,6 +39,20 @@ public class LocalControllerNodeRefreshRunnable implements Runnable {
 		return ready;
 	}
 
+	public void retainOnlyActiveAndAcknowledgedPeers(final List<RemoteNodeData> allPeerDataList) {
+		final Iterator<RemoteNodeData> dataIt = allPeerDataList.iterator();
+		while (dataIt.hasNext()) {
+			final RemoteNodeData data = dataIt.next();
+			switch (data.getConnectionPhase()) {
+			case ACTIVE:
+			case ACKNOWLEDGED:
+				break;
+			default:
+				dataIt.remove();
+			}
+		}
+	}
+
 	@Override
 	public void run() {
 		final LocalNodeData localNodeData = localControllerNode.getLocalNodeData();
@@ -59,6 +74,7 @@ public class LocalControllerNodeRefreshRunnable implements Runnable {
 
 				Collections.shuffle(allPeerDataList);
 				activePeerDataList.addAll(allPeerDataList);
+				retainOnlyActiveAndAcknowledgedPeers(activePeerDataList);
 
 				if (activePeerDataList.size() > localNodeData.getActiveThreadCount()) {
 					activePeerDataList.subList(localNodeData.getActiveThreadCount(), activePeerDataList.size()).clear();
@@ -92,14 +108,22 @@ public class LocalControllerNodeRefreshRunnable implements Runnable {
 						}
 					}
 				}
-
 				for (final RemoteNodeData data : allPeerDataList) {
 					boolean retry = false;
 					if (data.getConnectionPhase().equals(NodeConnectionPhaseEnum.UNKNOWN)) {
 						retry = true;
 					}
+
+					final int peerDataSetSize;
+					synchronized (localControllerNode) {
+						final List<RemoteNodeData> checkActivePeerDataList = new ArrayList<>();
+						checkActivePeerDataList.addAll(localControllerNode.getPeerDataSet());
+						retainOnlyActiveAndAcknowledgedPeers(checkActivePeerDataList);
+						peerDataSetSize = checkActivePeerDataList.size();
+					}
+
 					if (data.getConnectionPhase().equals(NodeConnectionPhaseEnum.INACTIVE)) {
-						if (activePeerDataList.size() < (localNodeData.getActiveThreadCount() - 1)) {
+						if (peerDataSetSize < (localNodeData.getActiveThreadCount() - 1)) {
 							retry = true;
 						}
 					}

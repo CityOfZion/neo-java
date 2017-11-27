@@ -11,10 +11,10 @@ import org.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import neo.model.ByteArraySerializable;
 import neo.model.bytes.UInt16;
 import neo.model.bytes.UInt32;
 import neo.model.bytes.UInt64;
-import neo.model.keystore.ByteArraySerializable;
 import neo.model.util.ModelUtil;
 import neo.model.util.NetworkUtil;
 

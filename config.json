@@ -4,8 +4,8 @@
 		"good-node-file": "goodNodes.json",
 		"magic": 7630401,
 		"port": 10333,
-		"thread-pool-count": 20,
-		"active-thread-count": 5,
+		"thread-pool-count": 8,
+		"active-thread-count": 4,
 		"timers": {
 			"verify": {
 				"blocks": {

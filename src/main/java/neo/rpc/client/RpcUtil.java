@@ -76,8 +76,7 @@ public class RpcUtil {
 		return outputJson.getInt("result");
 	}
 
-	// TODO: make private
-	public static String getBlockHash(final String rpcNode, final int blockHeight, final Integer verbose,
+	private static String getBlockHash(final String rpcNode, final int blockHeight, final Integer verbose,
 			final boolean silentErrors) throws ClientProtocolException, IOException {
 		final JSONObject outputJson = getBlock(rpcNode, blockHeight, verbose, silentErrors);
 		if (outputJson == null) {

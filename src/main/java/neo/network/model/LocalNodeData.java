@@ -25,6 +25,8 @@ public class LocalNodeData {
 
 	private Date highestHeaderTime;
 
+	private final long startTime;
+
 	private int blockchainBlockCount;
 
 	private long blockFileSize;
@@ -42,6 +44,7 @@ public class LocalNodeData {
 			AbstractBlockBase.getAbstractBlockBaseComparator());
 
 	public LocalNodeData(final long magic, final int activeThreadCount, final Map<String, TimerData> timersMap) {
+		startTime = System.currentTimeMillis();
 		this.magic = magic;
 		this.activeThreadCount = activeThreadCount;
 		this.timersMap = timersMap;
@@ -73,6 +76,10 @@ public class LocalNodeData {
 
 	public long getMagic() {
 		return magic;
+	}
+
+	public long getStartTime() {
+		return startTime;
 	}
 
 	public Map<String, TimerData> getTimersMap() {

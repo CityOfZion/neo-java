@@ -116,7 +116,6 @@
       <property name="tokens" value="DOT"/>
     </module>
     <module name="SingleSpaceSeparator"/>
-    <module name="AvoidNestedBlocks"/>
     <module name="EmptyBlock">
       <property name="option" value="text"/>
       <property name="tokens" value="LITERAL_WHILE,LITERAL_TRY,LITERAL_FINALLY,LITERAL_DO,LITERAL_IF,LITERAL_ELSE,LITERAL_FOR,INSTANCE_INIT,STATIC_INIT,LITERAL_SWITCH,LITERAL_SYNCHRONIZED"/>
@@ -140,6 +139,10 @@
     <module name="SeparatorWrap">
       <metadata name="net.sf.eclipsecs.core.comment" value="Comma ','"/>
       <property name="tokens" value="COMMA"/>
+    </module>
+    <module name="AvoidNestedBlocks">
+      <property name="allowInSwitchCase" value="true"/>
+      <message key="block.nested" value="Avoid nested blocks. In switch/case clause blocks, all statements must be inside the nested block, including breaks."/>
     </module>
   </module>
   <module name="FileLength"/>

@@ -3,7 +3,6 @@ package neo.network;
 import java.io.File;
 import java.io.IOException;
 import java.util.Iterator;
-import java.util.List;
 
 import org.apache.commons.codec.DecoderException;
 import org.apache.http.client.ClientProtocolException;
@@ -127,26 +126,6 @@ public class LocalNodeDataSynchronizedUtil {
 	public static void addUnverifiedBlock(final LocalNodeData localNodeData, final Block block) {
 		synchronized (localNodeData) {
 			localNodeData.getUnverifiedBlockPoolSet().add(block);
-		}
-	}
-
-	public static void compressDb(final LocalNodeData localNodeData) {
-		LOG.info("STARTED COMPRESSING DB");
-		synchronized (localNodeData) {
-			localNodeData.getBlockDb().compress();
-		}
-		LOG.info("SUCCESS COMPRESSING DB");
-	}
-
-	public static void deleteBlocksAboveMinIndex(final LocalNodeData localNodeData) {
-		synchronized (localNodeData) {
-			LOG.debug("STARTED deleteBlocksAboveMinIndex");
-			final List<Block> gapBlockList = localNodeData.getBlockDb()
-					.getBlocksWithMissingPrevHash(GenesisBlockData.GENESIS_HASH.toByteArray(), 1);
-			for (final Block block : gapBlockList) {
-				localNodeData.getBlockDb().deleteBlocksAboveAndIncludingIndex(block.index);
-			}
-			LOG.debug("SUCCESS deleteBlocksAboveMinIndex");
 		}
 	}
 

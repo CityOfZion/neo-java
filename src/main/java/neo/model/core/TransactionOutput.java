@@ -6,11 +6,11 @@ import java.nio.ByteBuffer;
 
 import org.json.JSONObject;
 
+import neo.model.ByteArraySerializable;
 import neo.model.ToJsonObject;
 import neo.model.bytes.Fixed8;
 import neo.model.bytes.UInt160;
 import neo.model.bytes.UInt256;
-import neo.model.keystore.ByteArraySerializable;
 import neo.model.util.ModelUtil;
 import neo.model.util.NetworkUtil;
 

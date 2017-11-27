@@ -6,8 +6,8 @@ import java.nio.ByteBuffer;
 
 import org.json.JSONObject;
 
+import neo.model.ByteArraySerializable;
 import neo.model.ToJsonObject;
-import neo.model.keystore.ByteArraySerializable;
 import neo.model.util.ModelUtil;
 import neo.model.util.NetworkUtil;
 
@@ -66,16 +66,16 @@ public final class TransactionAttribute implements ToJsonObject, ByteArraySerial
 			data = new byte[readData.length + 1];
 			System.arraycopy(readData, 0, data, 1, readData.length);
 			data[0] = usage.getTypeByte();
-		}
 			break;
+		}
 		case SCRIPT:
 			data = ModelUtil.getByteArray(bb, 20, false);
 			break;
 		case DESCRIPTION_URL: {
 			final int length = ModelUtil.getByte(bb) & 0xff;
 			data = ModelUtil.getByteArray(bb, length, false);
-		}
 			break;
+		}
 		case DESCRIPTION:
 		case REMARK_00:
 		case REMARK_01:
@@ -94,8 +94,8 @@ public final class TransactionAttribute implements ToJsonObject, ByteArraySerial
 		case REMARK_14:
 		case REMARK_15: {
 			data = ModelUtil.getByteArray(bb);
-		}
 			break;
+		}
 		default:
 			throw new RuntimeException("unknown usage:" + usage);
 		}
@@ -130,8 +130,8 @@ public final class TransactionAttribute implements ToJsonObject, ByteArraySerial
 			case ECDH02:
 			case ECDH03: {
 				bout.write(data, 1, data.length - 1);
-			}
 				break;
+			}
 			case SCRIPT:
 				bout.write(data);
 				break;
@@ -139,8 +139,8 @@ public final class TransactionAttribute implements ToJsonObject, ByteArraySerial
 				final byte b = (byte) data.length;
 				bout.write(b);
 				bout.write(data);
-			}
 				break;
+			}
 			case DESCRIPTION:
 			case REMARK_00:
 			case REMARK_01:
@@ -159,8 +159,8 @@ public final class TransactionAttribute implements ToJsonObject, ByteArraySerial
 			case REMARK_14:
 			case REMARK_15: {
 				NetworkUtil.writeByteArray(bout, data);
-			}
 				break;
+			}
 			default:
 				throw new RuntimeException("unknown usage:" + usage);
 			}

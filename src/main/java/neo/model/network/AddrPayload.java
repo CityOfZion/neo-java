@@ -8,6 +8,12 @@ import org.json.JSONObject;
 
 import neo.model.util.ModelUtil;
 
+/**
+ * the "address" payload.
+ *
+ * @author coranos
+ *
+ */
 public final class AddrPayload implements Payload {
 
 	public final List<NetworkAddressWithTime> addressList;

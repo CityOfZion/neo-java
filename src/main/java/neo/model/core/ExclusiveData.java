@@ -1,7 +1,7 @@
 package neo.model.core;
 
+import neo.model.ByteArraySerializable;
 import neo.model.ToJsonObject;
-import neo.model.keystore.ByteArraySerializable;
 
 /**
  * interface for exclusive data for various transactions.

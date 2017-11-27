@@ -10,8 +10,8 @@ import java.util.List;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
+import neo.model.ByteArraySerializable;
 import neo.model.ToJsonObject;
-import neo.model.keystore.ByteArraySerializable;
 import neo.model.util.ModelUtil;
 import neo.model.util.NetworkUtil;
 

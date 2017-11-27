@@ -26,7 +26,6 @@ import neo.model.network.GetBlocksPayload;
 import neo.model.network.Message;
 import neo.model.network.VersionPayload;
 import neo.rpc.client.CityOfZionUtil;
-import neo.rpc.client.RpcUtil;
 import neo.rpc.client.test.util.TestUtil;
 
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
@@ -169,23 +168,31 @@ public class TestCityOfZionUtil {
 	}
 
 	@Test
+	@Ignore
 	public void test007MainNetGenesis() throws ClientProtocolException, IOException, DecoderException {
-		final String expectedGenesisHashHexStr = "0xd42561e3d30e15be6400b6df2f328e02d2bf6354c41dce433bc57687c82144bf";
-
-		final String rpcNode = CityOfZionUtil.getMainNetRpcNode();
-		final String actualGenesisHashHexStr = RpcUtil.getBlockHash(rpcNode, 0, 1, false);
-
-		Assert.assertEquals("GenesisHash should be equal", expectedGenesisHashHexStr, actualGenesisHashHexStr);
+		// final String expectedGenesisHashHexStr =
+		// "0xd42561e3d30e15be6400b6df2f328e02d2bf6354c41dce433bc57687c82144bf";
+		//
+		// final String rpcNode = CityOfZionUtil.getMainNetRpcNode();
+		// final String actualGenesisHashHexStr = RpcUtil.getBlockHash(rpcNode, 0, 1,
+		// false);
+		//
+		// Assert.assertEquals("GenesisHash should be equal", expectedGenesisHashHexStr,
+		// actualGenesisHashHexStr);
 	}
 
 	@Test
+	@Ignore
 	public void test008TestNetGenesis() throws ClientProtocolException, IOException, DecoderException {
-		final String expectedGenesisHashHexStr = "0xb3181718ef6167105b70920e4a8fbbd0a0a56aacf460d70e10ba6fa1668f1fef";
-
-		final String rpcNode = CityOfZionUtil.getTestNetRpcNode();
-		final String actualGenesisHashHexStr = RpcUtil.getBlockHash(rpcNode, 0, 1, false);
-
-		Assert.assertEquals("GenesisHash should be equal", expectedGenesisHashHexStr, actualGenesisHashHexStr);
+		// final String expectedGenesisHashHexStr =
+		// "0xb3181718ef6167105b70920e4a8fbbd0a0a56aacf460d70e10ba6fa1668f1fef";
+		//
+		// final String rpcNode = CityOfZionUtil.getTestNetRpcNode();
+		// final String actualGenesisHashHexStr = RpcUtil.getBlockHash(rpcNode, 0, 1,
+		// false);
+		//
+		// Assert.assertEquals("GenesisHash should be equal", expectedGenesisHashHexStr,
+		// actualGenesisHashHexStr);
 	}
 
 }

@@ -26,7 +26,6 @@ import neo.network.LocalControllerNode;
 
 /**
  * The main class for the neo-java application.
- *
  */
 public final class NeoMain {
 

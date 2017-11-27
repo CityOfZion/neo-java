@@ -10,9 +10,7 @@ import java.sql.Timestamp;
 
 import org.apache.commons.lang.ArrayUtils;
 
-import neo.model.keystore.ByteArraySerializable;
-import neo.model.keystore.KeySerializable;
-import neo.model.keystore.ValueSerializable;
+import neo.model.ByteArraySerializable;
 import neo.model.util.ModelUtil;
 
 /**
@@ -22,8 +20,7 @@ import neo.model.util.ModelUtil;
  * @author coranos
  *
  */
-public abstract class AbstractByteArray implements KeySerializable, ValueSerializable, ByteArraySerializable,
-		Comparable<AbstractByteArray>, Serializable {
+public abstract class AbstractByteArray implements ByteArraySerializable, Comparable<AbstractByteArray>, Serializable {
 
 	private static final long serialVersionUID = 1L;
 
@@ -177,11 +174,6 @@ public abstract class AbstractByteArray implements KeySerializable, ValueSeriali
 		return ModelUtil.toHexString(bytes);
 	}
 
-	@Override
-	public final String toKey() {
-		return ModelUtil.toHexString(bytes);
-	}
-
 	/**
 	 * returns a positive BigInteger.
 	 *
@@ -226,11 +218,6 @@ public abstract class AbstractByteArray implements KeySerializable, ValueSeriali
 	 */
 	public final Timestamp toTimestamp() {
 		return new Timestamp(toPositiveBigInteger().longValue() * 1000);
-	}
-
-	@Override
-	public final Object toValue() {
-		return ModelUtil.toHexString(bytes);
 	}
 
 	/**

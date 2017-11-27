@@ -10,12 +10,12 @@ import java.util.Comparator;
 import org.apache.commons.lang3.ArrayUtils;
 import org.json.JSONObject;
 
+import neo.model.ByteArraySerializable;
 import neo.model.ToJsonObject;
 import neo.model.bytes.UInt160;
 import neo.model.bytes.UInt256;
 import neo.model.bytes.UInt32;
 import neo.model.bytes.UInt64;
-import neo.model.keystore.ByteArraySerializable;
 import neo.model.util.Base58Util;
 import neo.model.util.ModelUtil;
 import neo.model.util.NetworkUtil;

@@ -48,6 +48,60 @@ public final class StatsModel extends AbstractRefreshingModel {
 	private final List<String> statsValueList = new ArrayList<>();
 
 	/**
+	 * add stats about what API calls were made.
+	 */
+	private void addApiCallStats() {
+		final Map<String, Long> apiCallMap = new TreeMap<>();
+		MapUtil.increment(apiCallMap, LocalNodeData.API_CALL_MAP);
+
+		for (final String key : apiCallMap.keySet()) {
+			final long value = apiCallMap.get(key);
+			addNameAndValue(key, value);
+		}
+	}
+
+	/**
+	 * add stats about the blockchain.
+	 *
+	 * @param localNodeData
+	 *            the local node data to use.
+	 */
+	private void addBlockchainStats(final LocalNodeData localNodeData) {
+		final long blockCount = localNodeData.getBlockDb().getBlockCount();
+		final long blockFileSize = localNodeData.getBlockFileSize();
+
+		final int allChainBlockCount = localNodeData.getBlockchainBlockCount();
+		addNameAndValue("Blockchain Block Count", allChainBlockCount);
+		addNameAndValue("Known Block Count", blockCount);
+
+		final Block highestBlock = localNodeData.getBlockDb().getBlockWithMaxIndex();
+		if (highestBlock != null) {
+			addNameAndValue("Max Block Height", highestBlock.getIndexAsLong());
+		}
+		if (localNodeData.getHighestBlockTime() != null) {
+			addNameAndValue("Last Block Height Change", localNodeData.getHighestBlockTime());
+		}
+
+		if (!localNodeData.getVerifiedHeaderPoolMap().isEmpty()) {
+			addNameAndValue("Max Header Height", localNodeData.getVerifiedHeaderPoolMap().lastKey());
+		} else {
+			if (highestBlock != null) {
+				addNameAndValue("Max Header Height", highestBlock.getIndexAsLong());
+			}
+		}
+
+		if (localNodeData.getHighestHeaderTime() != null) {
+			addNameAndValue("Last Header Height Change", localNodeData.getHighestHeaderTime());
+		}
+
+		addNameAndValue("Block File Size", blockFileSize);
+		if (blockCount > 0) {
+			addNameAndValue("Avg File Size Per Block", blockFileSize / blockCount);
+			addNameAndValue("Est File Size For Blockchain", (blockFileSize / blockCount) * allChainBlockCount);
+		}
+	}
+
+	/**
 	 * adds the name and value to the stats list, calling toString() on the value.
 	 *
 	 * @param name
@@ -73,6 +127,56 @@ public final class StatsModel extends AbstractRefreshingModel {
 	private void addNameAndValue(final String name, final long value) {
 		statsNameList.add(name);
 		statsValueList.add(NumberFormat.getIntegerInstance().format(value));
+	}
+
+	/**
+	 * adds stats for how many peers are in each onnection [hase.
+	 *
+	 * @param peerDataSet
+	 *            the set of connected remote peers.
+	 */
+	private void addNodeConnectionPhaseStats(final Set<RemoteNodeData> peerDataSet) {
+		final Map<NodeConnectionPhaseEnum, Integer> connectionPhaseMap = new EnumMap<>(NodeConnectionPhaseEnum.class);
+		for (final NodeConnectionPhaseEnum connectionPhase : NodeConnectionPhaseEnum.values()) {
+			connectionPhaseMap.put(connectionPhase, 0);
+		}
+
+		for (final RemoteNodeData data : peerDataSet) {
+			final int oldCount = connectionPhaseMap.get(data.getConnectionPhase());
+			connectionPhaseMap.put(data.getConnectionPhase(), oldCount + 1);
+		}
+
+		for (final NodeConnectionPhaseEnum connectionPhase : connectionPhaseMap.keySet()) {
+			final int count = connectionPhaseMap.get(connectionPhase);
+			addNameAndValue(WordUtils.capitalize(connectionPhase.name()), count);
+		}
+	}
+
+	/**
+	 * add stats on how many peers are at a given version.
+	 *
+	 * @param peerDataSet
+	 *            the set of connected remote peers.
+	 */
+	private void addVersionStats(final Set<RemoteNodeData> peerDataSet) {
+		final Map<String, Integer> versionCountMap = new TreeMap<>();
+		for (final RemoteNodeData data : peerDataSet) {
+			final String version = data.getVersion();
+			if (version != null) {
+				if (versionCountMap.containsKey(version)) {
+					final int oldCount = versionCountMap.get(version);
+					versionCountMap.put(version, oldCount + 1);
+				} else {
+					versionCountMap.put(version, 1);
+				}
+			}
+
+		}
+
+		for (final String version : versionCountMap.keySet()) {
+			final int count = versionCountMap.get(version);
+			addNameAndValue(version, count);
+		}
 	}
 
 	@Override
@@ -128,81 +232,17 @@ public final class StatsModel extends AbstractRefreshingModel {
 				statsNameList.clear();
 				statsValueList.clear();
 
-				final Map<String, Long> apiCallMap = new TreeMap<>();
+				addNameAndValue("Start Time", new Date(localNodeData.getStartTime()));
+				addNameAndValue("Duration (Seconds)",
+						(System.currentTimeMillis() - localNodeData.getStartTime()) / 1000);
 
-				final Map<NodeConnectionPhaseEnum, Integer> statsMap = new EnumMap<>(NodeConnectionPhaseEnum.class);
-				for (final NodeConnectionPhaseEnum connectionPhase : NodeConnectionPhaseEnum.values()) {
-					statsMap.put(connectionPhase, 0);
+				addNodeConnectionPhaseStats(peerDataSet);
 
-				}
+				addVersionStats(peerDataSet);
 
-				MapUtil.increment(apiCallMap, LocalNodeData.API_CALL_MAP);
+				addBlockchainStats(localNodeData);
 
-				for (final RemoteNodeData data : peerDataSet) {
-					final int oldCount = statsMap.get(data.getConnectionPhase());
-					statsMap.put(data.getConnectionPhase(), oldCount + 1);
-				}
-
-				final Map<String, Integer> versionCountMap = new TreeMap<>();
-				for (final RemoteNodeData data : peerDataSet) {
-					final String version = data.getVersion();
-					if (version != null) {
-						if (versionCountMap.containsKey(version)) {
-							final int oldCount = versionCountMap.get(version);
-							versionCountMap.put(version, oldCount + 1);
-						} else {
-							versionCountMap.put(version, 1);
-						}
-					}
-
-				}
-
-				for (final NodeConnectionPhaseEnum connectionPhase : statsMap.keySet()) {
-					final int count = statsMap.get(connectionPhase);
-					addNameAndValue(WordUtils.capitalize(connectionPhase.name()), count);
-				}
-
-				for (final String version : versionCountMap.keySet()) {
-					final int count = versionCountMap.get(version);
-					addNameAndValue(version, count);
-				}
-				final long blockCount = localNodeData.getBlockDb().getBlockCount();
-				final long blockFileSize = localNodeData.getBlockFileSize();
-
-				final int allChainBlockCount = localNodeData.getBlockchainBlockCount();
-				addNameAndValue("Blockchain Block Count", allChainBlockCount);
-				addNameAndValue("Known Block Count", blockCount);
-
-				final Block highestBlock = localNodeData.getBlockDb().getBlockWithMaxIndex();
-				if (highestBlock != null) {
-					addNameAndValue("Max Block Height", highestBlock.getIndexAsLong());
-				}
-				if (localNodeData.getHighestBlockTime() != null) {
-					addNameAndValue("Last Block Height Change", localNodeData.getHighestBlockTime());
-				}
-
-				if (!localNodeData.getVerifiedHeaderPoolMap().isEmpty()) {
-					addNameAndValue("Max Header Height", localNodeData.getVerifiedHeaderPoolMap().lastKey());
-				} else {
-					if (highestBlock != null) {
-						addNameAndValue("Max Header Height", highestBlock.getIndexAsLong());
-					}
-				}
-
-				if (localNodeData.getHighestHeaderTime() != null) {
-					addNameAndValue("Last Header Height Change", localNodeData.getHighestHeaderTime());
-				}
-
-				addNameAndValue("Block File Size", blockFileSize);
-				if (blockCount > 0) {
-					addNameAndValue("Avg File Size Per Block", blockFileSize / blockCount);
-					addNameAndValue("Est File Size For Blockchain", (blockFileSize / blockCount) * allChainBlockCount);
-				}
-
-				for (final String key : apiCallMap.keySet()) {
-					final long value = apiCallMap.get(key);
-					addNameAndValue(key, value);
-				}
+				addApiCallStats();
 
 				try (FileOutputStream fout = new FileOutputStream("LocalControllerStatsModel.txt");
 						PrintWriter pw = new PrintWriter(fout, true)) {

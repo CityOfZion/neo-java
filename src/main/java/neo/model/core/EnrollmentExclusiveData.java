@@ -6,10 +6,10 @@ import java.nio.ByteBuffer;
 
 import org.json.JSONObject;
 
+import neo.model.ByteArraySerializable;
 import neo.model.ToJsonObject;
 import neo.model.crypto.ecc.ECCurve;
 import neo.model.crypto.ecc.ECPoint;
-import neo.model.keystore.ByteArraySerializable;
 import neo.model.util.ModelUtil;
 
 /**
