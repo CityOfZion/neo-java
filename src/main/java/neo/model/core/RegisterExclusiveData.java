@@ -16,18 +16,56 @@ import neo.model.keystore.ByteArraySerializable;
 import neo.model.util.ModelUtil;
 import neo.model.util.NetworkUtil;
 
-public class RegisterExclusiveData implements ExclusiveData, ToJsonObject, ByteArraySerializable, Serializable {
+/**
+ * exclusive data for registration transactions.
+ *
+ * @author coranos
+ */
+public final class RegisterExclusiveData implements ExclusiveData, ToJsonObject, ByteArraySerializable, Serializable {
 
 	private static final long serialVersionUID = 1L;
 
+	/**
+	 * the asset type.
+	 */
 	public final AssetType assetType;
+
+	/**
+	 * the internal byte array that represents the name.
+	 */
 	private final byte[] nameBa;
+
+	/**
+	 * the name.
+	 */
 	public final String name;
+
+	/**
+	 * the amount.
+	 */
 	public final Fixed8 amount;
+
+	/**
+	 * the precision.
+	 */
 	public final byte precision;
+
+	/**
+	 * the owner.
+	 */
 	public final ECPoint owner;
+
+	/**
+	 * the admin.
+	 */
 	public final UInt160 admin;
 
+	/**
+	 * the constructor.
+	 *
+	 * @param bb
+	 *            the ByteBuffer to read.
+	 */
 	public RegisterExclusiveData(final ByteBuffer bb) {
 		assetType = AssetType.valueOf(ModelUtil.getByte(bb));
 		nameBa = ModelUtil.getByteArray(bb);

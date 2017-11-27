@@ -32,7 +32,7 @@ public final class MinerExclusiveData implements ExclusiveData, ToJsonObject, By
 
 	/**
 	 * the constructor.
-	 * 
+	 *
 	 * @param bb
 	 *            the ByteBuffer to read.
 	 */

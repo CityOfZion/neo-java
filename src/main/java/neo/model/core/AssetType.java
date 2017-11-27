@@ -27,6 +27,8 @@ public enum AssetType {
 	;
 
 	/**
+	 * return the asset type, or throw an exception if there is no match.
+	 *
 	 * @param typeByte
 	 *            type type byte.
 	 * @return the asset type, or throw an exception if there is no match.
@@ -56,6 +58,8 @@ public enum AssetType {
 	}
 
 	/**
+	 * return the type byte.
+	 *
 	 * @return the type byte.
 	 */
 	public byte getTypeByte() {

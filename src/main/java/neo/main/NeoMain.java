@@ -116,7 +116,7 @@ public final class NeoMain {
 		}
 
 		frame.getContentPane().add(mainPanel);
-		frame.setSize(1024, 768);
+		frame.setSize(512, 1024);
 		frame.setVisible(true);
 
 		controller.startThreadPool();

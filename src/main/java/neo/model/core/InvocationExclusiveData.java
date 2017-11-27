@@ -39,10 +39,10 @@ public final class InvocationExclusiveData implements ExclusiveData, ToJsonObjec
 
 	/**
 	 * the constructor.
-	 * 
+	 *
 	 * @param version
 	 *            the trsansaction version.
-	 * 
+	 *
 	 * @param bb
 	 *            the byte buffer to read.
 	 */

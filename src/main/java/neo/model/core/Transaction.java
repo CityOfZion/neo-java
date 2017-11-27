@@ -12,18 +12,57 @@ import neo.model.keystore.ByteArraySerializable;
 import neo.model.util.ModelUtil;
 import neo.model.util.NetworkUtil;
 
-public class Transaction implements ToJsonObject, ByteArraySerializable, Serializable {
+/**
+ * the transaction.
+ *
+ * @author coranos
+ *
+ */
+public final class Transaction implements ToJsonObject, ByteArraySerializable, Serializable {
 
 	private static final long serialVersionUID = 1L;
 
+	/**
+	 * the transaction type.
+	 */
 	public final TransactionType type;
+
+	/**
+	 * the version.
+	 */
 	public final byte version;
+
+	/**
+	 * the exclusive data.
+	 */
 	public final ExclusiveData exclusiveData;
+
+	/**
+	 * the transaction attributes.
+	 */
 	public final List<TransactionAttribute> attributes;
+
+	/**
+	 * the transaction inputs.
+	 */
 	public final List<CoinReference> inputs;
+
+	/**
+	 * the transaction outputs.
+	 */
 	public final List<TransactionOutput> outputs;
+
+	/**
+	 * the scripts.
+	 */
 	public final List<Witness> scripts;
 
+	/**
+	 * the constructor.
+	 *
+	 * @param bb
+	 *            the ByteBuffer to read.
+	 */
 	public Transaction(final ByteBuffer bb) {
 		type = TransactionType.valueOf(ModelUtil.getByte(bb));
 		version = ModelUtil.getByte(bb);
@@ -34,6 +73,15 @@ public class Transaction implements ToJsonObject, ByteArraySerializable, Seriali
 		scripts = ModelUtil.readArray(bb, Witness.class);
 	}
 
+	/**
+	 * deserialize the exclusive data based on the transaction type.
+	 *
+	 * @param bb
+	 *            the ByteBuffer to read.
+	 *
+	 * @return the exclusive data, or throw an exception if the transaction type is
+	 *         not recognized.
+	 */
 	private ExclusiveData deserializeExclusiveData(final ByteBuffer bb) {
 		switch (type) {
 		case MINER_TRANSACTION:

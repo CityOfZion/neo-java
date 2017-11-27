@@ -3,6 +3,9 @@ package neo.model.core;
 import java.io.ByteArrayOutputStream;
 import java.io.Serializable;
 import java.nio.ByteBuffer;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -12,34 +15,78 @@ import neo.model.keystore.ByteArraySerializable;
 import neo.model.util.ModelUtil;
 import neo.model.util.NetworkUtil;
 
-public class PublishExclusiveData implements ExclusiveData, ToJsonObject, ByteArraySerializable, Serializable {
+/**
+ * exclusive data for publish transactions.
+ *
+ * @author coranos
+ */
+public final class PublishExclusiveData implements ExclusiveData, ToJsonObject, ByteArraySerializable, Serializable {
 
 	private static final long serialVersionUID = 1L;
 
+	/**
+	 * the version.
+	 */
 	private final byte version;
 
-	public byte[] script;
+	/**
+	 * the script.
+	 */
+	public final byte[] script;
 
-	public ContractParameterType[] parameterList;
+	/**
+	 * the parameter list.
+	 */
+	public final List<ContractParameterType> parameterList;
 
-	public ContractParameterType returnType;
+	/**
+	 * the return type.
+	 */
+	public final ContractParameterType returnType;
 
-	public boolean needStorage;
+	/**
+	 * the flag saying if it needs storage or not.
+	 */
+	public final boolean needStorage;
 
-	public String name;
+	/**
+	 * the name.
+	 */
+	public final String name;
 
-	public String codeVersion;
+	/**
+	 * the code version.
+	 */
+	public final String codeVersion;
 
-	public String author;
+	/**
+	 * the author.
+	 */
+	public final String author;
 
-	public String email;
+	/**
+	 * the email.
+	 */
+	public final String email;
 
-	public String description;
+	/**
+	 * the description.
+	 */
+	public final String description;
 
+	/**
+	 * the constructor.
+	 *
+	 * @param version
+	 *            the version to use.
+	 * @param bb
+	 *            the ByteBuffer to read.
+	 */
 	public PublishExclusiveData(final byte version, final ByteBuffer bb) {
 		this.version = version;
 		script = ModelUtil.getByteArray(bb);
-		parameterList = ContractParameterType.valuesOf(ModelUtil.getByteArray(bb));
+		parameterList = Collections
+				.unmodifiableList(Arrays.asList(ContractParameterType.valuesOf(ModelUtil.getByteArray(bb))));
 		returnType = ContractParameterType.valueOf(ModelUtil.getByte(bb));
 		if (version >= 1) {
 			needStorage = ModelUtil.getBoolean(bb);
@@ -58,9 +105,9 @@ public class PublishExclusiveData implements ExclusiveData, ToJsonObject, ByteAr
 		try {
 			final ByteArrayOutputStream bout = new ByteArrayOutputStream();
 			NetworkUtil.writeByteArray(bout, script);
-			final byte[] parameterListBa = new byte[parameterList.length];
-			for (int ix = 0; ix < parameterList.length; ix++) {
-				parameterListBa[ix] = parameterList[ix].getTypeByte();
+			final byte[] parameterListBa = new byte[parameterList.size()];
+			for (int ix = 0; ix < parameterList.size(); ix++) {
+				parameterListBa[ix] = parameterList.get(ix).getTypeByte();
 			}
 			NetworkUtil.writeByteArray(bout, parameterListBa);
 			bout.write(new byte[] { returnType.getTypeByte() });

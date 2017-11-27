@@ -13,13 +13,13 @@ import neo.model.keystore.ByteArraySerializable;
  *
  * @author coranos
  */
-public class NoExclusiveData implements ExclusiveData, ToJsonObject, ByteArraySerializable, Serializable {
+public final class NoExclusiveData implements ExclusiveData, ToJsonObject, ByteArraySerializable, Serializable {
 
 	private static final long serialVersionUID = 1L;
 
 	/**
 	 * the constructor.
-	 * 
+	 *
 	 * @param bb
 	 *            the ByteBuffer to read.
 	 */
