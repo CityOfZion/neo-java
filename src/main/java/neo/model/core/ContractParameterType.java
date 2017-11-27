@@ -1,31 +1,43 @@
 package neo.model.core;
 
+/**
+ * the parameter types of a published contract.
+ *
+ * @author coranos
+ *
+ */
 public enum ContractParameterType {
-	/** */
+	/** Signature. */
 	Signature(0x00),
-	/** */
+	/** Boolean. */
 	Boolean(0x01),
-	/** */
+	/** Integer. */
 	Integer(0x02),
-	/** */
+	/** Hash160. */
 	Hash160(0x03),
-	/** */
+	/** Hash256. */
 	Hash256(0x04),
-	/** */
+	/** Byte Array. */
 	ByteArray(0x05),
-	/** */
+	/** Public Key. */
 	PublicKey(0x06),
-	/** */
+	/** String. */
 	String(0x07),
-	/** */
+	/** Array. */
 	Array(0x10),
-	/** */
+	/** Interop Interface. */
 	InteropInterface(0xf0),
-	/** */
+	/** Void. */
 	Void(0xff),
 	/** ending semicolon */
 	;
 
+	/**
+	 * @param typeByte
+	 *            the type byte to use.
+	 * @return the ContractParameterType with the given typeByte, or throws an error
+	 *         if the typeBytes has no ContractParameterType.
+	 */
 	public static ContractParameterType valueOf(final byte typeByte) {
 		for (final ContractParameterType it : ContractParameterType.values()) {
 			if (it.typeByte == typeByte) {
@@ -35,6 +47,14 @@ public enum ContractParameterType {
 		throw new RuntimeException("unknown typeByte:" + typeByte);
 	}
 
+	/**
+	 *
+	 * @param byteArray
+	 *            the array of type bytes to use.
+	 * @return an array of ContractParameterTypes corresponding tto the typeBytes,
+	 *         or throws an error if one of the typeBytes has no
+	 *         ContractParameterType.
+	 */
 	public static ContractParameterType[] valuesOf(final byte[] byteArray) {
 		final ContractParameterType[] typeArray = new ContractParameterType[byteArray.length];
 		for (int ix = 0; ix < typeArray.length; ix++) {
@@ -43,12 +63,24 @@ public enum ContractParameterType {
 		return typeArray;
 	}
 
+	/**
+	 * the type byte.
+	 */
 	private final byte typeByte;
 
-	private ContractParameterType(final int typeInt) {
+	/**
+	 * the constructor.
+	 *
+	 * @param typeInt
+	 *            the type byte as an int.
+	 */
+	ContractParameterType(final int typeInt) {
 		typeByte = (byte) (typeInt & 0xff);
 	}
 
+	/**
+	 * @return the type byte.
+	 */
 	public byte getTypeByte() {
 		return typeByte;
 	}

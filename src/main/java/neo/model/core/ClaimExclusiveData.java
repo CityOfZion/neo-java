@@ -12,12 +12,27 @@ import neo.model.keystore.ByteArraySerializable;
 import neo.model.util.ModelUtil;
 import neo.model.util.NetworkUtil;
 
-public class ClaimExclusiveData implements ExclusiveData, ToJsonObject, ByteArraySerializable, Serializable {
+/**
+ * exclusive data for Claim transactions.
+ *
+ * @author coranos
+ *
+ */
+public final class ClaimExclusiveData implements ExclusiveData, ToJsonObject, ByteArraySerializable, Serializable {
 
 	private static final long serialVersionUID = 1L;
 
+	/**
+	 * the list of CoinReferences that represent coin claims.
+	 */
 	public final List<CoinReference> claims;
 
+	/**
+	 * the constructor.
+	 *
+	 * @param bb
+	 *            the ByteBuffer to read.
+	 */
 	public ClaimExclusiveData(final ByteBuffer bb) {
 		claims = ModelUtil.readArray(bb, CoinReference.class);
 	}

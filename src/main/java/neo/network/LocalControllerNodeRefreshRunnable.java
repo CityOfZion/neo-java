@@ -51,17 +51,20 @@ public class LocalControllerNodeRefreshRunnable implements Runnable {
 				if (LOG.isTraceEnabled()) {
 					LOG.trace("INTERIM refreshThread");
 				}
-				final List<RemoteNodeData> peerDataList = new ArrayList<>();
+				final List<RemoteNodeData> allPeerDataList = new ArrayList<>();
+				final List<RemoteNodeData> activePeerDataList = new ArrayList<>();
 				synchronized (localControllerNode) {
-					peerDataList.addAll(localControllerNode.getPeerDataSet());
+					allPeerDataList.addAll(localControllerNode.getPeerDataSet());
 				}
 
-				Collections.shuffle(peerDataList);
-				if (peerDataList.size() > localNodeData.getActiveThreadCount()) {
-					peerDataList.subList(localNodeData.getActiveThreadCount(), peerDataList.size()).clear();
+				Collections.shuffle(allPeerDataList);
+				activePeerDataList.addAll(allPeerDataList);
+
+				if (activePeerDataList.size() > localNodeData.getActiveThreadCount()) {
+					activePeerDataList.subList(localNodeData.getActiveThreadCount(), activePeerDataList.size()).clear();
 				}
 
-				for (final RemoteNodeData data : peerDataList) {
+				for (final RemoteNodeData data : activePeerDataList) {
 					LOG.trace("refreshThread {} isGoodPeer:{}, isAcknowledgedPeer {}, getQueueDepth {}",
 							data.getTcpAddressAndPortString(), data.isGoodPeer(), data.isAcknowledgedPeer(),
 							data.getQueueDepth());
@@ -83,9 +86,24 @@ public class LocalControllerNodeRefreshRunnable implements Runnable {
 						}
 					}
 				}
-				for (final RemoteNodeData data : peerDataList) {
-					if (data.getConnectionPhase().equals(NodeConnectionPhaseEnum.INACTIVE)
-							|| data.getConnectionPhase().equals(NodeConnectionPhaseEnum.UNKNOWN)) {
+
+				if (!activePeerDataList.isEmpty()) {
+					if (activePeerDataList.size() == localNodeData.getActiveThreadCount()) {
+						activePeerDataList.get(0).setGoodPeer(false);
+					}
+				}
+
+				for (final RemoteNodeData data : allPeerDataList) {
+					boolean retry = false;
+					if (data.getConnectionPhase().equals(NodeConnectionPhaseEnum.UNKNOWN)) {
+						retry = true;
+					}
+					if (data.getConnectionPhase().equals(NodeConnectionPhaseEnum.INACTIVE)) {
+						if (activePeerDataList.size() < localNodeData.getActiveThreadCount()) {
+							retry = true;
+						}
+					}
+					if (retry) {
 						try {
 							if (LOG.isDebugEnabled()) {
 								LOG.debug("refreshThread {} retrying node with phase {}",

@@ -13,13 +13,32 @@ import neo.model.keystore.ByteArraySerializable;
 import neo.model.util.ModelUtil;
 import neo.model.util.NetworkUtil;
 
-public class CoinReference implements ToJsonObject, ByteArraySerializable, Serializable {
+/**
+ * a reference to a coin, used to claim coins, and used as transaction inputs.
+ *
+ * @author coranos
+ *
+ */
+public final class CoinReference implements ToJsonObject, ByteArraySerializable, Serializable {
 
 	private static final long serialVersionUID = 1L;
 
-	public UInt256 prevHash;
-	public UInt16 prevIndex;
+	/**
+	 * the hash of the block that contains this coin reference.
+	 */
+	public final UInt256 prevHash;
 
+	/**
+	 * the index of the transaction in the block.
+	 */
+	public final UInt16 prevIndex;
+
+	/**
+	 * the constructor.
+	 *
+	 * @param bb
+	 *            the ByteBuffer to read.
+	 */
 	public CoinReference(final ByteBuffer bb) {
 		prevHash = ModelUtil.getUInt256(bb);
 		prevIndex = ModelUtil.getUInt16(bb);
