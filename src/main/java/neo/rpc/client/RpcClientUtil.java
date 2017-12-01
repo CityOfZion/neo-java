@@ -23,12 +23,12 @@ import org.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class RpcUtil {
+public class RpcClientUtil {
 
 	/**
 	 * the logger.
 	 */
-	private static final Logger LOG = LoggerFactory.getLogger(RpcUtil.class);
+	private static final Logger LOG = LoggerFactory.getLogger(RpcClientUtil.class);
 
 	private static final int TIMEOUT_MILLIS = 2000;
 

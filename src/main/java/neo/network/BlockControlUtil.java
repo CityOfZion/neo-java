@@ -18,7 +18,7 @@ import neo.model.network.InvPayload;
 import neo.network.model.LocalNodeData;
 import neo.network.model.RemoteNodeData;
 import neo.rpc.client.CityOfZionUtil;
-import neo.rpc.client.RpcUtil;
+import neo.rpc.client.RpcClientUtil;
 
 public class BlockControlUtil {
 
@@ -35,7 +35,7 @@ public class BlockControlUtil {
 	public static final void refreshCityOfZionBlockHeight(final LocalNodeData localNodeData)
 			throws ClientProtocolException, IOException {
 		final String rpcNode = CityOfZionUtil.getMainNetRpcNode();
-		final int blockchainHeight = RpcUtil.getBlockCount(rpcNode, false);
+		final int blockchainHeight = RpcClientUtil.getBlockCount(rpcNode, false);
 		localNodeData.setBlockchainBlockCount(blockchainHeight);
 	}
 
