@@ -1,5 +1,7 @@
 package neo.model.bytes;
 
+import java.math.BigInteger;
+
 /**
  * an unsigned 32 bit byte array.
  *
@@ -16,6 +18,20 @@ public final class UInt32 extends AbstractByteArray {
 	public static final int SIZE = 4;
 
 	/**
+	 * return the value as a byte array.
+	 *
+	 * @param value
+	 *            the value to use.
+	 * @return the value as a byte array.
+	 */
+	private static byte[] toByteArray(final long value) {
+		final byte[] biBa = BigInteger.valueOf(value).toByteArray();
+		final byte[] ba = new byte[UInt32.SIZE];
+		System.arraycopy(biBa, 0, ba, UInt32.SIZE - biBa.length, biBa.length);
+		return ba;
+	}
+
+	/**
 	 * the constructor.
 	 *
 	 * @param bytes
@@ -23,6 +39,16 @@ public final class UInt32 extends AbstractByteArray {
 	 */
 	public UInt32(final byte[] bytes) {
 		super(bytes);
+	}
+
+	/**
+	 * the constructor.
+	 *
+	 * @param value
+	 *            the value to use.
+	 */
+	public UInt32(final long value) {
+		super(toByteArray(value));
 	}
 
 	/**

@@ -6,6 +6,7 @@ import java.nio.ByteBuffer;
 import org.apache.commons.lang.ArrayUtils;
 
 public class ECPoint {
+
 	private static byte[] concat(final byte[] ba1, final byte[] ba2) {
 		final byte[] ba = new byte[ba1.length + ba2.length];
 		System.arraycopy(ba1, 0, ba, 0, ba1.length);
@@ -17,40 +18,43 @@ public class ECPoint {
 		ECPoint p = null;
 		final int expectedLength = (curve.Q.bitLength() + 7) / 8;
 		switch (encoded[0]) {
-		case 0x00: // infinity
-		{
+		// infinity
+		case 0x00: {
 			if (encoded.length != 1) {
 				throw new RuntimeException("Incorrect length for infinity encoding");
 			}
 			p = curve.Infinity;
 			break;
 		}
-		case 0x02: // compressed
-		case 0x03: // compressed
-		{
+		// compressed
+		case 0x02:
+			// compressed
+		case 0x03: {
 			if (encoded.length != (expectedLength + 1)) {
 				throw new RuntimeException("Incorrect length for compressed encoding");
 			}
 			final int yTilde = encoded[0] & 1;
 
-			final BigInteger X1 = new BigInteger(
+			final BigInteger x1 = new BigInteger(
 					concat(reverse(subarray(encoded, 1, encoded.length - 1)), new byte[1]));
-			p = DecompressPoint(encoded, yTilde, X1, curve);
+			p = DecompressPoint(encoded, yTilde, x1, curve);
 			break;
 		}
-		case 0x04: // uncompressed
-		case 0x06: // hybrid
-		case 0x07: // hybrid
-		{
+		// uncompressed
+		case 0x04:
+			// hybrid
+		case 0x06:
+			// hybrid
+		case 0x07: {
 			if (encoded.length != ((2 * expectedLength) + 1)) {
 				throw new RuntimeException("Incorrect length for uncompressed/hybrid encoding");
 			} else {
-				final BigInteger X1 = new BigInteger(
+				final BigInteger x1 = new BigInteger(
 						concat(reverse(subarray(encoded, 1, expectedLength)), new byte[1]));
-				final BigInteger Y1 = new BigInteger(
+				final BigInteger y1 = new BigInteger(
 						concat(reverse(subarray(encoded, 1 + expectedLength, encoded.length - (1 + expectedLength))),
 								new byte[1]));
-				p = new ECPoint(encoded, new ECFieldElement(X1, curve), new ECFieldElement(Y1, curve), curve);
+				p = new ECPoint(encoded, new ECFieldElement(x1, curve), new ECFieldElement(y1, curve), curve);
 			}
 			break;
 		}

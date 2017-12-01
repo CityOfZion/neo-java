@@ -13,6 +13,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.jdbc.core.JdbcTemplate;
 
 import neo.model.bytes.UInt256;
+import neo.model.bytes.UInt32;
 import neo.model.core.Block;
 
 /**
@@ -101,6 +102,53 @@ public final class BlockDb {
 		final List<Integer> data = t.queryForList("select 1 from block where hash = ?", Integer.class,
 				hash.toByteArray());
 		return !data.isEmpty();
+	}
+
+	/**
+	 * returns the block with the given index.
+	 *
+	 * @param index
+	 *            the index to use.
+	 * @return the block with the given index.
+	 */
+	public Block getBlock(final long index) {
+		synchronized (this) {
+			if (closed) {
+				return null;
+			}
+		}
+		final JdbcTemplate t = new JdbcTemplate(ds);
+		final UInt32 indexObj = new UInt32(index);
+		final byte[] indexBa = indexObj.toByteArray();
+		final List<byte[]> data = t.queryForList("select block from block where index = ?", byte[].class, indexBa);
+		if (data.isEmpty()) {
+			return null;
+		}
+
+		return new Block(ByteBuffer.wrap(data.get(0)));
+	}
+
+	/**
+	 * returns the block with the given hash.
+	 *
+	 * @param hash
+	 *            the hash to use.
+	 * @return the block with the given hash.
+	 */
+	public Block getBlock(final UInt256 hash) {
+		synchronized (this) {
+			if (closed) {
+				return null;
+			}
+		}
+		final JdbcTemplate t = new JdbcTemplate(ds);
+		final List<byte[]> data = t.queryForList("select block from block where hash = ?", byte[].class,
+				hash.toByteArray());
+		if (data.isEmpty()) {
+			return null;
+		}
+
+		return new Block(ByteBuffer.wrap(data.get(0)));
 	}
 
 	/**
