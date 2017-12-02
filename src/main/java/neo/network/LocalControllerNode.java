@@ -1,7 +1,6 @@
 package neo.network;
 
 import java.io.File;
-import java.io.IOException;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.nio.charset.Charset;
@@ -12,7 +11,6 @@ import java.util.Map;
 import org.apache.commons.codec.binary.Hex;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.ArrayUtils;
-import org.apache.http.client.ClientProtocolException;
 import org.json.JSONArray;
 import org.json.JSONObject;
 import org.slf4j.Logger;
@@ -27,6 +25,7 @@ import neo.model.network.InvPayload;
 import neo.model.network.Message;
 import neo.model.network.NetworkAddressWithTime;
 import neo.model.network.VersionPayload;
+import neo.model.util.JsonUtil;
 import neo.model.util.MapUtil;
 import neo.model.util.threadpool.ThreadPool;
 import neo.network.model.LocalNodeData;
@@ -35,6 +34,8 @@ import neo.network.model.RemoteNodeData;
 import neo.network.model.TimerData;
 
 public class LocalControllerNode {
+
+	private static final String RPC_CLIENT_TIMOUT = "rpc-client-timout";
 
 	private static final String IN_HEADERS_ALL_DUPLICATES = "in-headers-all-duplicates";
 
@@ -90,11 +91,15 @@ public class LocalControllerNode {
 
 	private final LocalControllerNodeRefreshRunnable refreshRunnable;
 
+	private final LocalControllerNodeCoreRpcRunnable coreRpcRunnable;
+
 	private final Thread refreshThread;
+
+	private final Thread coreRpcServerThread;
 
 	private final JSONObject remoteNodeConfig;
 
-	public LocalControllerNode(final JSONObject config) throws ClientProtocolException, IOException {
+	public LocalControllerNode(final JSONObject config) {
 		LOG.debug("STARTED LocalControllerNode config : {}", config);
 		final JSONObject localJson = config.getJSONObject(LOCAL);
 		remoteNodeConfig = config.getJSONObject(REMOTE);
@@ -102,7 +107,8 @@ public class LocalControllerNode {
 		final int activeThreadCount = localJson.getInt(ACTIVE_THREAD_COUNT);
 		final JSONObject timersJson = localJson.getJSONObject(TIMERS);
 		final Map<String, TimerData> timersMap = TimerUtil.getTimerMap(timersJson);
-		localNodeData = new LocalNodeData(magic, activeThreadCount, timersMap);
+		final long rpcClientTimeoutMillis = JsonUtil.getTime(localJson, RPC_CLIENT_TIMOUT);
+		localNodeData = new LocalNodeData(magic, activeThreadCount, rpcClientTimeoutMillis, timersMap);
 		threadPool = new ThreadPool(localJson.getInt(THREAD_POOL_COUNT));
 		nonce = config.getInt(NONCE);
 		port = localJson.getInt(PORT);
@@ -111,6 +117,9 @@ public class LocalControllerNode {
 		LocalNodeDataSynchronizedUtil.initUnknownBlockHashHeightSet(localNodeData);
 		refreshRunnable = new LocalControllerNodeRefreshRunnable(this);
 		refreshThread = new Thread(refreshRunnable, "Refresh Thread");
+
+		coreRpcRunnable = new LocalControllerNodeCoreRpcRunnable(this);
+		coreRpcServerThread = new Thread(coreRpcRunnable, "Core RPC Thread");
 	}
 
 	public void addPeerChangeListener(final NodeDataChangeListener l) {
@@ -418,6 +427,23 @@ public class LocalControllerNode {
 		return anyChanged;
 	}
 
+	/**
+	 * starts the core RPC server.
+	 */
+	public void startCoreRpcServer() {
+		coreRpcServerThread.start();
+		while (!coreRpcRunnable.isStarted()) {
+			try {
+				Thread.sleep(1000);
+			} catch (final InterruptedException e) {
+				throw new RuntimeException(e);
+			}
+		}
+	}
+
+	/**
+	 * starts the refresh thread.
+	 */
 	public void startRefreshThread() {
 		refreshThread.start();
 	}
@@ -438,14 +464,32 @@ public class LocalControllerNode {
 		}
 	}
 
+	/**
+	 * stops the local controller node.
+	 *
+	 * @throws InterruptedException
+	 */
 	public void stop() throws InterruptedException {
 		if (LOG.isDebugEnabled()) {
 			LOG.debug("STARTED stop");
 		}
+		stopCoreRpcServer();
 		refreshRunnable.setStop(true);
 		refreshThread.join();
 		if (LOG.isDebugEnabled()) {
 			LOG.debug("SUCCESS stop");
+		}
+	}
+
+	/**
+	 * stops the core RPC server (server cannot be restarted after it is stopped).
+	 */
+	public void stopCoreRpcServer() {
+		coreRpcRunnable.stop();
+		try {
+			coreRpcServerThread.join();
+		} catch (final InterruptedException e) {
+			throw new RuntimeException(e);
 		}
 	}
 

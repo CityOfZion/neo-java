@@ -137,8 +137,7 @@ public class LocalNodeDataSynchronizedUtil {
 		return magic;
 	}
 
-	public static void initUnknownBlockHashHeightSet(final LocalNodeData localNodeData)
-			throws ClientProtocolException, IOException {
+	public static void initUnknownBlockHashHeightSet(final LocalNodeData localNodeData) {
 		synchronized (localNodeData) {
 			BlockControlUtil.initUnknownBlockHashHeightSet(localNodeData);
 		}

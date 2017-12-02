@@ -35,6 +35,8 @@ public class TestPayload {
 
 	private static final Logger LOG = LoggerFactory.getLogger(TestPayload.class);
 
+	private static final int TIMEOUT_MS = 2000;
+
 	@AfterClass
 	public static void afterClass() {
 		LOG.debug("afterClass");
@@ -68,19 +70,20 @@ public class TestPayload {
 	public void test002GenesisHeadersPayload()
 			throws ClientProtocolException, IOException, DecoderException, InterruptedException {
 		final String rpcNode = CityOfZionUtil.getMainNetRpcNode();
-		final String blockHexStr = RpcClientUtil.getBlockHex(rpcNode, 0, false);
+		final String blockHexStr = RpcClientUtil.getBlockHex(TIMEOUT_MS, rpcNode, 0, false);
 		final byte[] blockBa = Hex.decodeHex(blockHexStr.toCharArray());
 		blockBa[108] = 0;
 		final Header header = new Header(ByteBuffer.wrap(blockBa));
 		Assert.assertNotNull("header should not be null", header);
-		final String hashStr = RpcClientUtil.getHeaderHashHex(rpcNode, 0, false);
+		final String hashStr = RpcClientUtil.getHeaderHashHex(TIMEOUT_MS, rpcNode, 0, false);
 		Assert.assertNotNull("hashStr should not be null", hashStr);
 		final byte[] actualGenesisBa = Hex.decodeHex(hashStr.toCharArray());
 		ArrayUtils.reverse(actualGenesisBa);
 		final UInt256 actualGenesisHash = new UInt256(ByteBuffer.wrap(actualGenesisBa));
 		Assert.assertEquals("genesisHash", GenesisBlockData.GENESIS_HASH, actualGenesisHash);
 
-		final JSONObject expectedJsonBlock = TestUtil.getSorted(RpcClientUtil.getJSONBlock(rpcNode, 0, false));
+		final JSONObject expectedJsonBlock = TestUtil
+				.getSorted(RpcClientUtil.getJSONBlock(TIMEOUT_MS, rpcNode, 0, false));
 		expectedJsonBlock.remove("tx");
 		expectedJsonBlock.remove("confirmations");
 		expectedJsonBlock.remove("nonce");
@@ -103,7 +106,8 @@ public class TestPayload {
 	public void test003GenesisBlockPayload()
 			throws ClientProtocolException, IOException, DecoderException, InterruptedException {
 		final String rpcNode = CityOfZionUtil.getMainNetRpcNode();
-		final JSONObject expectedJsonBlock = TestUtil.getSorted(RpcClientUtil.getJSONBlock(rpcNode, 0, false));
+		final JSONObject expectedJsonBlock = TestUtil
+				.getSorted(RpcClientUtil.getJSONBlock(TIMEOUT_MS, rpcNode, 0, false));
 		expectedJsonBlock.remove("confirmations");
 		expectedJsonBlock.remove("nonce");
 		expectedJsonBlock.remove("size");
@@ -113,11 +117,11 @@ public class TestPayload {
 
 		LOG.info("expectedJSONBlock {}", expectedJsonBlock.toString(2));
 
-		final String blockHexStr = RpcClientUtil.getBlockHex(rpcNode, 0, false);
+		final String blockHexStr = RpcClientUtil.getBlockHex(TIMEOUT_MS, rpcNode, 0, false);
 		final byte[] blockBa = Hex.decodeHex(blockHexStr.toCharArray());
 		final Block block = new Block(ByteBuffer.wrap(blockBa));
 		Assert.assertNotNull("block should not be null", block);
-		final String hashStr = RpcClientUtil.getHeaderHashHex(rpcNode, 0, false);
+		final String hashStr = RpcClientUtil.getHeaderHashHex(TIMEOUT_MS, rpcNode, 0, false);
 		Assert.assertNotNull("hashStr should not be null", hashStr);
 		final byte[] actualGenesisBa = Hex.decodeHex(hashStr.toCharArray());
 		ArrayUtils.reverse(actualGenesisBa);

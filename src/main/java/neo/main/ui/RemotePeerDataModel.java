@@ -55,7 +55,7 @@ public final class RemotePeerDataModel extends AbstractRefreshingModel {
 				return "Index";
 			}
 		}
-		throw new RuntimeException("unknown column index:" + columnIndex);
+		throw new RuntimeException("unknown column name index:" + columnIndex);
 	}
 
 	@Override
@@ -90,7 +90,7 @@ public final class RemotePeerDataModel extends AbstractRefreshingModel {
 				return rowIndex + 1;
 			}
 		}
-		throw new RuntimeException("unknown column index:" + columnIndex);
+		throw new RuntimeException("unknown column value index:" + columnIndex);
 	}
 
 	@Override

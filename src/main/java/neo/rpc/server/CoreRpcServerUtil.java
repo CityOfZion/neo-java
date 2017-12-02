@@ -3,6 +3,8 @@ package neo.rpc.server;
 import org.json.JSONObject;
 
 /**
+ * examples.
+ *
  * http://cityofzion.io/neon-js/api/index.html
  * <p>
  * https://github.com/CityOfZion/neon-wallet-db/blob/042d2d00c4fb1a657e2268280c46fb900b4645ce/README.md
@@ -25,22 +27,42 @@ import org.json.JSONObject;
  * @author coranos
  *
  */
-public class RpcServerUtil {
+public final class CoreRpcServerUtil {
 
+	/**
+	 * the method.
+	 */
+	private static final String METHOD = "method";
+
+	/**
+	 * process the request.
+	 *
+	 * @param requestStr
+	 *            the request to process
+	 *
+	 * @return the response.
+	 */
 	public static JSONObject process(final String requestStr) {
 		final JSONObject request = new JSONObject(requestStr);
 
-		final String methodStr = request.getString("method");
-		final CoreRpcCommandEnum coreRpcCommand = CoreRpcCommandEnum.valueOf(methodStr);
+		final String methodStr = request.getString(METHOD);
+		final CoreRpcCommandEnum coreRpcCommand = CoreRpcCommandEnum.fromName(methodStr);
 
 		switch (coreRpcCommand) {
 		default: {
 			final JSONObject response = new JSONObject();
 			response.put("error", "unknown method");
-			response.put("method", methodStr);
+			response.put(METHOD, methodStr);
 			return response;
 		}
 		}
+
+	}
+
+	/**
+	 * the constructor.
+	 */
+	private CoreRpcServerUtil() {
 
 	}
 

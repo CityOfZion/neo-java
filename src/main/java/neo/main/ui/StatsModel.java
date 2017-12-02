@@ -31,6 +31,51 @@ import neo.network.model.RemoteNodeData;
 public final class StatsModel extends AbstractRefreshingModel {
 
 	/**
+	 * estimated file size for blockchain.
+	 */
+	private static final String EST_FILE_SIZE_FOR_BLOCKCHAIN = "Est File Size For Blockchain";
+
+	/**
+	 * average file size per block.
+	 */
+	private static final String AVG_FILE_SIZE_PER_BLOCK = "Avg File Size Per Block";
+
+	/**
+	 * block file size.
+	 */
+	private static final String BLOCK_FILE_SIZE = "Block File Size";
+
+	/**
+	 * date of last header height change.
+	 */
+	private static final String LAST_HEADER_HEIGHT_CHANGE = "Last Header Height Change";
+
+	/**
+	 * block count on the blockchain (as reported by the CityOfZion REST API).
+	 */
+	private static final String BLOCKCHAIN_BLOCK_COUNT = "Blockchain Block Count";
+
+	/**
+	 * known block count.
+	 */
+	private static final String KNOWN_BLOCK_COUNT = "Known Block Count";
+
+	/**
+	 * date of last block height change.
+	 */
+	private static final String LAST_BLOCK_HEIGHT_CHANGE = "Last Block Height Change";
+
+	/**
+	 * maximum known block height.
+	 */
+	private static final String MAX_BLOCK_HEIGHT = "Max Block Height";
+
+	/**
+	 * maximum known header height.
+	 */
+	private static final String MAX_HEADER_HEIGHT = "Max Header Height";
+
+	/**
 	 * the logger.
 	 */
 	private static final Logger LOG = LoggerFactory.getLogger(StatsModel.class);
@@ -71,33 +116,33 @@ public final class StatsModel extends AbstractRefreshingModel {
 		final long blockFileSize = localNodeData.getBlockFileSize();
 
 		final int allChainBlockCount = localNodeData.getBlockchainBlockCount();
-		addNameAndValue("Blockchain Block Count", allChainBlockCount);
-		addNameAndValue("Known Block Count", blockCount);
+		addNameAndValue(BLOCKCHAIN_BLOCK_COUNT, allChainBlockCount);
+		addNameAndValue(KNOWN_BLOCK_COUNT, blockCount);
 
 		final Block highestBlock = localNodeData.getBlockDb().getBlockWithMaxIndex();
 		if (highestBlock != null) {
-			addNameAndValue("Max Block Height", highestBlock.getIndexAsLong());
+			addNameAndValue(MAX_BLOCK_HEIGHT, highestBlock.getIndexAsLong());
 		}
 		if (localNodeData.getHighestBlockTime() != null) {
-			addNameAndValue("Last Block Height Change", localNodeData.getHighestBlockTime());
+			addNameAndValue(LAST_BLOCK_HEIGHT_CHANGE, localNodeData.getHighestBlockTime());
 		}
 
 		if (!localNodeData.getVerifiedHeaderPoolMap().isEmpty()) {
-			addNameAndValue("Max Header Height", localNodeData.getVerifiedHeaderPoolMap().lastKey());
+			addNameAndValue(MAX_HEADER_HEIGHT, localNodeData.getVerifiedHeaderPoolMap().lastKey());
 		} else {
 			if (highestBlock != null) {
-				addNameAndValue("Max Header Height", highestBlock.getIndexAsLong());
+				addNameAndValue(MAX_HEADER_HEIGHT, highestBlock.getIndexAsLong());
 			}
 		}
 
 		if (localNodeData.getHighestHeaderTime() != null) {
-			addNameAndValue("Last Header Height Change", localNodeData.getHighestHeaderTime());
+			addNameAndValue(LAST_HEADER_HEIGHT_CHANGE, localNodeData.getHighestHeaderTime());
 		}
 
-		addNameAndValue("Block File Size", blockFileSize);
+		addNameAndValue(BLOCK_FILE_SIZE, blockFileSize);
 		if (blockCount > 0) {
-			addNameAndValue("Avg File Size Per Block", blockFileSize / blockCount);
-			addNameAndValue("Est File Size For Blockchain", (blockFileSize / blockCount) * allChainBlockCount);
+			addNameAndValue(AVG_FILE_SIZE_PER_BLOCK, blockFileSize / blockCount);
+			addNameAndValue(EST_FILE_SIZE_FOR_BLOCKCHAIN, (blockFileSize / blockCount) * allChainBlockCount);
 		}
 	}
 
@@ -196,7 +241,7 @@ public final class StatsModel extends AbstractRefreshingModel {
 				return "Value";
 			}
 		}
-		throw new RuntimeException("unknown column index:" + columnIndex);
+		throw new RuntimeException("unknown column name index:" + columnIndex);
 	}
 
 	@Override
@@ -221,7 +266,7 @@ public final class StatsModel extends AbstractRefreshingModel {
 				return statsValueList.get(rowIndex);
 			}
 		}
-		throw new RuntimeException("unknown column index:" + columnIndex);
+		throw new RuntimeException("unknown column value index:" + columnIndex);
 	}
 
 	@Override

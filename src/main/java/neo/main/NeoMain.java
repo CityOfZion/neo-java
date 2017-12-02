@@ -2,10 +2,7 @@ package neo.main;
 
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
-import java.io.File;
-import java.nio.charset.Charset;
 import java.sql.SQLException;
-import java.util.concurrent.ThreadLocalRandom;
 
 import javax.swing.BoxLayout;
 import javax.swing.JFrame;
@@ -15,24 +12,19 @@ import javax.swing.JTabbedPane;
 import javax.swing.JTable;
 import javax.swing.WindowConstants;
 
-import org.apache.commons.io.FileUtils;
 import org.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import neo.main.ui.RemotePeerDataModel;
 import neo.main.ui.StatsModel;
+import neo.model.util.ConfigurationUtil;
 import neo.network.LocalControllerNode;
 
 /**
  * The main class for the neo-java application.
  */
 public final class NeoMain {
-
-	/**
-	 * the name of the config file.
-	 */
-	private static final File CONFIG_FILE = new File("config.json");
 
 	/**
 	 * the logger.
@@ -115,12 +107,7 @@ public final class NeoMain {
 	 */
 	public static void main(final String[] args) throws Exception {
 		LOG.info("STARTED main");
-		final int nonce = ThreadLocalRandom.current().nextInt(Integer.MAX_VALUE);
-		final JSONObject controllerNodeConfig = new JSONObject(
-				FileUtils.readFileToString(CONFIG_FILE, Charset.defaultCharset()));
-		controllerNodeConfig.put(LocalControllerNode.NONCE, nonce);
-
-		LOG.info("INTERIM config.length : {}", controllerNodeConfig.length());
+		final JSONObject controllerNodeConfig = ConfigurationUtil.getConfiguration();
 		final LocalControllerNode controller = new LocalControllerNode(controllerNodeConfig);
 		controller.loadNodeFile();
 

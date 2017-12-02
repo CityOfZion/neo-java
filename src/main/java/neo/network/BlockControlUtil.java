@@ -27,15 +27,14 @@ public class BlockControlUtil {
 	 */
 	private static final Logger LOG = LoggerFactory.getLogger(BlockControlUtil.class);
 
-	public static final void initUnknownBlockHashHeightSet(final LocalNodeData localNodeData)
-			throws ClientProtocolException, IOException {
+	public static final void initUnknownBlockHashHeightSet(final LocalNodeData localNodeData) {
 		refreshCityOfZionBlockHeight(localNodeData);
 	}
 
-	public static final void refreshCityOfZionBlockHeight(final LocalNodeData localNodeData)
-			throws ClientProtocolException, IOException {
+	public static final void refreshCityOfZionBlockHeight(final LocalNodeData localNodeData) {
 		final String rpcNode = CityOfZionUtil.getMainNetRpcNode();
-		final int blockchainHeight = RpcClientUtil.getBlockCount(rpcNode, false);
+		final int blockchainHeight = RpcClientUtil.getBlockCount(localNodeData.getRpcClientTimeoutMillis(), rpcNode,
+				false);
 		localNodeData.setBlockchainBlockCount(blockchainHeight);
 	}
 

@@ -144,6 +144,10 @@
       <property name="allowInSwitchCase" value="true"/>
       <message key="block.nested" value="Avoid nested blocks. In switch/case clause blocks, all statements must be inside the nested block, including breaks."/>
     </module>
+    <module name="StringLiteralEquality"/>
+    <module name="MultipleStringLiterals">
+      <property name="ignoreStringsRegexp" value="^&quot;&quot;|&quot;\\t&quot;$"/>
+    </module>
   </module>
   <module name="FileLength"/>
   <module name="NewlineAtEndOfFile"/>

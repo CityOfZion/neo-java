@@ -16,6 +16,7 @@ import org.slf4j.LoggerFactory;
 import neo.model.CommandEnum;
 import neo.model.bytes.UInt32;
 import neo.model.core.Block;
+import neo.model.util.InputStreamUtil;
 import neo.model.util.ModelUtil;
 import neo.model.util.NetworkUtil;
 import neo.model.util.SHA256HashUtil;
@@ -53,7 +54,7 @@ public class Message {
 
 	public Message(final InputStream in) throws IOException {
 		final byte[] headerBa = new byte[24];
-		readUntilFull(in, headerBa);
+		InputStreamUtil.readUntilFull(in, headerBa);
 		final ByteBuffer headerBb = ByteBuffer.wrap(headerBa);
 		final UInt32 magicObj = ModelUtil.getUInt32(headerBb);
 		magic = magicObj.toPositiveBigInteger().intValue();
@@ -82,7 +83,7 @@ public class Message {
 				LOG.error("OutOfMemoryError getting command \"{}\" payload of size:{}", command, length);
 				throw e;
 			}
-			readUntilFull(in, payloadBa);
+			InputStreamUtil.readUntilFull(in, payloadBa);
 		}
 		final ByteBuffer payloadBb = ByteBuffer.wrap(payloadBa);
 		this.payloadBa = ModelUtil.getByteArray(payloadBb, length, false);
@@ -148,26 +149,6 @@ public class Message {
 
 	public byte[] getPayloadByteArray() {
 		return payloadBa;
-	}
-
-	public void readUntilFull(final InputStream in, final byte[] ba) throws IOException {
-		int bytesRead = 0;
-		while (bytesRead < ba.length) {
-			if (LOG.isTraceEnabled()) {
-				LOG.trace("STARTED readUntilFull {} of {} ", bytesRead, ba.length);
-			}
-			final int readBlock = in.read(ba, bytesRead, ba.length - bytesRead);
-			if (readBlock == -1) {
-				if (LOG.isTraceEnabled()) {
-					LOG.trace("FAILURE readUntilFull {} of {} ", bytesRead, ba.length);
-				}
-				throw new SocketTimeoutException();
-			}
-			bytesRead += readBlock;
-		}
-		if (LOG.isTraceEnabled()) {
-			LOG.trace("SUCCESS readUntilFull {} of {} ", bytesRead, ba.length);
-		}
 	}
 
 	public byte[] toByteArray() throws IOException, UnsupportedEncodingException {
