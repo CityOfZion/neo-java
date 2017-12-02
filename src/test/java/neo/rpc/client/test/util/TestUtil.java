@@ -20,6 +20,7 @@ import java.util.TreeMap;
 import java.util.concurrent.ThreadLocalRandom;
 
 import org.apache.commons.codec.binary.Hex;
+import org.apache.commons.io.IOUtils;
 import org.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -39,6 +40,25 @@ public class TestUtil {
 	public static final long MAIN_NET_MAGIC = 7630401;
 
 	public static final long TEST_NET_MAGIC = 1953787457;
+
+	/**
+	 *
+	 * @param testClassName
+	 *            the name of the test class.
+	 * @param testFunctionName
+	 *            the name of the test function.
+	 * @return a string with the contents of "/neo/rpc/client/test/" + testClassName
+	 *         + "." + testFunctionName + ".json"
+	 */
+	public static String getJsonTestResourceAsString(final String testClassName, final String testFunctionName) {
+		final String resourceName = "/neo/rpc/client/test/" + testClassName + "." + testFunctionName + ".json";
+		try (InputStream resourceAsStream = TestUtil.class.getResourceAsStream(resourceName);) {
+			final String jsonStr = IOUtils.toString(resourceAsStream, "UTF-8");
+			return jsonStr;
+		} catch (final IOException | NullPointerException e) {
+			throw new RuntimeException("error reading resource\"" + resourceName + "\"", e);
+		}
+	}
 
 	public static Optional<ByteArraySerializable> getMainNetVersionPayload() {
 		return getVersionPayload(MAIN_NET_PORT, ThreadLocalRandom.current().nextInt(), 0);

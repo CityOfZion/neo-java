@@ -28,6 +28,7 @@ import neo.model.core.Transaction;
 import neo.model.core.TransactionType;
 import neo.model.db.BlockDb;
 import neo.model.util.ModelUtil;
+import neo.rpc.client.test.util.TestUtil;
 
 /**
  * tests serializing blocks.
@@ -64,18 +65,18 @@ public class TestBlockSerialization {
 	 * index, and verifys that it's transaction type is the expected transaction
 	 * type.
 	 *
-	 * @param testName
-	 *            the test name to use.
+	 * @param testFunctionName
+	 *            the test function name to use.
 	 * @param txIx
 	 *            the transaction index to use.
 	 * @param expectedTransactionType
 	 *            the expected transaction type to use.
 	 */
-	private void assertTransactionTypeEquals(final String testName, final int txIx,
+	private void assertTransactionTypeEquals(final String testFunctionName, final int txIx,
 			final TransactionType expectedTransactionType) {
 		try {
-			final String blockJsonStr = IOUtils.toString(this.getClass()
-					.getResourceAsStream("/neo/rpc/client/test/TestBlockSerialization." + testName + ".json"), "UTF-8");
+			final String blockJsonStr = TestUtil.getJsonTestResourceAsString(getClass().getSimpleName(),
+					testFunctionName);
 			final JSONObject blockJson = new JSONObject(blockJsonStr);
 
 			final JSONArray blockJsonArray = blockJson.getJSONArray("data");
