@@ -46,14 +46,10 @@ public final class CoinReference implements ToJsonObject, ByteArraySerializable,
 
 	@Override
 	public byte[] toByteArray() {
-		try {
-			final ByteArrayOutputStream bout = new ByteArrayOutputStream();
-			NetworkUtil.write(bout, prevHash, true);
-			NetworkUtil.write(bout, prevIndex, true);
-			return bout.toByteArray();
-		} catch (final Exception e) {
-			throw new RuntimeException(e);
-		}
+		final ByteArrayOutputStream bout = new ByteArrayOutputStream();
+		NetworkUtil.write(bout, prevHash, true);
+		NetworkUtil.write(bout, prevIndex, true);
+		return bout.toByteArray();
 	}
 
 	@Override

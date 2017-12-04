@@ -39,13 +39,9 @@ public final class ClaimExclusiveData implements ExclusiveData, ToJsonObject, By
 
 	@Override
 	public byte[] toByteArray() {
-		try {
-			final ByteArrayOutputStream bout = new ByteArrayOutputStream();
-			NetworkUtil.write(bout, claims);
-			return bout.toByteArray();
-		} catch (final Exception e) {
-			throw new RuntimeException(e);
-		}
+		final ByteArrayOutputStream bout = new ByteArrayOutputStream();
+		NetworkUtil.write(bout, claims);
+		return bout.toByteArray();
 	}
 
 	@Override

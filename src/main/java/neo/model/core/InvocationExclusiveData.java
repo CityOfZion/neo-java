@@ -58,16 +58,12 @@ public final class InvocationExclusiveData implements ExclusiveData, ToJsonObjec
 
 	@Override
 	public byte[] toByteArray() {
-		try {
-			final ByteArrayOutputStream bout = new ByteArrayOutputStream();
-			NetworkUtil.writeByteArray(bout, script);
-			if (version >= 1) {
-				NetworkUtil.write(bout, gas, true);
-			}
-			return bout.toByteArray();
-		} catch (final Exception e) {
-			throw new RuntimeException(e);
+		final ByteArrayOutputStream bout = new ByteArrayOutputStream();
+		NetworkUtil.writeByteArray(bout, script);
+		if (version >= 1) {
+			NetworkUtil.write(bout, gas, true);
 		}
+		return bout.toByteArray();
 	}
 
 	@Override

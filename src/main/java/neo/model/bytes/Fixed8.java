@@ -15,6 +15,11 @@ import neo.model.util.ModelUtil;
 public final class Fixed8 implements ByteArraySerializable {
 
 	/**
+	 * the size, 8 bytes.
+	 */
+	public static final int SIZE = UInt64.SIZE;
+
+	/**
 	 * the value.
 	 */
 	public final long value;

@@ -14,8 +14,17 @@ import neo.model.core.Block;
 import neo.model.core.Header;
 import neo.model.db.BlockDb;
 
+/**
+ * the lass containing all the data usd for the local node.
+ *
+ * @author coranos
+ *
+ */
 public class LocalNodeData {
 
+	/**
+	 * the API Call map, used to track call stats.
+	 */
 	public static final Map<String, Long> API_CALL_MAP = Collections.synchronizedMap(new TreeMap<>());
 
 	/**
@@ -184,26 +193,56 @@ public class LocalNodeData {
 		return blockFileSize;
 	}
 
+	/**
+	 * return the file of good nodes.
+	 *
+	 * @return the file of good nodes.
+	 */
 	public File getGoodNodeFile() {
 		return goodNodeFile;
 	}
 
+	/**
+	 * return the last time the highest block changed.
+	 *
+	 * @return the last time the highest block changed.
+	 */
 	public Date getHighestBlockTime() {
 		return highestBlockTime;
 	}
 
+	/**
+	 * return the last time the highest header changed.
+	 *
+	 * @return the last time the highest header changed.
+	 */
 	public Date getHighestHeaderTime() {
 		return highestHeaderTime;
 	}
 
+	/**
+	 * return the magic long.
+	 *
+	 * @return the magic long.
+	 */
 	public long getMagic() {
 		return magic;
 	}
 
+	/**
+	 * return the nonce.
+	 *
+	 * @return the nonce.
+	 */
 	public int getNonce() {
 		return nonce;
 	}
 
+	/**
+	 * return the port.
+	 *
+	 * @return the port.
+	 */
 	public int getPort() {
 		return port;
 	}
@@ -217,42 +256,92 @@ public class LocalNodeData {
 		return rpcClientTimeoutMillis;
 	}
 
+	/**
+	 * return the file of seed nodes.
+	 *
+	 * @return the file of seed nodes.
+	 */
 	public File getSeedNodeFile() {
 		return seedNodeFile;
 	}
 
+	/**
+	 * return the start time.
+	 *
+	 * @return the start time.
+	 */
 	public long getStartTime() {
 		return startTime;
 	}
 
+	/**
+	 * return the timers map, used for timing the sending of messages to remote
+	 * nodes.
+	 *
+	 * @return the timers map, used for timing the sending of messages to remote
+	 *         nodes.
+	 */
 	public Map<String, TimerData> getTimersMap() {
 		return timersMap;
 	}
 
+	/**
+	 * return the pool of unverified blocks.
+	 *
+	 * @return the pool of unverified blocks.
+	 */
 	public SortedSet<Block> getUnverifiedBlockPoolSet() {
 		return unverifiedBlockPoolSet;
 	}
 
+	/**
+	 * return the pool of unverified headers.
+	 *
+	 * @return the pool of unverified headers.
+	 */
 	public SortedSet<Header> getUnverifiedHeaderPoolSet() {
 		return unverifiedHeaderPoolSet;
 	}
 
+	/**
+	 * return the pool of verified headers.
+	 *
+	 * @return the pool of verified headers.
+	 */
 	public SortedMap<Long, Header> getVerifiedHeaderPoolMap() {
 		return verifiedHeaderPoolMap;
 	}
 
+	/**
+	 * sets the block count as read from the blockchain CityOfZion web service.
+	 *
+	 * @param blockchainBlockCount
+	 *            the block count to use.
+	 */
 	public void setBlockchainBlockCount(final int blockchainBlockCount) {
 		this.blockchainBlockCount = blockchainBlockCount;
 	}
 
+	/**
+	 * sets the size of the block file (all files in the directory, combined).
+	 *
+	 * @param blockFileSize
+	 *            the block file size to use.
+	 */
 	public void setBlockFileSize(final long blockFileSize) {
 		this.blockFileSize = blockFileSize;
 	}
 
+	/**
+	 * update the highest block time to be the current time.
+	 */
 	public void updateHighestBlockTime() {
 		highestBlockTime = new Date();
 	}
 
+	/**
+	 * update the highest header time to be the current time.
+	 */
 	public void updateHighestHeaderTime() {
 		highestHeaderTime = new Date();
 	}

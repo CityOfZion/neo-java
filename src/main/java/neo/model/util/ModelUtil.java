@@ -198,7 +198,7 @@ public class ModelUtil {
 			} catch (NoSuchMethodException | SecurityException | InstantiationException | IllegalAccessException
 					| IllegalArgumentException | InvocationTargetException e) {
 				throw new RuntimeException(
-						"error reading record " + ix + " of " + length + " class " + cl.getSimpleName(), e);
+						"error reading record " + (ix + 1) + " of " + length + " class " + cl.getSimpleName(), e);
 			}
 
 			LOG.trace("SUCCESS readArray class {} [{}]: {} {}", cl.getSimpleName(), ix,

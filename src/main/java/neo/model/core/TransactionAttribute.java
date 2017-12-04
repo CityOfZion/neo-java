@@ -19,6 +19,11 @@ import neo.model.util.NetworkUtil;
  */
 public final class TransactionAttribute implements ToJsonObject, ByteArraySerializable, Serializable {
 
+	/**
+	 * unknown usage.
+	 */
+	private static final String UNKNOWN_USAGE = "unknown usage:";
+
 	private static final long serialVersionUID = 1L;
 
 	/**
@@ -38,7 +43,7 @@ public final class TransactionAttribute implements ToJsonObject, ByteArraySerial
 	 *            the ByteBuffer to read.
 	 */
 	public TransactionAttribute(final ByteBuffer bb) {
-		usage = TransactionAttributeUsage.valueOf(ModelUtil.getByte(bb));
+		usage = TransactionAttributeUsage.valueOfByte(ModelUtil.getByte(bb));
 
 		switch (usage) {
 		case CONTRACT_HASH:
@@ -97,78 +102,74 @@ public final class TransactionAttribute implements ToJsonObject, ByteArraySerial
 			break;
 		}
 		default:
-			throw new RuntimeException("unknown usage:" + usage);
+			throw new RuntimeException(UNKNOWN_USAGE + usage);
 		}
 	}
 
 	@Override
 	public byte[] toByteArray() {
-		try {
-			final ByteArrayOutputStream bout = new ByteArrayOutputStream();
-			bout.write(new byte[] { usage.getTypeByte() });
+		final ByteArrayOutputStream bout = new ByteArrayOutputStream();
+		NetworkUtil.write(bout, usage.getTypeByte());
 
-			switch (usage) {
-			case CONTRACT_HASH:
-			case VOTE:
-			case HASH_01:
-			case HASH_02:
-			case HASH_03:
-			case HASH_04:
-			case HASH_05:
-			case HASH_06:
-			case HASH_07:
-			case HASH_08:
-			case HASH_09:
-			case HASH_10:
-			case HASH_11:
-			case HASH_12:
-			case HASH_13:
-			case HASH_14:
-			case HASH_15:
-				bout.write(data);
-				break;
-			case ECDH02:
-			case ECDH03: {
-				bout.write(data, 1, data.length - 1);
-				break;
-			}
-			case SCRIPT:
-				bout.write(data);
-				break;
-			case DESCRIPTION_URL: {
-				final byte b = (byte) data.length;
-				bout.write(b);
-				bout.write(data);
-				break;
-			}
-			case DESCRIPTION:
-			case REMARK_00:
-			case REMARK_01:
-			case REMARK_02:
-			case REMARK_03:
-			case REMARK_04:
-			case REMARK_05:
-			case REMARK_06:
-			case REMARK_07:
-			case REMARK_08:
-			case REMARK_09:
-			case REMARK_10:
-			case REMARK_11:
-			case REMARK_12:
-			case REMARK_13:
-			case REMARK_14:
-			case REMARK_15: {
-				NetworkUtil.writeByteArray(bout, data);
-				break;
-			}
-			default:
-				throw new RuntimeException("unknown usage:" + usage);
-			}
-
-			return bout.toByteArray();
-		} catch (final Exception e) {
-			throw new RuntimeException(e);
+		switch (usage) {
+		case CONTRACT_HASH:
+		case VOTE:
+		case HASH_01:
+		case HASH_02:
+		case HASH_03:
+		case HASH_04:
+		case HASH_05:
+		case HASH_06:
+		case HASH_07:
+		case HASH_08:
+		case HASH_09:
+		case HASH_10:
+		case HASH_11:
+		case HASH_12:
+		case HASH_13:
+		case HASH_14:
+		case HASH_15:
+			NetworkUtil.write(bout, data);
+			break;
+		case ECDH02:
+		case ECDH03: {
+			NetworkUtil.write(bout, data, 1, data.length - 1);
+			break;
 		}
+		case SCRIPT:
+			NetworkUtil.write(bout, data);
+			break;
+		case DESCRIPTION_URL: {
+			final byte b = (byte) data.length;
+			NetworkUtil.write(bout, b);
+			NetworkUtil.write(bout, data);
+			break;
+		}
+		case DESCRIPTION:
+		case REMARK_00:
+		case REMARK_01:
+		case REMARK_02:
+		case REMARK_03:
+		case REMARK_04:
+		case REMARK_05:
+		case REMARK_06:
+		case REMARK_07:
+		case REMARK_08:
+		case REMARK_09:
+		case REMARK_10:
+		case REMARK_11:
+		case REMARK_12:
+		case REMARK_13:
+		case REMARK_14:
+		case REMARK_15: {
+			NetworkUtil.writeByteArray(bout, data);
+			break;
+		}
+		default:
+			throw new RuntimeException(UNKNOWN_USAGE + usage);
+		}
+
+		return bout.toByteArray();
 	}
 
 	@Override
@@ -179,14 +180,6 @@ public final class TransactionAttribute implements ToJsonObject, ByteArraySerial
 		json.put("data", ModelUtil.toHexString(data));
 
 		return json;
-	}
-
-	@Override
-	public String toString() {
-		final JSONObject json = new JSONObject();
-		json.put("class", getClass().getSimpleName());
-		json.put("fields", toJSONObject());
-		return json.toString();
 	}
 
 }

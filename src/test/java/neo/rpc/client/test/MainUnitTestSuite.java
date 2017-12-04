@@ -17,6 +17,12 @@ import org.junit.runners.Suite;
 		/** */
 		TestRpcServer.class,
 		/** */
+		TestCoreToJson.class,
+		/** */
+		TestCoreExceptions.class,
+		/** */
+		TestCoreEnums.class,
+		/** */
 })
 
 public class MainUnitTestSuite {

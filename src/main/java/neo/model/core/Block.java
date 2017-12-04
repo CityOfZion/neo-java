@@ -48,14 +48,10 @@ public final class Block extends AbstractBlockBase implements ToJsonObject, Payl
 
 	@Override
 	public byte[] toByteArray() {
-		try {
-			final ByteArrayOutputStream bout = new ByteArrayOutputStream();
-			writeBaseToOutputStream(bout);
-			NetworkUtil.write(bout, transactionList);
-			return bout.toByteArray();
-		} catch (final Exception e) {
-			throw new RuntimeException(e);
-		}
+		final ByteArrayOutputStream bout = new ByteArrayOutputStream();
+		writeBaseToOutputStream(bout);
+		NetworkUtil.write(bout, transactionList);
+		return bout.toByteArray();
 	}
 
 	@Override

@@ -11,6 +11,7 @@ import neo.model.ByteArraySerializable;
 import neo.model.ToJsonObject;
 import neo.model.util.ModelUtil;
 import neo.model.util.NetworkUtil;
+import neo.model.util.TransactionUtil;
 
 /**
  * the transaction.
@@ -64,62 +65,26 @@ public final class Transaction implements ToJsonObject, ByteArraySerializable, S
 	 *            the ByteBuffer to read.
 	 */
 	public Transaction(final ByteBuffer bb) {
-		type = TransactionType.valueOf(ModelUtil.getByte(bb));
+		type = TransactionType.valueOfByte(ModelUtil.getByte(bb));
 		version = ModelUtil.getByte(bb);
-		exclusiveData = deserializeExclusiveData(bb);
+		exclusiveData = TransactionUtil.deserializeExclusiveData(type, version, bb);
 		attributes = ModelUtil.readArray(bb, TransactionAttribute.class);
 		inputs = ModelUtil.readArray(bb, CoinReference.class);
 		outputs = ModelUtil.readArray(bb, TransactionOutput.class);
 		scripts = ModelUtil.readArray(bb, Witness.class);
 	}
 
-	/**
-	 * deserialize the exclusive data based on the transaction type.
-	 *
-	 * @param bb
-	 *            the ByteBuffer to read.
-	 *
-	 * @return the exclusive data, or throw an exception if the transaction type is
-	 *         not recognized.
-	 */
-	private ExclusiveData deserializeExclusiveData(final ByteBuffer bb) {
-		switch (type) {
-		case MINER_TRANSACTION:
-			return new MinerExclusiveData(bb);
-		case CLAIM_TRANSACTION:
-			return new ClaimExclusiveData(bb);
-		case CONTRACT_TRANSACTION:
-			return new NoExclusiveData(bb);
-		case ENROLLMENT_TRANSACTION:
-			return new EnrollmentExclusiveData(bb);
-		case INVOCATION_TRANSACTION:
-			return new InvocationExclusiveData(version, bb);
-		case ISSUE_TRANSACTION:
-			return new NoExclusiveData(bb);
-		case PUBLISH_TRANSACTION:
-			return new PublishExclusiveData(version, bb);
-		case REGISTER_TRANSACTION:
-			return new RegisterExclusiveData(bb);
-		default:
-			throw new RuntimeException("unknown type:" + type);
-		}
-	}
-
 	@Override
 	public byte[] toByteArray() {
-		try {
-			final ByteArrayOutputStream bout = new ByteArrayOutputStream();
-			bout.write(new byte[] { type.getTypeByte() });
-			bout.write(new byte[] { version });
-			NetworkUtil.write(bout, exclusiveData, false);
-			NetworkUtil.write(bout, attributes);
-			NetworkUtil.write(bout, inputs);
-			NetworkUtil.write(bout, outputs);
-			NetworkUtil.write(bout, scripts);
-			return bout.toByteArray();
-		} catch (final Exception e) {
-			throw new RuntimeException(e);
-		}
+		final ByteArrayOutputStream bout = new ByteArrayOutputStream();
+		NetworkUtil.write(bout, new byte[] { type.getTypeByte() });
+		NetworkUtil.write(bout, new byte[] { version });
+		NetworkUtil.write(bout, exclusiveData, false);
+		NetworkUtil.write(bout, attributes);
+		NetworkUtil.write(bout, inputs);
+		NetworkUtil.write(bout, outputs);
+		NetworkUtil.write(bout, scripts);
+		return bout.toByteArray();
 	}
 
 	@Override

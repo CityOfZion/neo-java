@@ -22,10 +22,10 @@ import org.slf4j.LoggerFactory;
 
 import neo.model.bytes.UInt256;
 import neo.model.core.Block;
-import neo.model.core.GenesisBlockData;
 import neo.model.core.Header;
 import neo.model.network.HeadersPayload;
 import neo.model.util.Base58Util;
+import neo.model.util.GenesisBlockUtil;
 import neo.rpc.client.CityOfZionUtil;
 import neo.rpc.client.RpcClientUtil;
 import neo.rpc.client.test.util.TestUtil;
@@ -80,7 +80,7 @@ public class TestPayload {
 		final byte[] actualGenesisBa = Hex.decodeHex(hashStr.toCharArray());
 		ArrayUtils.reverse(actualGenesisBa);
 		final UInt256 actualGenesisHash = new UInt256(ByteBuffer.wrap(actualGenesisBa));
-		Assert.assertEquals("genesisHash", GenesisBlockData.GENESIS_HASH, actualGenesisHash);
+		Assert.assertEquals("genesisHash", GenesisBlockUtil.GENESIS_HASH, actualGenesisHash);
 
 		final JSONObject expectedJsonBlock = TestUtil
 				.getSorted(RpcClientUtil.getJSONBlock(TIMEOUT_MS, rpcNode, 0, false));
@@ -98,7 +98,7 @@ public class TestPayload {
 		LOG.debug("actualJSONBlock {}", actualJsonBlock);
 		Assert.assertEquals("JSONBlock", expectedJsonBlock.toString(2), actualJsonBlock.toString(2));
 
-		Assert.assertEquals("genesisHash", GenesisBlockData.GENESIS_HASH, header.hash);
+		Assert.assertEquals("genesisHash", GenesisBlockUtil.GENESIS_HASH, header.hash);
 	}
 
 	@Test
@@ -126,13 +126,13 @@ public class TestPayload {
 		final byte[] actualGenesisBa = Hex.decodeHex(hashStr.toCharArray());
 		ArrayUtils.reverse(actualGenesisBa);
 		final UInt256 actualGenesisHash = new UInt256(ByteBuffer.wrap(actualGenesisBa));
-		Assert.assertEquals("genesisHash", GenesisBlockData.GENESIS_HASH, actualGenesisHash);
+		Assert.assertEquals("genesisHash", GenesisBlockUtil.GENESIS_HASH, actualGenesisHash);
 
 		final JSONObject actualJsonBlock = TestUtil.getSorted(block.toJSONObject());
 		LOG.info("actualJSONBlock {}", actualJsonBlock);
 		Assert.assertEquals("JSONBlock", expectedJsonBlock.toString(2), actualJsonBlock.toString(2));
 
-		Assert.assertEquals("genesisHash", GenesisBlockData.GENESIS_HASH, block.hash);
+		Assert.assertEquals("genesisHash", GenesisBlockUtil.GENESIS_HASH, block.hash);
 	}
 
 }

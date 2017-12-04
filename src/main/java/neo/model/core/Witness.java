@@ -59,14 +59,10 @@ public final class Witness implements ToJsonObject, ByteArraySerializable, Seria
 
 	@Override
 	public byte[] toByteArray() {
-		try {
-			final ByteArrayOutputStream bout = new ByteArrayOutputStream();
-			NetworkUtil.writeByteArray(bout, invocationScript);
-			NetworkUtil.writeByteArray(bout, verificationScript);
-			return bout.toByteArray();
-		} catch (final Exception e) {
-			throw new RuntimeException(e);
-		}
+		final ByteArrayOutputStream bout = new ByteArrayOutputStream();
+		NetworkUtil.writeByteArray(bout, invocationScript);
+		NetworkUtil.writeByteArray(bout, verificationScript);
+		return bout.toByteArray();
 	}
 
 	@Override

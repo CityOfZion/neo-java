@@ -8,21 +8,21 @@ package neo.model.core;
  */
 public enum AssetType {
 	/** credit flag. */
-	CreditFlag(0x40),
+	CREDIT_FLAG(0x40),
 	/** duty flag. */
-	DutyFlag(0x80),
+	DUTY_FLAG(0x80),
 	/** governing token. */
-	GoverningToken(0x00),
+	GOVERNING_TOKEN(0x00),
 	/** utility token. */
-	UtilityToken(0x01),
+	UTILITY_TOKEN(0x01),
 	/** currency. */
-	Currency(0x08),
+	X(0x08),
 	/** share. */
-	Share(0x80 | 0x10),
+	SHARE(0x80 | 0x10),
 	/** invoice. */
-	Invoice(0x80 | 0x18),
+	INVOICE(0x80 | 0x18),
 	/** token. */
-	Token(0x40 | 0x20),
+	TOKEN(0x40 | 0x20),
 	/** ending semicolon */
 	;
 
@@ -33,7 +33,7 @@ public enum AssetType {
 	 *            type type byte.
 	 * @return the asset type, or throw an exception if there is no match.
 	 */
-	public static AssetType valueOf(final byte typeByte) {
+	public static AssetType valueOfByte(final byte typeByte) {
 		for (final AssetType it : AssetType.values()) {
 			if (it.typeByte == typeByte) {
 				return it;

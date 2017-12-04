@@ -4,8 +4,6 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.Set;
 import java.util.TreeSet;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 import org.apache.commons.codec.DecoderException;
 import org.apache.commons.codec.binary.Hex;
@@ -39,12 +37,6 @@ import neo.rpc.client.test.util.TestUtil;
  */
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
 public class TestBlockSerialization {
-
-	/**
-	 * the "data" JSON key.
-	 */
-	private static final String DATA = "data";
-
 	/**
 	 * the logger.
 	 */
@@ -91,13 +83,7 @@ public class TestBlockSerialization {
 			final String blockJsonStr = TestUtil.getJsonTestResourceAsString(getClass().getSimpleName(),
 					testFunctionName);
 			final JSONObject blockJson = new JSONObject(blockJsonStr);
-
-			final JSONArray blockJsonArray = blockJson.getJSONArray(DATA);
-			final StringBuilder blockSb = new StringBuilder();
-			for (int ix = 0; ix < blockJsonArray.length(); ix++) {
-				blockSb.append(blockJsonArray.getString(ix));
-			}
-			final String blockStr = blockSb.toString();
+			final String blockStr = TestUtil.fromHexJsonObject(blockJson);
 			final byte[] blockBa = Hex.decodeHex(blockStr.toCharArray());
 			final Block block = new Block(ByteBuffer.wrap(blockBa));
 			final Transaction tx = block.getTransactionList().get(txIx);
@@ -235,14 +221,7 @@ public class TestBlockSerialization {
 
 			final String actualBlockHex = ModelUtil.toHexString(block.toByteArray());
 
-			final JSONObject actualBlockJson = new JSONObject();
-			final JSONArray actualBlockJsonArray = new JSONArray();
-			final Matcher matcher = Pattern.compile(".{1,128}").matcher(actualBlockHex);
-			while (matcher.find()) {
-				final String actualBlockHexSubstr = matcher.group();
-				actualBlockJsonArray.put(actualBlockHexSubstr);
-			}
-			actualBlockJson.put(DATA, actualBlockJsonArray);
+			final JSONObject actualBlockJson = TestUtil.toHexJsonObject(actualBlockHex);
 			final String actualBlockJsonStr = actualBlockJson.toString(2);
 			Assert.assertEquals("hex encodings of blocks must match", expectedBlockJsonStr, actualBlockJsonStr);
 		} catch (final Exception e) {

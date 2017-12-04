@@ -1,0 +1,15 @@
+{
+	"nextconsensus": "AFmseVrdL9f9oyCzZefL9tG6UbvhPbdYzM",
+	"nextconsensusHash": "5a6c7b56000000000000000000000000000000000000000017",
+	"tx": [],
+	"previousblockhash": "0x0000000000000000000000000000000000000000000000000000000000000000",
+	"merkleroot": "0x0000000000000000000000000000000000000000000000000000000000000000",
+	"index": 0,
+	"time": 0,
+	"version": 0,
+	"script": {
+		"invocation": "",
+		"verification": ""
+	},
+	"hash": "0x1bdea8f80eb5bd97fade38d5e7fb93b02c9d3e01394e9f4324218132293f7ea6"
+}

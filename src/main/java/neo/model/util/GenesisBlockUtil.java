@@ -1,4 +1,4 @@
-package neo.model.core;
+package neo.model.util;
 
 import org.apache.commons.codec.DecoderException;
 import org.apache.commons.codec.binary.Hex;
@@ -12,7 +12,7 @@ import neo.model.bytes.UInt256;
  * @author coranos
  *
  */
-public final class GenesisBlockData {
+public final class GenesisBlockUtil {
 
 	/**
 	 * the hash of the genesis block, in hex.
@@ -37,7 +37,7 @@ public final class GenesisBlockData {
 	/**
 	 * the constructor.
 	 */
-	private GenesisBlockData() {
+	private GenesisBlockUtil() {
 
 	}
 }

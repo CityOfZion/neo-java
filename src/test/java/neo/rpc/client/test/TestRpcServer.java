@@ -44,11 +44,6 @@ import neo.rpc.server.CoreRpcServerUtil;
 public class TestRpcServer {
 
 	/**
-	 * asesert responses must match.
-	 */
-	private static final String RESPONSES_MUST_MATCH = "responses must match";
-
-	/**
 	 * a connection exception.
 	 */
 	private static final String CONNECTION_EXCEPTION = "connection exception";
@@ -95,7 +90,7 @@ public class TestRpcServer {
 			// final BlockDb realDb = new BlockDbImpl();
 			// CONTROLLER.getLocalNodeData().getBlockDb().put(realDb.getBlock(0));
 			// realDb.close();
-			LOG.error("empty JSON db:{}", CONTROLLER.getLocalNodeData().getBlockDb());
+			throw new RuntimeException("empty JSON db:" + CONTROLLER.getLocalNodeData().getBlockDb());
 		}
 
 		CONTROLLER.startCoreRpcServer();
@@ -215,7 +210,7 @@ public class TestRpcServer {
 			throw new RuntimeException(e);
 		}
 
-		Assert.assertEquals(RESPONSES_MUST_MATCH, expectedStr, actualStr);
+		Assert.assertEquals(TestUtil.RESPONSES_MUST_MATCH, expectedStr, actualStr);
 	}
 
 	/**
@@ -232,7 +227,7 @@ public class TestRpcServer {
 
 		final String actualStr = getCityOfZionResponse(input, method);
 
-		Assert.assertEquals(RESPONSES_MUST_MATCH, expectedStr, actualStr);
+		Assert.assertEquals(TestUtil.RESPONSES_MUST_MATCH, expectedStr, actualStr);
 	}
 
 	/**
@@ -275,7 +270,7 @@ public class TestRpcServer {
 			throw new RuntimeException(e);
 		}
 
-		Assert.assertEquals(RESPONSES_MUST_MATCH, expectedStr, actualStr);
+		Assert.assertEquals(TestUtil.RESPONSES_MUST_MATCH, expectedStr, actualStr);
 	}
 
 	/**

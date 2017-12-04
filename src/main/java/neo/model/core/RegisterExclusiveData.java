@@ -67,7 +67,7 @@ public final class RegisterExclusiveData implements ExclusiveData, ToJsonObject,
 	 *            the ByteBuffer to read.
 	 */
 	public RegisterExclusiveData(final ByteBuffer bb) {
-		assetType = AssetType.valueOf(ModelUtil.getByte(bb));
+		assetType = AssetType.valueOfByte(ModelUtil.getByte(bb));
 		nameBa = ModelUtil.getByteArray(bb);
 		name = new String(nameBa, StandardCharsets.UTF_8);
 		amount = ModelUtil.getFixed8(bb);
@@ -78,18 +78,14 @@ public final class RegisterExclusiveData implements ExclusiveData, ToJsonObject,
 
 	@Override
 	public byte[] toByteArray() {
-		try {
-			final ByteArrayOutputStream bout = new ByteArrayOutputStream();
-			bout.write(new byte[] { assetType.getTypeByte() });
-			NetworkUtil.writeByteArray(bout, nameBa);
-			NetworkUtil.write(bout, amount, true);
-			bout.write(new byte[] { precision });
-			NetworkUtil.write(bout, owner.toByteArray(), true);
-			NetworkUtil.write(bout, admin, true);
-			return bout.toByteArray();
-		} catch (final Exception e) {
-			throw new RuntimeException(e);
-		}
+		final ByteArrayOutputStream bout = new ByteArrayOutputStream();
+		NetworkUtil.write(bout, new byte[] { assetType.getTypeByte() });
+		NetworkUtil.writeByteArray(bout, nameBa);
+		NetworkUtil.write(bout, amount, true);
+		NetworkUtil.write(bout, new byte[] { precision });
+		NetworkUtil.write(bout, owner.toByteArray(), true);
+		NetworkUtil.write(bout, admin, true);
+		return bout.toByteArray();
 	}
 
 	@Override

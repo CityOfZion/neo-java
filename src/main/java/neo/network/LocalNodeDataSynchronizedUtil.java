@@ -11,8 +11,8 @@ import org.slf4j.LoggerFactory;
 
 import neo.model.bytes.UInt256;
 import neo.model.core.Block;
-import neo.model.core.GenesisBlockData;
 import neo.model.core.Header;
+import neo.model.util.GenesisBlockUtil;
 import neo.model.util.MapUtil;
 import neo.network.model.LocalNodeData;
 import neo.network.model.RemoteNodeData;
@@ -37,7 +37,7 @@ public class LocalNodeDataSynchronizedUtil {
 		LOG.trace("STARTED addBlockIfNewAndParentExistsUnsynchronized adding block to db : index:{}; hash:{}; prev:{};",
 				blockIndex, block.hash, block.prevHash);
 		if (localNodeData.getBlockDb().containsHash(block.prevHash)
-				|| block.hash.equals(GenesisBlockData.GENESIS_HASH)) {
+				|| block.hash.equals(GenesisBlockUtil.GENESIS_HASH)) {
 			if (!localNodeData.getBlockDb().containsHash(block.hash)) {
 				localNodeData.getBlockDb().put(block);
 				localNodeData.updateHighestBlockTime();
@@ -202,7 +202,7 @@ public class LocalNodeDataSynchronizedUtil {
 					hashRaw = highestBlock.hash;
 				} else {
 					LOG.debug("requestHeaders hash is genesis.");
-					hashRaw = GenesisBlockData.GENESIS_HASH;
+					hashRaw = GenesisBlockUtil.GENESIS_HASH;
 				}
 			}
 			final byte[] ba = hashRaw.getBytesCopy();
@@ -249,7 +249,7 @@ public class LocalNodeDataSynchronizedUtil {
 			final UInt256 highestBlockHash;
 			final long highestBlockIndex;
 			if (highestBlock == null) {
-				highestBlockHash = GenesisBlockData.GENESIS_HASH;
+				highestBlockHash = GenesisBlockUtil.GENESIS_HASH;
 				highestBlockIndex = 0;
 			} else {
 				highestBlockHash = highestBlock.hash;

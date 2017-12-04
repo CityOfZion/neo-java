@@ -8,27 +8,27 @@ package neo.model.core;
  */
 public enum ContractParameterType {
 	/** Signature. */
-	Signature(0x00),
+	SIGNATURE(0x00),
 	/** Boolean. */
-	Boolean(0x01),
+	BOOLEAN(0x01),
 	/** Integer. */
-	Integer(0x02),
+	INTEGER(0x02),
 	/** Hash160. */
-	Hash160(0x03),
+	HASH160(0x03),
 	/** Hash256. */
-	Hash256(0x04),
+	HASH256(0x04),
 	/** Byte Array. */
-	ByteArray(0x05),
+	BYTE_ARRAY(0x05),
 	/** Public Key. */
-	PublicKey(0x06),
+	PUBLIC_KEY(0x06),
 	/** String. */
-	String(0x07),
+	STRING(0x07),
 	/** Array. */
-	Array(0x10),
+	ARRAY(0x10),
 	/** Interop Interface. */
-	InteropInterface(0xf0),
+	INTEROP_INTERFACE(0xf0),
 	/** Void. */
-	Void(0xff),
+	VOID(0xff),
 	/** ending semicolon */
 	;
 
@@ -40,7 +40,7 @@ public enum ContractParameterType {
 	 *            the type byte to use.
 	 * @return the ContractParameterType with the given typeByte.
 	 */
-	public static ContractParameterType valueOf(final byte typeByte) {
+	public static ContractParameterType valueOfByte(final byte typeByte) {
 		for (final ContractParameterType it : ContractParameterType.values()) {
 			if (it.typeByte == typeByte) {
 				return it;
@@ -60,7 +60,7 @@ public enum ContractParameterType {
 	public static ContractParameterType[] valuesOf(final byte[] byteArray) {
 		final ContractParameterType[] typeArray = new ContractParameterType[byteArray.length];
 		for (int ix = 0; ix < typeArray.length; ix++) {
-			typeArray[ix] = ContractParameterType.valueOf(byteArray[ix]);
+			typeArray[ix] = ContractParameterType.valueOfByte(byteArray[ix]);
 		}
 		return typeArray;
 	}

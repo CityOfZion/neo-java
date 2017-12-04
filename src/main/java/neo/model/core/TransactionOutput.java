@@ -53,15 +53,11 @@ public final class TransactionOutput implements ToJsonObject, ByteArraySerializa
 
 	@Override
 	public byte[] toByteArray() {
-		try {
-			final ByteArrayOutputStream bout = new ByteArrayOutputStream();
-			NetworkUtil.write(bout, assetId, true);
-			NetworkUtil.write(bout, value, true);
-			NetworkUtil.write(bout, scriptHash, true);
-			return bout.toByteArray();
-		} catch (final Exception e) {
-			throw new RuntimeException(e);
-		}
+		final ByteArrayOutputStream bout = new ByteArrayOutputStream();
+		NetworkUtil.write(bout, assetId, true);
+		NetworkUtil.write(bout, value, true);
+		NetworkUtil.write(bout, scriptHash, true);
+		return bout.toByteArray();
 	}
 
 	@Override

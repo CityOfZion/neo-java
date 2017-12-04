@@ -35,7 +35,7 @@ public enum TransactionType {
 	 *
 	 * @return the transaction type.
 	 */
-	public static TransactionType valueOf(final byte typeByte) {
+	public static TransactionType valueOfByte(final byte typeByte) {
 		for (final TransactionType it : TransactionType.values()) {
 			if (it.typeByte == typeByte) {
 				return it;

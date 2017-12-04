@@ -1,0 +1,29 @@
+{
+	"outputs": [],
+	"exclusiveDataType": "MinerExclusiveData",
+	"exclusiveData": {
+		"nonce": "0"
+	},
+	"inputs": [],
+	"attributes": [
+		{
+			"data": "0000000000000000000000000000000000000000000000000000000000000000",
+			"usage": "CONTRACT_HASH"
+		},
+		{
+			"data": "030000000000000000000000000000000000000000000000000000000000000000",
+			"usage": "ECDH03"
+		},
+		{
+			"data": "",
+			"usage": "DESCRIPTION_URL"
+		},
+		{
+			"data": "",
+			"usage": "REMARK_15"
+		}
+	],
+	"type": "MINER_TRANSACTION",
+	"scripts": [],
+	"version": 0
+}

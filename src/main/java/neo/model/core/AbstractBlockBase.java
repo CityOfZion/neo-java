@@ -27,15 +27,14 @@ import neo.model.util.SHA256HashUtil;
  * @author coranos
  *
  */
-public abstract class AbstractBlockBase
-		implements ToJsonObject, ByteArraySerializable, Comparable<AbstractBlockBase>, Serializable {
-
-	private static final long serialVersionUID = 1L;
+public abstract class AbstractBlockBase implements ToJsonObject, ByteArraySerializable, Serializable {
 
 	/**
-	 * the comparator for sorting AbstractBlockBase objects.
+	 * the prefix for any hex value, when converting to JSON.
 	 */
-	private static final Comparator<AbstractBlockBase> ABSTRACT_BLOCK_BASE_COMPARATOR = getAbstractBlockBaseComparator();
+	private static final String HEX_PREFIX = "0x";
+
+	private static final long serialVersionUID = 1L;
 
 	/**
 	 * return the comparator for sorting AbstractBlockBase objects.
@@ -131,8 +130,8 @@ public abstract class AbstractBlockBase
 	 */
 	protected final void addBaseToJSONObject(final JSONObject json) {
 		json.put("version", version.toPositiveBigInteger());
-		json.put("previousblockhash", "0x" + prevHash.toHexString());
-		json.put("merkleroot", "0x" + merkleRoot.toHexString());
+		json.put("previousblockhash", HEX_PREFIX + prevHash.toHexString());
+		json.put("merkleroot", HEX_PREFIX + merkleRoot.toHexString());
 		json.put("time", timestamp.toPositiveBigInteger());
 		json.put("index", index.toPositiveBigInteger());
 		final String nextConsensusAddress = ModelUtil.toAddress(nextConsensus);
@@ -140,7 +139,7 @@ public abstract class AbstractBlockBase
 		final byte[] nextconsensusHash = Base58Util.decode(nextConsensusAddress);
 		json.put("nextconsensusHash", ModelUtil.toHexString(nextconsensusHash));
 		json.put("script", script.toJSONObject());
-		json.put("hash", "0x" + hash.toReverseHexString());
+		json.put("hash", HEX_PREFIX + hash.toReverseHexString());
 	}
 
 	/**
@@ -149,30 +148,20 @@ public abstract class AbstractBlockBase
 	 * @return the hash, as calculated from the other parameters.
 	 */
 	private UInt256 calculateHash() {
-		try {
-			final ByteArrayOutputStream bout = new ByteArrayOutputStream();
-			bout.write(nextConsensus.toByteArray());
-			bout.write(consensusData.toByteArray());
-			bout.write(index.toByteArray());
-			bout.write(timestamp.toByteArray());
-			bout.write(merkleRoot.toByteArray());
-			final byte[] prevHashBa = prevHash.toByteArray();
-			ArrayUtils.reverse(prevHashBa);
-			bout.write(prevHashBa);
-			bout.write(version.toByteArray());
-
-			final byte[] hashDataBa = bout.toByteArray();
-			ArrayUtils.reverse(hashDataBa);
-			final byte[] hashBa = SHA256HashUtil.getDoubleSHA256Hash(hashDataBa);
-			return new UInt256(hashBa);
-		} catch (final IOException e) {
-			throw new RuntimeException(e);
-		}
-	}
-
-	@Override
-	public final int compareTo(final AbstractBlockBase that) {
-		return ABSTRACT_BLOCK_BASE_COMPARATOR.compare(this, that);
+		final ByteArrayOutputStream bout = new ByteArrayOutputStream();
+		NetworkUtil.write(bout, nextConsensus.toByteArray());
+		NetworkUtil.write(bout, consensusData.toByteArray());
+		NetworkUtil.write(bout, index.toByteArray());
+		NetworkUtil.write(bout, timestamp.toByteArray());
+		NetworkUtil.write(bout, merkleRoot.toByteArray());
+		final byte[] prevHashBa = prevHash.toByteArray();
+		ArrayUtils.reverse(prevHashBa);
+		NetworkUtil.write(bout, prevHashBa);
+		NetworkUtil.write(bout, version.toByteArray());
+		final byte[] hashDataBa = bout.toByteArray();
+		ArrayUtils.reverse(hashDataBa);
+		final byte[] hashBa = SHA256HashUtil.getDoubleSHA256Hash(hashDataBa);
+		return new UInt256(hashBa);
 	}
 
 	/**
@@ -196,7 +185,7 @@ public abstract class AbstractBlockBase
 	 * @throws IOException
 	 *             if an error occurs.
 	 */
-	protected void writeBaseToOutputStream(final OutputStream out) throws IOException {
+	protected void writeBaseToOutputStream(final OutputStream out) {
 		NetworkUtil.write(out, version, true);
 		NetworkUtil.write(out, prevHash, false);
 		NetworkUtil.write(out, merkleRoot, true);
@@ -205,9 +194,9 @@ public abstract class AbstractBlockBase
 		NetworkUtil.write(out, consensusData, true);
 		NetworkUtil.write(out, nextConsensus, true);
 		if (script == null) {
-			out.write(new byte[] { 0 });
+			NetworkUtil.write(out, new byte[] { 0 });
 		} else {
-			out.write(new byte[] { 1 });
+			NetworkUtil.write(out, new byte[] { 1 });
 		}
 		NetworkUtil.write(out, script, false);
 	}

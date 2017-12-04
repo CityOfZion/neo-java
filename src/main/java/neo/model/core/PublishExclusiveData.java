@@ -87,7 +87,7 @@ public final class PublishExclusiveData implements ExclusiveData, ToJsonObject, 
 		script = ModelUtil.getByteArray(bb);
 		parameterList = Collections
 				.unmodifiableList(Arrays.asList(ContractParameterType.valuesOf(ModelUtil.getByteArray(bb))));
-		returnType = ContractParameterType.valueOf(ModelUtil.getByte(bb));
+		returnType = ContractParameterType.valueOfByte(ModelUtil.getByte(bb));
 		if (version >= 1) {
 			needStorage = ModelUtil.getBoolean(bb);
 		} else {
@@ -102,34 +102,30 @@ public final class PublishExclusiveData implements ExclusiveData, ToJsonObject, 
 
 	@Override
 	public byte[] toByteArray() {
-		try {
-			final ByteArrayOutputStream bout = new ByteArrayOutputStream();
-			NetworkUtil.writeByteArray(bout, script);
-			final byte[] parameterListBa = new byte[parameterList.size()];
-			for (int ix = 0; ix < parameterList.size(); ix++) {
-				parameterListBa[ix] = parameterList.get(ix).getTypeByte();
-			}
-			NetworkUtil.writeByteArray(bout, parameterListBa);
-			bout.write(new byte[] { returnType.getTypeByte() });
-
-			if (version > 1) {
-				if (needStorage) {
-					bout.write(new byte[] { 1 });
-				} else {
-					bout.write(new byte[] { 0 });
-				}
-			}
-
-			NetworkUtil.writeString(bout, name);
-			NetworkUtil.writeString(bout, codeVersion);
-			NetworkUtil.writeString(bout, author);
-			NetworkUtil.writeString(bout, email);
-			NetworkUtil.writeString(bout, description);
-
-			return bout.toByteArray();
-		} catch (final Exception e) {
-			throw new RuntimeException(e);
+		final ByteArrayOutputStream bout = new ByteArrayOutputStream();
+		NetworkUtil.writeByteArray(bout, script);
+		final byte[] parameterListBa = new byte[parameterList.size()];
+		for (int ix = 0; ix < parameterList.size(); ix++) {
+			parameterListBa[ix] = parameterList.get(ix).getTypeByte();
 		}
+		NetworkUtil.writeByteArray(bout, parameterListBa);
+		NetworkUtil.write(bout, new byte[] { returnType.getTypeByte() });
+
+		if (version >= 1) {
+			if (needStorage) {
+				NetworkUtil.write(bout, new byte[] { 1 });
+			} else {
+				NetworkUtil.write(bout, new byte[] { 0 });
+			}
+		}
+
+		NetworkUtil.writeString(bout, name);
+		NetworkUtil.writeString(bout, codeVersion);
+		NetworkUtil.writeString(bout, author);
+		NetworkUtil.writeString(bout, email);
+		NetworkUtil.writeString(bout, description);
+
+		return bout.toByteArray();
 	}
 
 	@Override
@@ -153,6 +149,11 @@ public final class PublishExclusiveData implements ExclusiveData, ToJsonObject, 
 		json.put("description", description);
 
 		return json;
+	}
+
+	@Override
+	public String toString() {
+		return toJSONObject().toString();
 	}
 
 }

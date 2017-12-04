@@ -2,7 +2,6 @@ package neo.model.core;
 
 import java.io.ByteArrayOutputStream;
 import java.nio.ByteBuffer;
-import java.util.Comparator;
 
 import org.json.JSONObject;
 
@@ -17,17 +16,6 @@ import neo.model.util.ModelUtil;
 public final class Header extends AbstractBlockBase {
 
 	private static final long serialVersionUID = 1L;
-
-	/**
-	 * return the Comparator used to sort headers, by index as a long.
-	 *
-	 * @return the Comparator used to sort headers, by index (converted to a
-	 *         positive long value).
-	 */
-	public static Comparator<Header> getComparator() {
-		final Comparator<Header> c = Comparator.comparing(Header::getIndexAsLong).reversed();
-		return c;
-	}
 
 	/**
 	 * the constructor.
@@ -46,14 +34,9 @@ public final class Header extends AbstractBlockBase {
 
 	@Override
 	public byte[] toByteArray() {
-		try {
-			final ByteArrayOutputStream bout = new ByteArrayOutputStream();
-			writeBaseToOutputStream(bout);
-			return bout.toByteArray();
-		} catch (final Exception e) {
-			throw new RuntimeException(e);
-		}
-
+		final ByteArrayOutputStream bout = new ByteArrayOutputStream();
+		writeBaseToOutputStream(bout);
+		return bout.toByteArray();
 	}
 
 	@Override
@@ -61,5 +44,10 @@ public final class Header extends AbstractBlockBase {
 		final JSONObject json = new JSONObject();
 		addBaseToJSONObject(json);
 		return json;
+	}
+
+	@Override
+	public String toString() {
+		return toJSONObject().toString();
 	}
 }

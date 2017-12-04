@@ -18,9 +18,12 @@ import java.util.List;
 import java.util.Optional;
 import java.util.TreeMap;
 import java.util.concurrent.ThreadLocalRandom;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import org.apache.commons.codec.binary.Hex;
 import org.apache.commons.io.IOUtils;
+import org.json.JSONArray;
 import org.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -29,8 +32,32 @@ import neo.model.ByteArraySerializable;
 import neo.model.network.Message;
 import neo.model.util.PayloadUtil;
 
-public class TestUtil {
+/**
+ * the test utility class.
+ *
+ * @author coranos
+ *
+ */
+public final class TestUtil {
 
+	/**
+	 * the "data" JSON key.
+	 */
+	private static final String DATA = "data";
+
+	/**
+	 * Expected a RuntimeException to be thrown.
+	 */
+	public static final String EXPECTED_A_RUNTIME_EXCEPTION_TO_BE_THROWN = "Expected a RuntimeException to be thrown";
+
+	/**
+	 * assert responses must match.
+	 */
+	public static final String RESPONSES_MUST_MATCH = "responses must match";
+
+	/**
+	 * the logger.
+	 */
 	private static final Logger LOG = LoggerFactory.getLogger(TestUtil.class);
 
 	public static final int MAIN_NET_PORT = 10333;
@@ -40,6 +67,23 @@ public class TestUtil {
 	public static final long MAIN_NET_MAGIC = 7630401;
 
 	public static final long TEST_NET_MAGIC = 1953787457;
+
+	/**
+	 * converts a json object full of hex strings to a single hex string.
+	 *
+	 * @param json
+	 *            the JSON object to use.
+	 * @return the hex string.
+	 */
+	public static String fromHexJsonObject(final JSONObject json) {
+		final JSONArray jsonArray = json.getJSONArray(DATA);
+		final StringBuilder sb = new StringBuilder();
+		for (int ix = 0; ix < jsonArray.length(); ix++) {
+			sb.append(jsonArray.getString(ix));
+		}
+		final String str = sb.toString();
+		return str;
+	}
 
 	/**
 	 *
@@ -210,6 +254,32 @@ public class TestUtil {
 		});
 		thread.start();
 		return serverSocket;
+	}
+
+	/**
+	 * converts a hex string to a json object, so it wraps when formatted.
+	 *
+	 * @param hex
+	 *            the hex string to split.
+	 * @return the JSON data object.
+	 */
+	public static JSONObject toHexJsonObject(final String hex) {
+		final JSONObject json = new JSONObject();
+		final JSONArray jsonArray = new JSONArray();
+		final Matcher matcher = Pattern.compile(".{1,128}").matcher(hex);
+		while (matcher.find()) {
+			final String substr = matcher.group();
+			jsonArray.put(substr);
+		}
+		json.put(DATA, jsonArray);
+		return json;
+	}
+
+	/**
+	 * the constructor.
+	 */
+	private TestUtil() {
+
 	}
 
 }

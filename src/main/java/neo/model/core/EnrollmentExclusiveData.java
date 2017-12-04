@@ -11,6 +11,7 @@ import neo.model.ToJsonObject;
 import neo.model.crypto.ecc.ECCurve;
 import neo.model.crypto.ecc.ECPoint;
 import neo.model.util.ModelUtil;
+import neo.model.util.NetworkUtil;
 
 /**
  * exclusive data for enrollment transactions.
@@ -38,13 +39,9 @@ public final class EnrollmentExclusiveData implements ExclusiveData, ToJsonObjec
 
 	@Override
 	public byte[] toByteArray() {
-		try {
-			final ByteArrayOutputStream bout = new ByteArrayOutputStream();
-			bout.write(publicKey.toByteArray());
-			return bout.toByteArray();
-		} catch (final Exception e) {
-			throw new RuntimeException(e);
-		}
+		final ByteArrayOutputStream bout = new ByteArrayOutputStream();
+		NetworkUtil.write(bout, publicKey.toByteArray());
+		return bout.toByteArray();
 	}
 
 	@Override

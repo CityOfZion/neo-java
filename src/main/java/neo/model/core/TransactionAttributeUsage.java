@@ -96,7 +96,7 @@ public enum TransactionAttributeUsage {
 	 * @return the value that has the given typeByte, or throw an exception if there
 	 *         is no value with that typeByte.
 	 */
-	public static TransactionAttributeUsage valueOf(final byte typeByte) {
+	public static TransactionAttributeUsage valueOfByte(final byte typeByte) {
 		for (final TransactionAttributeUsage it : TransactionAttributeUsage.values()) {
 			if (it.typeByte == typeByte) {
 				return it;

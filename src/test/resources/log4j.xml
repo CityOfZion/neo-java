@@ -20,7 +20,7 @@
   </appender>
 
   <logger name="neo.network.LocalControllerNodeCoreRpcRunnable">
-    <level value="debug" />
+    <level value="info" />
   </logger>
 
   <logger name="neo">

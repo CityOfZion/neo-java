@@ -12,9 +12,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import neo.model.bytes.UInt256;
-import neo.model.core.GenesisBlockData;
 import neo.model.core.Header;
 import neo.model.network.InvPayload;
+import neo.model.util.GenesisBlockUtil;
 import neo.network.model.LocalNodeData;
 import neo.network.model.RemoteNodeData;
 import neo.rpc.client.CityOfZionUtil;
@@ -67,7 +67,7 @@ public class BlockControlUtil {
 				if (LOG.isDebugEnabled()) {
 					LOG.debug("requestBlocks send {} hash is genesis.", r.getHostAddress());
 				}
-				MessageUtil.sendGetData(r, localNodeData, GenesisBlockData.GENESIS_HASH);
+				MessageUtil.sendGetData(r, localNodeData, GenesisBlockUtil.GENESIS_HASH);
 			} else {
 				LOG.info("SKIPPING requestBlocks, no hashes.");
 			}
