@@ -110,7 +110,7 @@ public final class NetworkUtil {
 	 *            the output stream to use.
 	 * @param ba
 	 *            the byte array to use.
-	 * @param start
+	 * @param offset
 	 *            the offset.
 	 * @param length
 	 *            the length.

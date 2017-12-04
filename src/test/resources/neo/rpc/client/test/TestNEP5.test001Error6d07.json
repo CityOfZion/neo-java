@@ -1,0 +1,31 @@
+{
+	"outputs": [
+		{
+			"scriptHash": "3177132005199d2c1ddc00e250d19a6ab1425317",
+			"assetId": "602c79718b16e442de58778e148d0b1084e3b2dffd5de6b7b16cee7969282de7",
+			"valueHex": "100000000000000",
+			"value": 1
+		},
+		{
+			"scriptHash": "175342b16a9ad150e200dc1d2c9d190520137731",
+			"assetId": "602c79718b16e442de58778e148d0b1084e3b2dffd5de6b7b16cee7969282de7",
+			"valueHex": "dfee424e00000000",
+			"value": 1313009375
+		}
+	],
+	"exclusiveDataType": "InvocationExclusiveData",
+	"exclusiveData": {
+		"gas": 0,
+		"script": "0400e1f505143775292229eccdf904f16fff8e83e7cffdc0f0ce14175342b16a9ad150e200dc1d2c9d19052013773153c1087472616e736665726711c4d1f4fba619f2628870d36e3a9773e874705b"
+	},
+	"inputs": [
+		{
+			"previousindex": "0x0001",
+			"previousblockhash": "0x8047c84fb0b6ca7602a53ca434eb73b6e3af248cae99ca14117194c5f56eabce"
+		}
+	],
+	"attributes": [],
+	"type": "INVOCATION_TRANSACTION",
+	"scripts": [],
+	"version": 1
+}

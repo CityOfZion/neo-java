@@ -23,6 +23,8 @@ import org.junit.runners.Suite;
 		/** */
 		TestCoreEnums.class,
 		/** */
+		TestNEP5.class,
+		/** */
 })
 
 public class MainUnitTestSuite {
