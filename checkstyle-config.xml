@@ -74,13 +74,16 @@
     <module name="UnusedImports"/>
     <module name="AnonInnerLength"/>
     <module name="ExecutableStatementCount">
+      <property name="max" value="60"/>
       <property name="tokens" value="INSTANCE_INIT,STATIC_INIT,METHOD_DEF,CTOR_DEF"/>
     </module>
     <module name="LineLength">
       <property name="max" value="160"/>
     </module>
     <module name="MethodLength"/>
-    <module name="ParameterNumber"/>
+    <module name="ParameterNumber">
+      <property name="max" value="10"/>
+    </module>
     <module name="OuterTypeNumber"/>
     <module name="MethodCount">
       <property name="tokens" value="CLASS_DEF,ENUM_CONSTANT_DEF,ENUM_DEF,INTERFACE_DEF,ANNOTATION_DEF"/>

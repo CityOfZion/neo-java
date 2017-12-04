@@ -8,8 +8,6 @@ import java.util.concurrent.ThreadLocalRandom;
 import org.apache.commons.io.FileUtils;
 import org.json.JSONObject;
 
-import neo.network.LocalControllerNode;
-
 /**
  * a utility class to handle saving and loading the configuration files.
  *
@@ -17,6 +15,71 @@ import neo.network.LocalControllerNode;
  *
  */
 public final class ConfigurationUtil {
+
+	/**
+	 * the JSON key, "port".
+	 */
+	public static final String PORT = "port";
+
+	/**
+	 * the JSON key, "block-db-impl".
+	 */
+	public static final String BLOCK_DB_IMPL = "block-db-impl";
+
+	/**
+	 * the JSON key, "rpc-client-timout".
+	 */
+	public static final String RPC_CLIENT_TIMOUT = "rpc-client-timout";
+
+	/**
+	 * the JSON key, "good-node-file".
+	 */
+	public static final String GOOD_NODE_FILE = "good-node-file";
+
+	/**
+	 * the JSON key, "min-retry-time-ms".
+	 */
+	public static final String MIN_RETRY_TIME_MS = "min-retry-time-ms";
+
+	/**
+	 * the JSON key, "".
+	 */
+	public static final String MAGIC = "magic";
+
+	/**
+	 * the JSON key, "nonce".
+	 */
+	public static final String NONCE = "nonce";
+
+	/**
+	 * the JSON key, "thread-pool-count".
+	 */
+	public static final String THREAD_POOL_COUNT = "thread-pool-count";
+
+	/**
+	 * the JSON key, "active-thread-count".
+	 */
+	public static final String ACTIVE_THREAD_COUNT = "active-thread-count";
+
+	/**
+	 * the JSON key, "seed-node-file".
+	 */
+	public static final String SEED_NODE_FILE = "seed-node-file";
+
+	/**
+	 * the JSON key, "timers".
+	 */
+	public static final String TIMERS = "timers";
+
+	/**
+	 * the JSON key, "remote".
+	 */
+	public static final String REMOTE = "remote";
+
+	/**
+	 * the JSON key, "local".
+	 */
+	public static final String LOCAL = "local";
 
 	/**
 	 * the name of the config file.
@@ -33,7 +96,7 @@ public final class ConfigurationUtil {
 			final JSONObject controllerNodeConfig = new JSONObject(
 					FileUtils.readFileToString(CONFIG_FILE, Charset.defaultCharset()));
 			final int nonce = ThreadLocalRandom.current().nextInt(Integer.MAX_VALUE);
-			controllerNodeConfig.put(LocalControllerNode.NONCE, nonce);
+			controllerNodeConfig.put(ConfigurationUtil.NONCE, nonce);
 			return controllerNodeConfig;
 		} catch (final IOException e) {
 			throw new RuntimeException(e);

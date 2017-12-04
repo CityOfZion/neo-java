@@ -19,12 +19,14 @@ import org.slf4j.LoggerFactory;
 import neo.model.IndexedSet;
 import neo.model.core.Block;
 import neo.model.core.Header;
+import neo.model.db.BlockDb;
 import neo.model.network.AddrPayload;
 import neo.model.network.HeadersPayload;
 import neo.model.network.InvPayload;
 import neo.model.network.Message;
 import neo.model.network.NetworkAddressWithTime;
 import neo.model.network.VersionPayload;
+import neo.model.util.ConfigurationUtil;
 import neo.model.util.JsonUtil;
 import neo.model.util.MapUtil;
 import neo.model.util.threadpool.ThreadPool;
@@ -33,59 +35,59 @@ import neo.network.model.NodeConnectionPhaseEnum;
 import neo.network.model.RemoteNodeData;
 import neo.network.model.TimerData;
 
+/**
+ * the local controller node.
+ *
+ * @author coranos
+ *
+ */
 public class LocalControllerNode {
 
-	private static final String RPC_CLIENT_TIMOUT = "rpc-client-timout";
+	/**
+	 * the JSON key, "port".
+	 */
+	private static final String PORT = "port";
 
+	/**
+	 * the JSON key, "address".
+	 */
+	private static final String ADDRESS = "address";
+
+	/**
+	 * the JSON key, "good-peers".
+	 */
+	private static final String GOOD_PEERS = "good-peers";
+
+	/**
+	 * the JSON key, "in-headers-all-duplicates".
+	 */
 	private static final String IN_HEADERS_ALL_DUPLICATES = "in-headers-all-duplicates";
 
+	/**
+	 * the JSON key, "duplicate-in-header".
+	 */
 	private static final String DUPLICATE_IN_HEADER = "duplicate-in-header";
-
-	public static final String GOOD_NODE_FILE = "good-node-file";
-
-	public static final String MIN_RETRY_TIME_MS = "min-retry-time-ms";
 
 	/**
 	 * the logger.
 	 */
 	private static final Logger LOG = LoggerFactory.getLogger(LocalControllerNode.class);
 
-	public static final String MAGIC = "magic";
-
-	public static final String NONCE = "nonce";
-
-	public static final String THREAD_POOL_COUNT = "thread-pool-count";
-
-	public static final String ACTIVE_THREAD_COUNT = "active-thread-count";
-
-	public static final String SEED_NODE_FILE = "seed-node-file";
-
-	public static final String PORT = "port";
-
-	public static final String TIMERS = "timers";
-
-	public static final String REMOTE = "remote";
-
-	public static final String LOCAL = "local";
-
-	private static final String ADDRESS = "address";
-
-	private static final String GOOD_PEERS = "good-peers";
-
+	/**
+	 * the list of peer change listeners.
+	 */
 	private final List<NodeDataChangeListener> peerChangeListeners = new ArrayList<>();
 
+	/**
+	 * the list of peer data, indexed.
+	 */
 	private final IndexedSet<RemoteNodeData> peerDataSet = new IndexedSet<>(RemoteNodeData.getComparator(),
 			RemoteNodeData.getIndexCollector());
 
+	/**
+	 * the thread pool.
+	 */
 	private final ThreadPool threadPool;
-
-	private final int nonce;
-
-	private final int port;
-
-	private final File seedNodeFile;
-
-	private final File goodNodeFile;
 
 	private final LocalNodeData localNodeData;
 
@@ -101,19 +103,22 @@ public class LocalControllerNode {
 
 	public LocalControllerNode(final JSONObject config) {
 		LOG.debug("STARTED LocalControllerNode config : {}", config);
-		final JSONObject localJson = config.getJSONObject(LOCAL);
-		remoteNodeConfig = config.getJSONObject(REMOTE);
-		final long magic = localJson.getLong(MAGIC);
-		final int activeThreadCount = localJson.getInt(ACTIVE_THREAD_COUNT);
-		final JSONObject timersJson = localJson.getJSONObject(TIMERS);
+		final JSONObject localJson = config.getJSONObject(ConfigurationUtil.LOCAL);
+		remoteNodeConfig = config.getJSONObject(ConfigurationUtil.REMOTE);
+		final long magic = localJson.getLong(ConfigurationUtil.MAGIC);
+		final int activeThreadCount = localJson.getInt(ConfigurationUtil.ACTIVE_THREAD_COUNT);
+		final JSONObject timersJson = localJson.getJSONObject(ConfigurationUtil.TIMERS);
 		final Map<String, TimerData> timersMap = TimerUtil.getTimerMap(timersJson);
-		final long rpcClientTimeoutMillis = JsonUtil.getTime(localJson, RPC_CLIENT_TIMOUT);
-		localNodeData = new LocalNodeData(magic, activeThreadCount, rpcClientTimeoutMillis, timersMap);
-		threadPool = new ThreadPool(localJson.getInt(THREAD_POOL_COUNT));
-		nonce = config.getInt(NONCE);
-		port = localJson.getInt(PORT);
-		seedNodeFile = new File(localJson.getString(SEED_NODE_FILE));
-		goodNodeFile = new File(localJson.getString(GOOD_NODE_FILE));
+		final long rpcClientTimeoutMillis = JsonUtil.getTime(localJson, ConfigurationUtil.RPC_CLIENT_TIMOUT);
+		final String blockDbImplStr = localJson.getString(ConfigurationUtil.BLOCK_DB_IMPL);
+		final Class<BlockDb> blockDbImplClass = getBlockDbImplClass(blockDbImplStr);
+		final int nonce = config.getInt(ConfigurationUtil.NONCE);
+		final int port = localJson.getInt(ConfigurationUtil.PORT);
+		final File seedNodeFile = new File(localJson.getString(ConfigurationUtil.SEED_NODE_FILE));
+		final File goodNodeFile = new File(localJson.getString(ConfigurationUtil.GOOD_NODE_FILE));
+		localNodeData = new LocalNodeData(magic, activeThreadCount, rpcClientTimeoutMillis, blockDbImplClass, timersMap,
+				nonce, port, seedNodeFile, goodNodeFile);
+		threadPool = new ThreadPool(localJson.getInt(ConfigurationUtil.THREAD_POOL_COUNT));
 		LocalNodeDataSynchronizedUtil.initUnknownBlockHashHeightSet(localNodeData);
 		refreshRunnable = new LocalControllerNodeRefreshRunnable(this);
 		refreshThread = new Thread(refreshRunnable, "Refresh Thread");
@@ -146,26 +151,36 @@ public class LocalControllerNode {
 		}
 	}
 
-	public LocalNodeData getLocalNodeData() {
-		return localNodeData;
+	/**
+	 * returns the class named in blockDbImplClassName , cast to a BlockDb.
+	 *
+	 * @param blockDbImplClassName
+	 *            the name of the BlockDb implementation class to use.
+	 * @return the BlockDb implementation class.
+	 */
+	@SuppressWarnings("unchecked")
+	public Class<BlockDb> getBlockDbImplClass(final String blockDbImplClassName) {
+		final Class<BlockDb> blockDbImplClass;
+		try {
+			blockDbImplClass = (Class<BlockDb>) Class.forName(blockDbImplClassName);
+		} catch (final ClassNotFoundException e) {
+			throw new RuntimeException(e);
+		}
+		return blockDbImplClass;
 	}
 
-	public int getNonce() {
-		return nonce;
+	public LocalNodeData getLocalNodeData() {
+		return localNodeData;
 	}
 
 	public IndexedSet<RemoteNodeData> getPeerDataSet() {
 		return peerDataSet;
 	}
 
-	public int getPort() {
-		return port;
-	}
-
 	public void loadNodeFile() throws Exception {
 		synchronized (this) {
-			loadNodeFile(seedNodeFile);
-			loadNodeFile(goodNodeFile);
+			loadNodeFile(localNodeData.getSeedNodeFile());
+			loadNodeFile(localNodeData.getGoodNodeFile());
 		}
 		notifyNodeDataChangeListeners();
 	}
@@ -400,6 +415,14 @@ public class LocalControllerNode {
 		}
 	}
 
+	/**
+	 * change all unknown and inactive remote nodes to the pool, and put them in the
+	 * "try-start" phase.
+	 *
+	 * @return true if any new peers were added to the pool.
+	 * @throws Exception
+	 *             if an error occuured.
+	 */
 	private boolean runPeers() throws Exception {
 		boolean anyChanged = false;
 		final List<RemoteNodeData> peerDataList = new ArrayList<>();
@@ -408,12 +431,12 @@ public class LocalControllerNode {
 		}
 
 		for (final RemoteNodeData data : peerDataList) {
-			LOG.trace("refreshThread {} runPeers node with phase {}", data.getTcpAddressAndPortString(),
+			LOG.trace("refreshThread[1] {} runPeers node with phase {}", data.getTcpAddressAndPortString(),
 					data.getConnectionPhase());
 			if ((data.getConnectionPhase() == NodeConnectionPhaseEnum.UNKNOWN)
 					|| (data.getConnectionPhase() == NodeConnectionPhaseEnum.INACTIVE)) {
 				synchronized (this) {
-					LOG.trace("refreshThread {} runPeers node with phase {}", data.getTcpAddressAndPortString(),
+					LOG.trace("refreshThread[2] {} runPeers node with phase {}", data.getTcpAddressAndPortString(),
 							data.getConnectionPhase());
 					data.setConnectionPhase(NodeConnectionPhaseEnum.TRY_START);
 
@@ -448,6 +471,12 @@ public class LocalControllerNode {
 		refreshThread.start();
 	}
 
+	/**
+	 * adds all the "unknown" remote nodes to the thread pool.
+	 *
+	 * @throws Exception
+	 *             if an error occurs.
+	 */
 	public void startThreadPool() throws Exception {
 		final List<RemoteNodeData> bootstrapPeerList = new ArrayList<>();
 		synchronized (LocalControllerNode.this) {
@@ -468,6 +497,7 @@ public class LocalControllerNode {
 	 * stops the local controller node.
 	 *
 	 * @throws InterruptedException
+	 *             if an error occurs.
 	 */
 	public void stop() throws InterruptedException {
 		if (LOG.isDebugEnabled()) {
@@ -490,13 +520,6 @@ public class LocalControllerNode {
 			coreRpcServerThread.join();
 		} catch (final InterruptedException e) {
 			throw new RuntimeException(e);
-		}
-	}
-
-	public void verifyUnverifiedBlocks() {
-		final boolean blockChanged = LocalNodeDataSynchronizedUtil.verifyUnverifiedBlocks(localNodeData);
-		if (blockChanged) {
-			notifyNodeDataChangeListeners();
 		}
 	}
 

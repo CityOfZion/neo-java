@@ -28,11 +28,13 @@ public final class LocalControllerNodeCoreRpcRunnable implements Runnable {
 	/**
 	 * proesses the request from the given session.
 	 *
+	 * @param controller
+	 *            the controller to use.
 	 * @param session
 	 *            the session to use.
 	 * @return the response.
 	 */
-	private static String processRequest(final IHTTPSession session) {
+	private static String processRequest(final LocalControllerNode controller, final IHTTPSession session) {
 		try {
 			final InputStream in = session.getInputStream();
 			if (LOG.isDebugEnabled()) {
@@ -46,7 +48,7 @@ public final class LocalControllerNodeCoreRpcRunnable implements Runnable {
 			if (LOG.isDebugEnabled()) {
 				LOG.debug("host:{};request:{}", session.getRemoteHostName(), requestStr);
 			}
-			final JSONObject response = CoreRpcServerUtil.process(requestStr);
+			final JSONObject response = CoreRpcServerUtil.process(controller, requestStr);
 			final String responseStr = response.toString();
 			if (LOG.isDebugEnabled()) {
 				LOG.debug("host:{};response:{}", session.getRemoteHostName(), responseStr);
@@ -60,7 +62,7 @@ public final class LocalControllerNodeCoreRpcRunnable implements Runnable {
 	/**
 	 * if true, stop running.
 	 */
-	private boolean stopped = false;
+	private final boolean stopped = false;
 
 	/**
 	 * if true, socket has started listening.
@@ -85,10 +87,10 @@ public final class LocalControllerNodeCoreRpcRunnable implements Runnable {
 	 */
 	public LocalControllerNodeCoreRpcRunnable(final LocalControllerNode localControllerNode) {
 		this.localControllerNode = localControllerNode;
-		httpServer = new NanoHTTPD(localControllerNode.getPort()) {
+		httpServer = new NanoHTTPD(localControllerNode.getLocalNodeData().getPort()) {
 			@Override
 			public Response serve(final IHTTPSession session) {
-				return newFixedLengthResponse(processRequest(session));
+				return newFixedLengthResponse(processRequest(localControllerNode, session));
 			}
 		};
 	}
@@ -116,12 +118,8 @@ public final class LocalControllerNodeCoreRpcRunnable implements Runnable {
 		try {
 			final long timeout = localControllerNode.getLocalNodeData().getRpcClientTimeoutMillis();
 			httpServer.start((int) timeout);
-			while (!stopped) {
-				started = true;
-				Thread.sleep(timeout);
-			}
-			httpServer.stop();
-		} catch (IOException | InterruptedException e) {
+			started = true;
+		} catch (final IOException e) {
 			throw new RuntimeException(e);
 		}
 	}
@@ -130,6 +128,6 @@ public final class LocalControllerNodeCoreRpcRunnable implements Runnable {
 	 * stop the server.
 	 */
 	public void stop() {
-		stopped = true;
+		httpServer.stop();
 	}
 }

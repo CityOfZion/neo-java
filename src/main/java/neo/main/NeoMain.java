@@ -2,7 +2,6 @@ package neo.main;
 
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
-import java.sql.SQLException;
 
 import javax.swing.BoxLayout;
 import javax.swing.JFrame;
@@ -89,7 +88,7 @@ public final class NeoMain {
 					LOG.info("STARTED SHUTTING DOWN DB");
 					controller.getLocalNodeData().getBlockDb().close();
 					LOG.info("SUCCESS SHUTTING DOWN DB");
-				} catch (final SQLException | InterruptedException ex) {
+				} catch (final InterruptedException ex) {
 					LOG.error("error closing", ex);
 				}
 				System.exit(0);

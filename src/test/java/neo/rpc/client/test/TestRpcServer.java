@@ -30,7 +30,9 @@ import org.slf4j.LoggerFactory;
 import neo.model.util.ConfigurationUtil;
 import neo.network.LocalControllerNode;
 import neo.rpc.client.CityOfZionUtil;
+import neo.rpc.client.test.util.AbstractJsonMockBlockDb;
 import neo.rpc.client.test.util.TestUtil;
+import neo.rpc.server.CoreRpcServerUtil;
 
 /**
  * tests serializing blocks.
@@ -68,6 +70,8 @@ public class TestRpcServer {
 
 	static {
 		final JSONObject controllerNodeConfig = ConfigurationUtil.getConfiguration();
+		controllerNodeConfig.getJSONObject(ConfigurationUtil.LOCAL).put(ConfigurationUtil.BLOCK_DB_IMPL,
+				"neo.rpc.client.test.TestRpcServer$JsonBlockDbImpl");
 		CONTROLLER = new LocalControllerNode(controllerNodeConfig);
 	}
 
@@ -86,6 +90,14 @@ public class TestRpcServer {
 	@BeforeClass
 	public static void beforeClass() {
 		LOG.debug("beforeClass");
+
+		if (CONTROLLER.getLocalNodeData().getBlockDb().getBlockWithMaxIndex() == null) {
+			// final BlockDb realDb = new BlockDbImpl();
+			// CONTROLLER.getLocalNodeData().getBlockDb().put(realDb.getBlock(0));
+			// realDb.close();
+			LOG.error("empty JSON db:{}", CONTROLLER.getLocalNodeData().getBlockDb());
+		}
+
 		CONTROLLER.startCoreRpcServer();
 	}
 
@@ -150,10 +162,10 @@ public class TestRpcServer {
 	 */
 	private JSONObject creteInputJson(final String method, final JSONArray params) {
 		final JSONObject inputJson = new JSONObject();
-		inputJson.put("jsonrpc", "2.0");
-		inputJson.put("method", method);
-		inputJson.put("params", params);
-		inputJson.put("id", 1);
+		inputJson.put(CoreRpcServerUtil.JSONRPC, CoreRpcServerUtil.VERSION_2_0);
+		inputJson.put(CoreRpcServerUtil.METHOD, method);
+		inputJson.put(CoreRpcServerUtil.PARAMS, params);
+		inputJson.put(CoreRpcServerUtil.ID, 1);
 		return inputJson;
 	}
 
@@ -171,7 +183,7 @@ public class TestRpcServer {
 		final String actualStr;
 		try {
 			final JSONObject inputJson = creteInputJson(method, params);
-			final String coreRpcNode = "http://localhost:" + CONTROLLER.getPort();
+			final String coreRpcNode = "http://localhost:" + CONTROLLER.getLocalNodeData().getPort();
 			final StringEntity input = new StringEntity(inputJson.toString(), ContentType.APPLICATION_JSON);
 			final HttpPost post = new HttpPost(coreRpcNode);
 			final RequestConfig requestConfig = RequestConfig.custom().setSocketTimeout(TIMEOUT_MILLIS)
@@ -259,4 +271,42 @@ public class TestRpcServer {
 		Assert.assertEquals(RESPONSES_MUST_MATCH, expectedStr, actualStr);
 	}
 
+	/**
+	 * last test, blank, so afterClass() time doesnt throw off the metrics.
+	 */
+	@Test
+	public void zzzLastTest() {
+	}
+
+	/**
+	 * returns a BlockDb implementation for this test class.
+	 *
+	 * @author coranos
+	 *
+	 */
+	public static final class JsonBlockDbImpl extends AbstractJsonMockBlockDb {
+
+		/**
+		 * the json array of test blocks.
+		 */
+		private final JSONArray jsonArray;
+
+		/**
+		 * the constructor.
+		 */
+		public JsonBlockDbImpl() {
+			final String dbStr = TestUtil.getJsonTestResourceAsString("TestRpcServer", "BlockDbImpl");
+			jsonArray = new JSONArray(dbStr);
+		}
+
+		@Override
+		public JSONArray getMockBlockDb() {
+			return jsonArray;
+		}
+
+		@Override
+		public String toString() {
+			return jsonArray.toString();
+		}
+	}
 }

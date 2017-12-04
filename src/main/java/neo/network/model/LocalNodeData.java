@@ -1,5 +1,6 @@
 package neo.network.model;
 
+import java.io.File;
 import java.util.Collections;
 import java.util.Date;
 import java.util.Map;
@@ -25,7 +26,7 @@ public class LocalNodeData {
 	/**
 	 * the block database.
 	 */
-	private final BlockDb blockDb = BlockDb.getInstance();
+	private final BlockDb blockDb;
 
 	/**
 	 * the last time we got the highest block.
@@ -68,6 +69,26 @@ public class LocalNodeData {
 	private final long rpcClientTimeoutMillis;
 
 	/**
+	 * the nonce.
+	 */
+	private final int nonce;
+
+	/**
+	 * the local server port.
+	 */
+	private final int port;
+
+	/**
+	 * the local seed node file.
+	 */
+	private final File seedNodeFile;
+
+	/**
+	 * the local good node file.
+	 */
+	private final File goodNodeFile;
+
+	/**
 	 * the map of verified headers, by blockchain height.
 	 */
 	private final SortedMap<Long, Header> verifiedHeaderPoolMap = new TreeMap<>();
@@ -96,14 +117,35 @@ public class LocalNodeData {
 	 * @param timersMap
 	 *            the timers map to use, which governs when to send automatic
 	 *            messages.
+	 * @param goodNodeFile
+	 *            the file of known "good" remote nodes.
+	 * @param seedNodeFile
+	 *            the file of seed nodes. All seed nodes should be good, but not all
+	 *            good nodes are seed nodes.
+	 * @param port
+	 *            the port for the local server.
+	 * @param nonce
+	 *            the nonce.
+	 * @param blockDbClass
+	 *            the block DB class.
 	 */
 	public LocalNodeData(final long magic, final int activeThreadCount, final long rpcClientTimeoutMillis,
-			final Map<String, TimerData> timersMap) {
+			final Class<BlockDb> blockDbClass, final Map<String, TimerData> timersMap, final int nonce, final int port,
+			final File seedNodeFile, final File goodNodeFile) {
 		startTime = System.currentTimeMillis();
 		this.magic = magic;
 		this.activeThreadCount = activeThreadCount;
 		this.rpcClientTimeoutMillis = rpcClientTimeoutMillis;
 		this.timersMap = timersMap;
+		this.nonce = nonce;
+		this.port = port;
+		this.seedNodeFile = seedNodeFile;
+		this.goodNodeFile = goodNodeFile;
+		try {
+			blockDb = blockDbClass.newInstance();
+		} catch (InstantiationException | IllegalAccessException e) {
+			throw new RuntimeException(e);
+		}
 	}
 
 	/**
@@ -142,6 +184,10 @@ public class LocalNodeData {
 		return blockFileSize;
 	}
 
+	public File getGoodNodeFile() {
+		return goodNodeFile;
+	}
+
 	public Date getHighestBlockTime() {
 		return highestBlockTime;
 	}
@@ -154,6 +200,14 @@ public class LocalNodeData {
 		return magic;
 	}
 
+	public int getNonce() {
+		return nonce;
+	}
+
+	public int getPort() {
+		return port;
+	}
+
 	/**
 	 * return the RPC client timeout.
 	 *
@@ -161,6 +215,10 @@ public class LocalNodeData {
 	 */
 	public long getRpcClientTimeoutMillis() {
 		return rpcClientTimeoutMillis;
+	}
+
+	public File getSeedNodeFile() {
+		return seedNodeFile;
 	}
 
 	public long getStartTime() {

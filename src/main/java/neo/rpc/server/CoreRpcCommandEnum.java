@@ -1,5 +1,7 @@
 package neo.rpc.server;
 
+import org.json.JSONArray;
+
 /**
  * an enumeration of all the commands that can be sent to the neo core rpc
  * service.
@@ -54,6 +56,19 @@ public enum CoreRpcCommandEnum {
 			}
 		}
 		return null;
+	}
+
+	/**
+	 * return the values, as a JSON array.
+	 *
+	 * @return the values, as a JSON array.
+	 */
+	public static JSONArray valuesJSONArray() {
+		final JSONArray expectedArray = new JSONArray();
+		for (final CoreRpcCommandEnum coreRpcCommand : CoreRpcCommandEnum.values()) {
+			expectedArray.put(coreRpcCommand.getName());
+		}
+		return expectedArray;
 	}
 
 	/**

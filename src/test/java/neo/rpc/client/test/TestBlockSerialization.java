@@ -28,6 +28,7 @@ import neo.model.core.Transaction;
 import neo.model.core.TransactionType;
 import neo.model.db.BlockDb;
 import neo.model.util.ModelUtil;
+import neo.rpc.client.test.util.AbstractJsonMockBlockDb;
 import neo.rpc.client.test.util.TestUtil;
 
 /**
@@ -38,6 +39,11 @@ import neo.rpc.client.test.util.TestUtil;
  */
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
 public class TestBlockSerialization {
+
+	/**
+	 * the "data" JSON key.
+	 */
+	private static final String DATA = "data";
 
 	/**
 	 * the logger.
@@ -79,7 +85,7 @@ public class TestBlockSerialization {
 					testFunctionName);
 			final JSONObject blockJson = new JSONObject(blockJsonStr);
 
-			final JSONArray blockJsonArray = blockJson.getJSONArray("data");
+			final JSONArray blockJsonArray = blockJson.getJSONArray(DATA);
 			final StringBuilder blockSb = new StringBuilder();
 			for (int ix = 0; ix < blockJsonArray.length(); ix++) {
 				blockSb.append(blockJsonArray.getString(ix));
@@ -178,12 +184,18 @@ public class TestBlockSerialization {
 	@Test
 	@Ignore
 	public void test00ZAllBlocks() throws ClientProtocolException, IOException, DecoderException, InterruptedException {
-		final long maxBlockIx = BlockDb.getInstance().getBlockWithMaxIndex().getIndexAsLong();
+		final BlockDb blockDb = new AbstractJsonMockBlockDb() {
+			@Override
+			public JSONArray getMockBlockDb() {
+				return new JSONArray();
+			}
+		};
+		final long maxBlockIx = blockDb.getBlockWithMaxIndex().getIndexAsLong();
 
 		final Set<TransactionType> knownTypeSet = new TreeSet<>();
 
 		for (long blockIx = 0; blockIx <= maxBlockIx; blockIx++) {
-			final Block block = BlockDb.getInstance().getBlock(blockIx);
+			final Block block = blockDb.getBlock(blockIx);
 			for (int txIx = 0; txIx < block.getTransactionList().size(); txIx++) {
 				final Transaction tx = block.getTransactionList().get(txIx);
 				if (!knownTypeSet.contains(tx.type)) {
@@ -192,6 +204,7 @@ public class TestBlockSerialization {
 				}
 			}
 		}
+		blockDb.close();
 	}
 
 	/**
@@ -200,12 +213,18 @@ public class TestBlockSerialization {
 	@Test
 	@Ignore
 	public void testGetBlock() {
+		final BlockDb blockDb = new AbstractJsonMockBlockDb() {
+			@Override
+			public JSONArray getMockBlockDb() {
+				return new JSONArray();
+			}
+		};
 		try {
-			final String testName = "test001TxTypeMiner";
+			final String testName = "test001TxTypeMiner1";
 			final int blockIx = 1271700;
 			final String expectedBlockJsonStr = IOUtils.toString(this.getClass()
 					.getResourceAsStream("/neo/rpc/client/test/TestBlockSerialization." + testName + ".json"), "UTF-8");
-			final Block block = BlockDb.getInstance().getBlock(blockIx);
+			final Block block = blockDb.getBlock(blockIx);
 
 			final String actualBlockHex = ModelUtil.toHexString(block.toByteArray());
 
@@ -216,11 +235,13 @@ public class TestBlockSerialization {
 				final String actualBlockHexSubstr = matcher.group();
 				actualBlockJsonArray.put(actualBlockHexSubstr);
 			}
-			actualBlockJson.put("data", actualBlockJsonArray);
+			actualBlockJson.put(DATA, actualBlockJsonArray);
 			final String actualBlockJsonStr = actualBlockJson.toString(2);
 			Assert.assertEquals("hex encodings of blocks must match", expectedBlockJsonStr, actualBlockJsonStr);
 		} catch (final Exception e) {
 			throw new RuntimeException(e);
+		} finally {
+			blockDb.close();
 		}
 	}
 

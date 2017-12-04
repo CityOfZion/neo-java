@@ -49,6 +49,10 @@ public class RemoteNodeData {
 		return c;
 	}
 
+	/**
+	 * @return the list of indexes (simmilar to database indexes, I.E. searchable
+	 *         fields), currently just "tcp address and port".
+	 */
 	public static List<Function<RemoteNodeData, Object>> getIndexCollector() {
 		return Arrays.asList(TCP_ADDRESS_AND_PORT);
 	}
