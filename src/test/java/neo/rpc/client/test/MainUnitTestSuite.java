@@ -15,6 +15,8 @@ import org.junit.runners.Suite;
 		/** */
 		TestBlockSerialization.class,
 		/** */
+		TestRpcServer.class,
+		/** */
 })
 
 public class MainUnitTestSuite {

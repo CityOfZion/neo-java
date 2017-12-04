@@ -152,6 +152,13 @@ public class TestRpcServer {
 	}
 
 	/**
+	 * first test, blank, so beforeClass() time doesnt throw off the metrics.
+	 */
+	@Test
+	public void aaaFirstTest() {
+	}
+
+	/**
 	 * creates a RPC input JSON from the method name and parameters.
 	 *
 	 * @param method

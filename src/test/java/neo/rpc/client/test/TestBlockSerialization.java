@@ -67,6 +67,13 @@ public class TestBlockSerialization {
 	}
 
 	/**
+	 * first test, blank, so beforeClass() time doesnt throw off the metrics.
+	 */
+	@Test
+	public void aaaFirstTest() {
+	}
+
+	/**
 	 * reads in the test json for the given test name, gets the tx at the given
 	 * index, and verifys that it's transaction type is the expected transaction
 	 * type.
@@ -157,6 +164,10 @@ public class TestBlockSerialization {
 		assertTransactionTypeEquals("test007TxTypePublish", 1, TransactionType.PUBLISH_TRANSACTION);
 	}
 
+	// 2017-12-01 16:41:44 ERROR TestBlockSerialization:75 - getBlock 1271700
+	// 8ee34f98ba2eb385b2e49f9091e41098c82055d87d08e8ec38eaff444269dfdc tx 2
+	// INVOCATION_TRANSACTION
+
 	/**
 	 * test reading a contract transaction.
 	 */
@@ -164,10 +175,6 @@ public class TestBlockSerialization {
 	public void test008TxTypeInvocation() {
 		assertTransactionTypeEquals("test008TxTypeInvocation", 2, TransactionType.INVOCATION_TRANSACTION);
 	}
-
-	// 2017-12-01 16:41:44 ERROR TestBlockSerialization:75 - getBlock 1271700
-	// 8ee34f98ba2eb385b2e49f9091e41098c82055d87d08e8ec38eaff444269dfdc tx 2
-	// INVOCATION_TRANSACTION
 
 	/**
 	 * pulls all the blocks (slow) to check for full coverage.
@@ -243,6 +250,13 @@ public class TestBlockSerialization {
 		} finally {
 			blockDb.close();
 		}
+	}
+
+	/**
+	 * last test, blank, so afterClass() time doesnt throw off the metrics.
+	 */
+	@Test
+	public void zzzLastTest() {
 	}
 
 }
