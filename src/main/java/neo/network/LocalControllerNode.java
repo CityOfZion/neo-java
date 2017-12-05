@@ -218,7 +218,7 @@ public class LocalControllerNode {
 	private void onAddr(final RemoteNodeControllerRunnable peer, final Message message) {
 		try {
 			final AddrPayload addrPayload = (AddrPayload) message.payload;
-			for (final NetworkAddressWithTime nawt : addrPayload.addressList) {
+			for (final NetworkAddressWithTime nawt : addrPayload.getAddressList()) {
 				final byte[] addressBa = nawt.address.getBytesCopy();
 				ArrayUtils.reverse(addressBa);
 				final int port = nawt.port.toReverseBytesPositiveBigInteger().intValue();
@@ -237,11 +237,11 @@ public class LocalControllerNode {
 				if (LOG.isDebugEnabled()) {
 					LOG.debug("{} onAddr response:{}, count {}, peerDataSet {}",
 							peer.getData().getTcpAddressAndPortString(), message.command,
-							addrPayload.addressList.size(), getPeerDataSet().size());
+							addrPayload.getAddressList().size(), getPeerDataSet().size());
 				}
 			}
 		} catch (final Exception e) {
-
+			LOG.error("error in onAddr", e);
 		}
 	}
 

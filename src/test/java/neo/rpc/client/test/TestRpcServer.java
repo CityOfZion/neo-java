@@ -179,10 +179,10 @@ public class TestRpcServer {
 		final JSONArray params = new JSONArray();
 		final String method = "getbestblockhash";
 
-		final String expectedStr = TestUtil.getJsonTestResourceAsString(getClass().getSimpleName(),
+		final String expectedStrRaw = TestUtil.getJsonTestResourceAsString(getClass().getSimpleName(),
 				"test002CoreGetBestBlockHash");
 
-		final String actualStr;
+		final String actualStrRaw;
 		try {
 			final JSONObject inputJson = creteInputJson(method, params);
 			final String coreRpcNode = "http://localhost:" + CONTROLLER.getLocalNodeData().getPort();
@@ -205,10 +205,13 @@ public class TestRpcServer {
 			}
 			final JSONObject responseJson = new JSONObject(responseStr);
 
-			actualStr = responseJson.toString(2);
+			actualStrRaw = responseJson.toString(2);
 		} catch (final Exception e) {
 			throw new RuntimeException(e);
 		}
+
+		final String expectedStr = new JSONObject(expectedStrRaw).toString(2);
+		final String actualStr = new JSONObject(actualStrRaw).toString(2);
 
 		Assert.assertEquals(TestUtil.RESPONSES_MUST_MATCH, expectedStr, actualStr);
 	}

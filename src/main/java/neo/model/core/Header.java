@@ -6,6 +6,7 @@ import java.nio.ByteBuffer;
 import org.json.JSONObject;
 
 import neo.model.util.ModelUtil;
+import neo.model.util.NetworkUtil;
 
 /**
  * the header of a block, withount any transactions.
@@ -36,6 +37,7 @@ public final class Header extends AbstractBlockBase {
 	public byte[] toByteArray() {
 		final ByteArrayOutputStream bout = new ByteArrayOutputStream();
 		writeBaseToOutputStream(bout);
+		NetworkUtil.write(bout, (byte) 0);
 		return bout.toByteArray();
 	}
 

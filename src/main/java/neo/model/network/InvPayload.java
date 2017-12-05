@@ -5,42 +5,86 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
 
 import neo.model.ByteArraySerializable;
+import neo.model.ToJsonObject;
 import neo.model.bytes.UInt256;
 import neo.model.util.ModelUtil;
 import neo.model.util.NetworkUtil;
 
-public class InvPayload implements Payload, ByteArraySerializable {
+/**
+ * the inventory payload.
+ *
+ * @author coranos
+ *
+ */
+public final class InvPayload implements Payload, ToJsonObject, ByteArraySerializable {
 
+	/**
+	 * the max number of hashes in a inventory payload.
+	 */
 	public static final int MAX_HASHES = 2000;
 
+	/**
+	 * the inventory type.
+	 */
 	private final byte type;
 
+	/**
+	 * the list of hashes.
+	 */
 	private final List<UInt256> hashes;
 
+	/**
+	 * the inventory type, as an enum.
+	 */
 	private final InventoryType typeEnum;
 
+	/**
+	 * the constructor.
+	 *
+	 * @param bb
+	 *            the byte buffer to read.
+	 */
 	public InvPayload(final ByteBuffer bb) {
 		type = bb.get();
 		typeEnum = InventoryType.valueOf(type);
 		hashes = ModelUtil.readArray(bb, UInt256.class);
 	}
 
+	/**
+	 * the constructor.
+	 *
+	 * @param typeEnum
+	 *            the inventory type enum.
+	 * @param hashes
+	 *            the list of hashes.
+	 */
 	public InvPayload(final InventoryType typeEnum, final UInt256... hashes) {
 		this.typeEnum = typeEnum;
 		type = typeEnum.getTypeByte();
 		this.hashes = new ArrayList<>(Arrays.asList(hashes));
 	}
 
+	/**
+	 * return the list of hashes.
+	 *
+	 * @return the list of hashes.
+	 */
 	public List<UInt256> getHashes() {
-		return hashes;
+		return Collections.unmodifiableList(hashes);
 	}
 
+	/**
+	 * return the type enum.
+	 *
+	 * @return the type enum.
+	 */
 	public InventoryType getType() {
 		return typeEnum;
 	}
@@ -61,7 +105,7 @@ public class InvPayload implements Payload, ByteArraySerializable {
 	}
 
 	@Override
-	public String toString() {
+	public JSONObject toJSONObject() {
 		final JSONObject json = new JSONObject();
 
 		json.put("type", type);
@@ -73,6 +117,11 @@ public class InvPayload implements Payload, ByteArraySerializable {
 			hashesJson.put(hash.toHexString());
 		}
 
-		return json.toString();
+		return json;
+	}
+
+	@Override
+	public String toString() {
+		return toJSONObject().toString();
 	}
 }

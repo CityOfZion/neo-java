@@ -58,17 +58,22 @@ public class TestNEP5 {
 	 */
 	@Test
 	public void test001Error6d07() {
-		final String testDataRaw = TestUtil.getJsonTestResourceAsString(getClass().getSimpleName(),
+		final String expectedHexStrRaw = TestUtil.getJsonTestResourceAsString(getClass().getSimpleName(),
 				"test001Error6d07Hex");
-		final String testDataHex = TestUtil.fromHexJsonObject(new JSONObject(testDataRaw));
+		final String transactionHex = TestUtil.fromHexJsonObject(new JSONObject(expectedHexStrRaw));
 
-		final Transaction transaction = new Transaction(ByteBuffer.wrap(ModelUtil.decodeHex(testDataHex)));
+		final Transaction transaction = new Transaction(ByteBuffer.wrap(ModelUtil.decodeHex(transactionHex)));
 
 		final String expectedStr = new JSONObject(
 				TestUtil.getJsonTestResourceAsString(getClass().getSimpleName(), "test001Error6d07")).toString();
 		final String actualStr = transaction.toString();
 
 		Assert.assertEquals(TestUtil.RESPONSES_MUST_MATCH, expectedStr, actualStr);
+
+		final String expectedHexStr = new JSONObject(expectedHexStrRaw).toString();
+		final String actualHexStr = TestUtil.toHexJsonObject(ModelUtil.toHexString(transaction.toByteArray()))
+				.toString();
+		Assert.assertEquals(TestUtil.RESPONSES_MUST_MATCH, expectedHexStr, actualHexStr);
 	}
 
 	/**

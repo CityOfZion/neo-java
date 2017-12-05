@@ -47,6 +47,14 @@ public final class HeadersPayload implements Payload, ToJsonObject, ByteArraySer
 	}
 
 	@Override
+	public byte[] toByteArray() {
+		final ByteArrayOutputStream out = new ByteArrayOutputStream();
+		NetworkUtil.write(out, headerList);
+		return out.toByteArray();
+
+	}
+
+	@Override
 	public JSONObject toJSONObject() {
 		final JSONObject json = new JSONObject();
 
@@ -63,14 +71,6 @@ public final class HeadersPayload implements Payload, ToJsonObject, ByteArraySer
 	@Override
 	public String toString() {
 		return toJSONObject().toString();
-	}
-
-	@Override
-	public byte[] toByteArray() {
-		final ByteArrayOutputStream out = new ByteArrayOutputStream();
-		NetworkUtil.write(out, headerList);
-		return out.toByteArray();
-
 	}
 
 }

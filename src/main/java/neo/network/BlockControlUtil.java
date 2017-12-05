@@ -32,10 +32,14 @@ public class BlockControlUtil {
 	}
 
 	public static final void refreshCityOfZionBlockHeight(final LocalNodeData localNodeData) {
-		final String rpcNode = CityOfZionUtil.getMainNetRpcNode();
-		final int blockchainHeight = RpcClientUtil.getBlockCount(localNodeData.getRpcClientTimeoutMillis(), rpcNode,
-				false);
-		localNodeData.setBlockchainBlockCount(blockchainHeight);
+		try {
+			final String rpcNode = CityOfZionUtil.getMainNetRpcNode();
+			final int blockchainHeight = RpcClientUtil.getBlockCount(localNodeData.getRpcClientTimeoutMillis(), rpcNode,
+					false);
+			localNodeData.setBlockchainBlockCount(blockchainHeight);
+		} catch (final Exception e) {
+			LOG.error("error refreshing block height", e);
+		}
 	}
 
 	public static final void requestBlocksUnsynchronized(final LocalNodeData localNodeData, final RemoteNodeData r)

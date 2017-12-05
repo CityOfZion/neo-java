@@ -24,7 +24,6 @@ import neo.model.bytes.UInt160;
 import neo.model.bytes.UInt256;
 import neo.model.bytes.UInt32;
 import neo.model.bytes.UInt64;
-import neo.model.bytes.UInt8;
 
 public class ModelUtil {
 
@@ -154,6 +153,13 @@ public class ModelUtil {
 		return new UInt160(ba);
 	}
 
+	/**
+	 * return a UInt256.
+	 *
+	 * @param bb
+	 *            the byte buffer to use.
+	 * @return a UInt256
+	 */
 	public static UInt256 getUInt256(final ByteBuffer bb) {
 		return getUInt256(bb, false);
 	}
@@ -174,11 +180,6 @@ public class ModelUtil {
 	public static UInt64 getUInt64(final ByteBuffer bb) {
 		final byte[] ba = getByteArray(bb, UInt64.SIZE, true);
 		return new UInt64(ba);
-	}
-
-	public static UInt8 getUInt8(final ByteBuffer bb) {
-		final byte[] ba = getByteArray(bb, UInt8.SIZE, true);
-		return new UInt8(ba);
 	}
 
 	public static <T extends ByteArraySerializable> List<T> readArray(final ByteBuffer bb, final Class<T> cl) {
