@@ -215,9 +215,20 @@ public class LocalControllerNode {
 		LOG.debug("SUCCESS notifyNodeDataChangeListeners");
 	}
 
+	/**
+	 * handles the "addr" message.
+	 *
+	 * @param peer
+	 *            the peer taht sent the message.
+	 * @param message
+	 *            the message.
+	 */
 	private void onAddr(final RemoteNodeControllerRunnable peer, final Message message) {
 		try {
 			final AddrPayload addrPayload = (AddrPayload) message.payload;
+			if (addrPayload == null) {
+				return;
+			}
 			for (final NetworkAddressWithTime nawt : addrPayload.getAddressList()) {
 				final byte[] addressBa = nawt.address.getBytesCopy();
 				ArrayUtils.reverse(addressBa);

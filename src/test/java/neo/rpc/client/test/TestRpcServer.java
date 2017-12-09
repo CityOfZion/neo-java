@@ -172,16 +172,15 @@ public class TestRpcServer {
 	}
 
 	/**
-	 * test reading address balance.
+	 * returns the response from the RPC server.
+	 *
+	 * @param params
+	 *            the parameters to send.
+	 * @param method
+	 *            the method to call.
+	 * @return the response from the RPC server.
 	 */
-	@Test
-	public void test001CoreGetBestBlockHash() {
-		final JSONArray params = new JSONArray();
-		final String method = "getbestblockhash";
-
-		final String expectedStrRaw = TestUtil.getJsonTestResourceAsString(getClass().getSimpleName(),
-				"test002CoreGetBestBlockHash");
-
+	private String getResponse(final JSONArray params, final String method) {
 		final String actualStrRaw;
 		try {
 			final JSONObject inputJson = creteInputJson(method, params);
@@ -209,6 +208,40 @@ public class TestRpcServer {
 		} catch (final Exception e) {
 			throw new RuntimeException(e);
 		}
+		return actualStrRaw;
+	}
+
+	/**
+	 * test reading best block.
+	 */
+	@Test
+	public void test001CoreGetBestBlockHash() {
+		final JSONArray params = new JSONArray();
+		final String method = "getbestblockhash";
+
+		final String expectedStrRaw = TestUtil.getJsonTestResourceAsString(getClass().getSimpleName(),
+				"test001CoreGetBestBlockHash");
+
+		final String actualStrRaw = getResponse(params, method);
+
+		final String expectedStr = new JSONObject(expectedStrRaw).toString(2);
+		final String actualStr = new JSONObject(actualStrRaw).toString(2);
+
+		Assert.assertEquals(TestUtil.RESPONSES_MUST_MATCH, expectedStr, actualStr);
+	}
+
+	/**
+	 * test reading address balance.
+	 */
+	@Test
+	public void test002CoreGetBlockCount() {
+		final JSONArray params = new JSONArray();
+		final String method = "getblockcount";
+
+		final String expectedStrRaw = TestUtil.getJsonTestResourceAsString(getClass().getSimpleName(),
+				"test002CoreGetBlockCount");
+
+		final String actualStrRaw = getResponse(params, method);
 
 		final String expectedStr = new JSONObject(expectedStrRaw).toString(2);
 		final String actualStr = new JSONObject(actualStrRaw).toString(2);

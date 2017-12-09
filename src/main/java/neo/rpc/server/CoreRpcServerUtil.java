@@ -33,6 +33,21 @@ import neo.network.LocalControllerNode;
 public final class CoreRpcServerUtil {
 
 	/**
+	 * error, no blocks in block chain.
+	 */
+	private static final String ERROR_NO_BLOCKS_IN_BLOCKCHAIN = "no blocks in blockchain";
+
+	/**
+	 * a generic expected value for a hex string "0x...".
+	 */
+	private static final String EXPECTED_GENERIC_HEX = "0x...";
+
+	/**
+	 * the string "null".
+	 */
+	private static final String NULL = "null";
+
+	/**
 	 * the response tag for the result.
 	 */
 	private static final String RESULT = "result";
@@ -107,14 +122,31 @@ public final class CoreRpcServerUtil {
 			final Block block = controller.getLocalNodeData().getBlockDb().getBlockWithMaxIndex();
 			if (block == null) {
 				final JSONObject response = new JSONObject();
-				response.put(ERROR, "no blocks in blockchain");
-				response.put(EXPECTED, "0x...");
-				response.put(ACTUAL, "null");
+				response.put(ERROR, ERROR_NO_BLOCKS_IN_BLOCKCHAIN);
+				response.put(EXPECTED, EXPECTED_GENERIC_HEX);
+				response.put(ACTUAL, NULL);
 				return response;
 			} else {
 				final JSONObject response = new JSONObject();
 				final String hashHex = block.hash.toHexString();
 				response.put(RESULT, "0x" + hashHex);
+				response.put(ID, id);
+				response.put(JSONRPC, VERSION_2_0);
+				return response;
+			}
+		}
+		case GETBLOCKCOUNT: {
+			final Block block = controller.getLocalNodeData().getBlockDb().getBlockWithMaxIndex();
+			if (block == null) {
+				final JSONObject response = new JSONObject();
+				response.put(ERROR, ERROR_NO_BLOCKS_IN_BLOCKCHAIN);
+				response.put(EXPECTED, EXPECTED_GENERIC_HEX);
+				response.put(ACTUAL, NULL);
+				return response;
+			} else {
+				final JSONObject response = new JSONObject();
+				final long index = block.getIndexAsLong();
+				response.put(RESULT, index + 1);
 				response.put(ID, id);
 				response.put(JSONRPC, VERSION_2_0);
 				return response;
