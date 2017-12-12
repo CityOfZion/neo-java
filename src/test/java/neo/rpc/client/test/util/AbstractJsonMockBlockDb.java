@@ -83,6 +83,20 @@ public abstract class AbstractJsonMockBlockDb implements BlockDb {
 	}
 
 	@Override
+	public final Block getBlock(final UInt256 hash) {
+		final String hashHex = hash.toHexString();
+		final JSONArray mockBlockDb = getMockBlockDb();
+		for (int ix = 0; ix < mockBlockDb.length(); ix++) {
+			final JSONObject mockBlock = mockBlockDb.getJSONObject(ix);
+			if (mockBlock.getString(HASH).equals(hashHex)) {
+				final Block block = getBlock(mockBlock);
+				return block;
+			}
+		}
+		throw new RuntimeException("no block at hash:" + hash);
+	}
+
+	@Override
 	public final long getBlockCount() {
 		return getMockBlockDb().length();
 	}

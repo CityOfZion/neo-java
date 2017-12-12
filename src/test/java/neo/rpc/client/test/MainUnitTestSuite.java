@@ -25,6 +25,8 @@ import org.junit.runners.Suite;
 		/** */
 		TestNEP5.class,
 		/** */
+		TestRpcServerInit.class,
+		/** */
 })
 
 public class MainUnitTestSuite {

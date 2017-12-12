@@ -133,7 +133,7 @@ public class LocalControllerNodeRefreshRunnable implements Runnable {
 								LOG.debug("refreshThread {} retrying node with phase {}",
 										data.getTcpAddressAndPortString(), data.getConnectionPhase());
 							}
-							localControllerNode.addPeerWrapperToPool(data);
+							localControllerNode.addRemoteNodeDataToPool(data);
 						} catch (final Exception e) {
 							throw new RuntimeException(e);
 						}

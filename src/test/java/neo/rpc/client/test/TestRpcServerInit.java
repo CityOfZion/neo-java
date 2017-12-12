@@ -43,7 +43,7 @@ import neo.rpc.server.CoreRpcServerUtil;
  *
  */
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
-public class TestRpcServer {
+public class TestRpcServerInit {
 
 	/**
 	 * a connection exception.
@@ -58,7 +58,7 @@ public class TestRpcServer {
 	/**
 	 * the logger.
 	 */
-	private static final Logger LOG = LoggerFactory.getLogger(TestRpcServer.class);
+	private static final Logger LOG = LoggerFactory.getLogger(TestRpcServerInit.class);
 
 	/**
 	 * the controller.
@@ -68,7 +68,7 @@ public class TestRpcServer {
 	static {
 		final JSONObject controllerNodeConfig = ConfigurationUtil.getConfiguration();
 		final JSONObject localJson = controllerNodeConfig.getJSONObject(ConfigurationUtil.LOCAL);
-		localJson.put(ConfigurationUtil.BLOCK_DB_IMPL, "neo.rpc.client.test.TestRpcServer$JsonBlockDbImpl");
+		localJson.put(ConfigurationUtil.BLOCK_DB_IMPL, "neo.rpc.client.test.TestRpcServerInit$JsonBlockDbImpl");
 		localJson.put(ConfigurationUtil.PORT, 30333);
 		CONTROLLER = new LocalControllerNode(controllerNodeConfig);
 	}
@@ -88,13 +88,6 @@ public class TestRpcServer {
 	@BeforeClass
 	public static void beforeClass() {
 		LOG.debug("beforeClass");
-
-		if (CONTROLLER.getLocalNodeData().getBlockDb().getBlockWithMaxIndex() == null) {
-			// final BlockDb realDb = new BlockDbImpl();
-			// CONTROLLER.getLocalNodeData().getBlockDb().put(realDb.getBlock(0));
-			// realDb.close();
-			throw new RuntimeException("empty JSON db:" + CONTROLLER.getLocalNodeData().getBlockDb());
-		}
 
 		CONTROLLER.startCoreRpcServer();
 	}
@@ -257,25 +250,6 @@ public class TestRpcServer {
 	}
 
 	/**
-	 * test for errors reading best block.
-	 */
-	@Test
-	public void test003CoreGetBestBlockHashErrors() {
-		final JSONArray params = new JSONArray();
-		final String method = CoreRpcCommandEnum.GETBESTBLOCKHASH.getName();
-
-		final String expectedStrRaw = TestUtil.getJsonTestResourceAsString(getClass().getSimpleName(),
-				"test003CoreGetBestBlockHash");
-
-		final String actualStrRaw = getResponse("", params, method);
-
-		final String expectedStr = new JSONObject(expectedStrRaw).toString(2);
-		final String actualStr = new JSONObject(actualStrRaw).toString(2);
-
-		Assert.assertEquals(TestUtil.RESPONSES_MUST_MATCH, expectedStr, actualStr);
-	}
-
-	/**
 	 * test reading address balance.
 	 */
 	@Test
@@ -380,8 +354,7 @@ public class TestRpcServer {
 		 * the constructor.
 		 */
 		public JsonBlockDbImpl() {
-			final String dbStr = TestUtil.getJsonTestResourceAsString("TestRpcServer", "BlockDbImpl");
-			jsonArray = new JSONArray(dbStr);
+			jsonArray = new JSONArray();
 		}
 
 		@Override

@@ -108,7 +108,7 @@ public final class NeoMain {
 		LOG.info("STARTED main");
 		final JSONObject controllerNodeConfig = ConfigurationUtil.getConfiguration();
 		final LocalControllerNode controller = new LocalControllerNode(controllerNodeConfig);
-		controller.loadNodeFile();
+		controller.loadNodeFiles();
 
 		final StatsModel statsTableModel = new StatsModel();
 		final RemotePeerDataModel peerTableModel = new RemotePeerDataModel();

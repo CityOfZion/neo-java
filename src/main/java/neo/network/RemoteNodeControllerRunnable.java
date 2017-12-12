@@ -200,10 +200,10 @@ public final class RemoteNodeControllerRunnable implements Runnable {
 		final Exception e) {
 			LOG.error("error", e);
 			LOG.debug("FAILURE RemoteNodeControllerRunnable run");
-			localControllerNode.OnSocketClose(RemoteNodeControllerRunnable.this);
+			localControllerNode.onSocketClose(RemoteNodeControllerRunnable.this);
 			return;
 		}
-		localControllerNode.OnSocketClose(RemoteNodeControllerRunnable.this);
+		localControllerNode.onSocketClose(RemoteNodeControllerRunnable.this);
 		LOG.debug("SUCCESS RemoteNodeControllerRunnable run");
 	}
 

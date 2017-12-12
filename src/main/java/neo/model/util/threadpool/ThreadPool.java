@@ -5,16 +5,39 @@ import java.util.List;
 import java.util.concurrent.BlockingDeque;
 import java.util.concurrent.LinkedBlockingDeque;
 
+/**
+ * the thread pool class.
+ *
+ * @author coranos
+ *
+ */
 public class ThreadPool {
 
-	private BlockingDeque<Runnable> taskQueue = null;
+	/**
+	 * the task queue.
+	 */
+	private final BlockingDeque<Runnable> taskQueue;
+
+	/**
+	 * the list of threads.
+	 */
 	private final List<PoolThread> threads = new ArrayList<>();
+
+	/**
+	 * the stopped flag.
+	 */
 	private boolean isStopped = false;
 
-	public ThreadPool(final int noOfThreads) {
+	/**
+	 * the constructor.
+	 *
+	 * @param threadCount
+	 *            the number of threads to create.
+	 */
+	public ThreadPool(final int threadCount) {
 		taskQueue = new LinkedBlockingDeque<>();
 
-		for (int i = 0; i < noOfThreads; i++) {
+		for (int threadIx = 0; threadIx < threadCount; threadIx++) {
 			threads.add(new PoolThread(taskQueue));
 		}
 		for (final PoolThread thread : threads) {
@@ -22,22 +45,35 @@ public class ThreadPool {
 		}
 	}
 
-	public synchronized void execute(final Runnable task) throws Exception {
+	/**
+	 * executes a runnable task.
+	 *
+	 * @param task
+	 *            the task to execute.
+	 */
+	public synchronized void execute(final Runnable task) {
 		if (isStopped) {
 			throw new IllegalStateException("ThreadPool is stopped");
 		}
 		taskQueue.addLast(task);
 	}
 
+	/**
+	 * return the size of the queue.
+	 *
+	 * @return the size of the queue.
+	 */
 	public synchronized int size() {
 		return taskQueue.size();
 	}
 
+	/**
+	 * stops all the threads in the queue.
+	 */
 	public synchronized void stop() {
 		isStopped = true;
 		for (final PoolThread thread : threads) {
 			thread.doStop();
 		}
 	}
-
 }

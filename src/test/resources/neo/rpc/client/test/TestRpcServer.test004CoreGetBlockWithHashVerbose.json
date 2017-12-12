@@ -1,0 +1,94 @@
+{
+	"result": {
+		"nextconsensus": "APyEx5f4Zm4oCHwFWiSTaph1fPBxZacYVR",
+		"nextconsensusHash": "14775fa555bfa4cc95efe9bb65c104bf27385d2b655de75917",
+		"tx": [
+			{
+				"outputs": [],
+				"exclusiveDataType": "MinerExclusiveData",
+				"exclusiveData": {
+					"nonce": "1dac2b7c"
+				},
+				"inputs": [],
+				"attributes": [],
+				"type": "MINER_TRANSACTION",
+				"scripts": [],
+				"version": 0
+			},
+			{
+				"outputs": [],
+				"exclusiveDataType": "RegisterExclusiveData",
+				"exclusiveData": {
+					"owner": "00",
+					"amount": 10000000000000000,
+					"precision": 0,
+					"name": "[{\"lang\":\"zh-CN\",\"name\":\"小蚁股\"},{\"lang\":\"en\",\"name\":\"AntShare\"}]",
+					"precisionHex": "0",
+					"admin": "4b5acd30ba7ec77199561afa0bbd49b5e94517da",
+					"assetType": "GOVERNING_TOKEN",
+					"amountHex": "c16ff2862300"
+				},
+				"inputs": [],
+				"attributes": [],
+				"type": "REGISTER_TRANSACTION",
+				"scripts": [],
+				"version": 0
+			},
+			{
+				"outputs": [],
+				"exclusiveDataType": "RegisterExclusiveData",
+				"exclusiveData": {
+					"owner": "00",
+					"amount": 10000000000000000,
+					"precision": 8,
+					"name": "[{\"lang\":\"zh-CN\",\"name\":\"小蚁币\"},{\"lang\":\"en\",\"name\":\"AntCoin\"}]",
+					"precisionHex": "8",
+					"admin": "68ebfc4fefbe24c9cff0f7e3c0d27ed396d07f9f",
+					"assetType": "UTILITY_TOKEN",
+					"amountHex": "c16ff2862300"
+				},
+				"inputs": [],
+				"attributes": [],
+				"type": "REGISTER_TRANSACTION",
+				"scripts": [],
+				"version": 0
+			},
+			{
+				"outputs": [
+					{
+						"scriptHash": "5fa99d93303775fe50ca119c327759313eccfa1c",
+						"assetId": "c56f33fc6ecfcd0c225c4ab356fee59390af8560be0e930faebe74a6daff7c9b",
+						"valueHex": "c16ff2862300",
+						"value": 10000000000000000
+					}
+				],
+				"exclusiveDataType": "NoExclusiveData",
+				"exclusiveData": {
+					
+				},
+				"inputs": [],
+				"attributes": [],
+				"type": "ISSUE_TRANSACTION",
+				"scripts": [
+					{
+						"invocation": "",
+						"verification": "51"
+					}
+				],
+				"version": 0
+			}
+		],
+		"previousblockhash": "0x0000000000000000000000000000000000000000000000000000000000000000",
+		"merkleroot": "0x803ff4abe3ea6533bcc0be574efa02f83ae8fdc651c879056b0d9be336c01bf4",
+		"index": 0,
+		"time": 1468595301,
+		"version": 0,
+		"script": {
+			"invocation": "",
+			"verification": "51"
+		},
+		"hash": "0xd42561e3d30e15be6400b6df2f328e02d2bf6354c41dce433bc57687c82144bf"
+	},
+	"id": 1,
+	"jsonrpc": "2.0"
+}

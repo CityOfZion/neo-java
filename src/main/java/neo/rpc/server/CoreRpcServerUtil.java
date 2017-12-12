@@ -1,8 +1,14 @@
 package neo.rpc.server;
 
+import java.nio.ByteBuffer;
+
+import org.apache.commons.codec.binary.Hex;
+import org.json.JSONArray;
 import org.json.JSONObject;
 
+import neo.model.bytes.UInt256;
 import neo.model.core.Block;
+import neo.model.util.ModelUtil;
 import neo.network.LocalControllerNode;
 
 /**
@@ -92,6 +98,99 @@ public final class CoreRpcServerUtil {
 	 */
 	public static final String METHOD = "method";
 
+	private static JSONObject onGetBestBlockHash(final LocalControllerNode controller, final int id) {
+		final Block block = controller.getLocalNodeData().getBlockDb().getBlockWithMaxIndex();
+		if (block == null) {
+			final JSONObject response = new JSONObject();
+			response.put(ERROR, ERROR_NO_BLOCKS_IN_BLOCKCHAIN);
+			response.put(EXPECTED, EXPECTED_GENERIC_HEX);
+			response.put(ACTUAL, NULL);
+			return response;
+		} else {
+			final JSONObject response = new JSONObject();
+			final String hashHex = block.hash.toHexString();
+			response.put(RESULT, "0x" + hashHex);
+			response.put(ID, id);
+			response.put(JSONRPC, VERSION_2_0);
+			return response;
+		}
+	}
+
+	private static JSONObject onGetBlock(final LocalControllerNode controller, final int id, final JSONArray params) {
+		if (params.length() == 0) {
+			final JSONObject response = new JSONObject();
+			response.put(ERROR, "no parameters, expected a hash or an index");
+			response.put(EXPECTED, 0);
+			response.put(ACTUAL, NULL);
+			return response;
+		} else {
+			final boolean verbose;
+			if (params.length() >= 2) {
+				if (params.get(1) instanceof Number) {
+					final long index = params.getLong(1);
+					verbose = index == 1;
+				} else {
+					verbose = false;
+				}
+			} else {
+				verbose = false;
+			}
+
+			final Block block;
+			if (params.get(0) instanceof String) {
+				final String hashStr = params.getString(0);
+				final byte[] ba = ModelUtil.decodeHex(hashStr);
+				final UInt256 hash = new UInt256(ByteBuffer.wrap(ba));
+				try {
+					block = controller.getLocalNodeData().getBlockDb().getBlock(hash);
+				} catch (final RuntimeException e) {
+					final JSONObject response = new JSONObject();
+					response.put(ERROR, e.getMessage());
+					response.put(EXPECTED, EXPECTED_GENERIC_HEX);
+					response.put(ACTUAL, params.get(0));
+					return response;
+				}
+			} else if (params.get(0) instanceof Number) {
+				final long index = params.getLong(0);
+				block = controller.getLocalNodeData().getBlockDb().getBlock(index);
+			} else {
+				final JSONObject response = new JSONObject();
+				response.put(ERROR, "bad parameters, expected a hash or an index");
+				response.put(EXPECTED, 0);
+				response.put(ACTUAL, params.get(0));
+				return response;
+			}
+			final JSONObject response = new JSONObject();
+			response.put(ID, id);
+			response.put(JSONRPC, VERSION_2_0);
+
+			if (verbose) {
+				response.put(RESULT, block.toJSONObject());
+			} else {
+				response.put(RESULT, Hex.encodeHexString(block.toByteArray()));
+			}
+			return response;
+		}
+	}
+
+	private static JSONObject onGetBlockCount(final LocalControllerNode controller, final int id) {
+		final Block block = controller.getLocalNodeData().getBlockDb().getBlockWithMaxIndex();
+		if (block == null) {
+			final JSONObject response = new JSONObject();
+			response.put(RESULT, 0);
+			response.put(ID, id);
+			response.put(JSONRPC, VERSION_2_0);
+			return response;
+		} else {
+			final JSONObject response = new JSONObject();
+			final long index = block.getIndexAsLong();
+			response.put(RESULT, index + 1);
+			response.put(ID, id);
+			response.put(JSONRPC, VERSION_2_0);
+			return response;
+		}
+	}
+
 	/**
 	 * process the request.
 	 *
@@ -119,38 +218,14 @@ public final class CoreRpcServerUtil {
 
 		switch (coreRpcCommand) {
 		case GETBESTBLOCKHASH: {
-			final Block block = controller.getLocalNodeData().getBlockDb().getBlockWithMaxIndex();
-			if (block == null) {
-				final JSONObject response = new JSONObject();
-				response.put(ERROR, ERROR_NO_BLOCKS_IN_BLOCKCHAIN);
-				response.put(EXPECTED, EXPECTED_GENERIC_HEX);
-				response.put(ACTUAL, NULL);
-				return response;
-			} else {
-				final JSONObject response = new JSONObject();
-				final String hashHex = block.hash.toHexString();
-				response.put(RESULT, "0x" + hashHex);
-				response.put(ID, id);
-				response.put(JSONRPC, VERSION_2_0);
-				return response;
-			}
+			return onGetBestBlockHash(controller, id);
 		}
 		case GETBLOCKCOUNT: {
-			final Block block = controller.getLocalNodeData().getBlockDb().getBlockWithMaxIndex();
-			if (block == null) {
-				final JSONObject response = new JSONObject();
-				response.put(ERROR, ERROR_NO_BLOCKS_IN_BLOCKCHAIN);
-				response.put(EXPECTED, EXPECTED_GENERIC_HEX);
-				response.put(ACTUAL, NULL);
-				return response;
-			} else {
-				final JSONObject response = new JSONObject();
-				final long index = block.getIndexAsLong();
-				response.put(RESULT, index + 1);
-				response.put(ID, id);
-				response.put(JSONRPC, VERSION_2_0);
-				return response;
-			}
+			return onGetBlockCount(controller, id);
+		}
+		case GETBLOCK: {
+			final JSONArray params = request.getJSONArray(PARAMS);
+			return onGetBlock(controller, id, params);
 		}
 		default: {
 			final JSONObject response = new JSONObject();
@@ -160,7 +235,6 @@ public final class CoreRpcServerUtil {
 			return response;
 		}
 		}
-
 	}
 
 	/**

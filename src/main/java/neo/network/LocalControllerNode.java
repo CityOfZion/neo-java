@@ -1,6 +1,7 @@
 package neo.network;
 
 import java.io.File;
+import java.io.IOException;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.nio.charset.Charset;
@@ -89,18 +90,42 @@ public class LocalControllerNode {
 	 */
 	private final ThreadPool threadPool;
 
+	/**
+	 * the local node data.
+	 */
 	private final LocalNodeData localNodeData;
 
+	/**
+	 * the node refresh runnable class.
+	 */
 	private final LocalControllerNodeRefreshRunnable refreshRunnable;
 
+	/**
+	 * the node core RPC runnable class.
+	 */
 	private final LocalControllerNodeCoreRpcRunnable coreRpcRunnable;
 
+	/**
+	 * the refresh thread.
+	 */
 	private final Thread refreshThread;
 
+	/**
+	 * the core RPC server thread.
+	 */
 	private final Thread coreRpcServerThread;
 
+	/**
+	 * the remote node config.
+	 */
 	private final JSONObject remoteNodeConfig;
 
+	/**
+	 * the constructor.
+	 *
+	 * @param config
+	 *            the JSON configuration.
+	 */
 	public LocalControllerNode(final JSONObject config) {
 		LOG.debug("STARTED LocalControllerNode config : {}", config);
 		final JSONObject localJson = config.getJSONObject(ConfigurationUtil.LOCAL);
@@ -127,14 +152,26 @@ public class LocalControllerNode {
 		coreRpcServerThread = new Thread(coreRpcRunnable, "Core RPC Thread");
 	}
 
-	public void addPeerChangeListener(final NodeDataChangeListener l) {
+	/**
+	 * adds a peer listener.
+	 *
+	 * @param listener
+	 *            the listener to add.
+	 */
+	public void addPeerChangeListener(final NodeDataChangeListener listener) {
 		synchronized (LocalControllerNode.this) {
-			peerChangeListeners.add(l);
-			l.nodeDataChanged(localNodeData, getPeerDataSet());
+			peerChangeListeners.add(listener);
+			listener.nodeDataChanged(localNodeData, getPeerDataSet());
 		}
 	}
 
-	public void addPeerWrapperToPool(final RemoteNodeData data) throws Exception {
+	/**
+	 * adds the remote node data to the pool of data used to in the network.
+	 *
+	 * @param data
+	 *            the data to use.
+	 */
+	public void addRemoteNodeDataToPool(final RemoteNodeData data) {
 		LOG.trace("STARTED addPeerWrapperToPool \"{}\"", data);
 		synchronized (LocalControllerNode.this) {
 			if (getPeerDataSet().containsIndex(RemoteNodeData.TCP_ADDRESS_AND_PORT, data)) {
@@ -169,15 +206,58 @@ public class LocalControllerNode {
 		return blockDbImplClass;
 	}
 
+	/**
+	 * return the local node data.
+	 *
+	 * @return the local node data.
+	 */
 	public LocalNodeData getLocalNodeData() {
 		return localNodeData;
 	}
 
+	/**
+	 * return the peer data set.
+	 *
+	 * @return the peer data set.
+	 */
 	public IndexedSet<RemoteNodeData> getPeerDataSet() {
 		return peerDataSet;
 	}
 
-	public void loadNodeFile() throws Exception {
+	/**
+	 * loads the node file.
+	 *
+	 * @param nodeFile
+	 *            the node file to load.
+	 */
+	private void loadNodeFile(final File nodeFile) {
+		try {
+			if (!nodeFile.exists()) {
+				LOG.error("FAILURE loadNodeFile, file does not exist: {}", nodeFile.getCanonicalPath());
+				return;
+			}
+			final JSONObject goodNodes = new JSONObject(FileUtils.readFileToString(nodeFile, Charset.defaultCharset()));
+			final JSONArray goodPeers = goodNodes.getJSONArray(GOOD_PEERS);
+			for (int ix = 0; ix < goodPeers.length(); ix++) {
+				final JSONObject goodPeer = goodPeers.getJSONObject(ix);
+				final String addressName = goodPeer.getString(ADDRESS);
+				final int port = goodPeer.getInt(PORT);
+				final InetAddress address = InetAddress.getByName(addressName);
+				final InetSocketAddress addressAndPort = new InetSocketAddress(address, port);
+				final RemoteNodeData data = new RemoteNodeData(remoteNodeConfig);
+				data.setConnectionPhase(NodeConnectionPhaseEnum.UNKNOWN);
+				data.setTcpAddressAndPort(addressAndPort);
+				addRemoteNodeDataToPool(data);
+			}
+		} catch (final IOException e) {
+			throw new RuntimeException(e);
+		}
+	}
+
+	/**
+	 * loads the node files.
+	 */
+	public void loadNodeFiles() {
 		synchronized (this) {
 			loadNodeFile(localNodeData.getSeedNodeFile());
 			loadNodeFile(localNodeData.getGoodNodeFile());
@@ -185,26 +265,9 @@ public class LocalControllerNode {
 		notifyNodeDataChangeListeners();
 	}
 
-	private void loadNodeFile(final File seedNodeFile) throws Exception {
-		if (!seedNodeFile.exists()) {
-			LOG.error("FAILURE loadNodeFile, file does not exist: {}", seedNodeFile.getCanonicalPath());
-			return;
-		}
-		final JSONObject goodNodes = new JSONObject(FileUtils.readFileToString(seedNodeFile, Charset.defaultCharset()));
-		final JSONArray goodPeers = goodNodes.getJSONArray(GOOD_PEERS);
-		for (int ix = 0; ix < goodPeers.length(); ix++) {
-			final JSONObject goodPeer = goodPeers.getJSONObject(ix);
-			final String addressName = goodPeer.getString(ADDRESS);
-			final int port = goodPeer.getInt(PORT);
-			final InetAddress address = InetAddress.getByName(addressName);
-			final InetSocketAddress addressAndPort = new InetSocketAddress(address, port);
-			final RemoteNodeData data = new RemoteNodeData(remoteNodeConfig);
-			data.setConnectionPhase(NodeConnectionPhaseEnum.UNKNOWN);
-			data.setTcpAddressAndPort(addressAndPort);
-			addPeerWrapperToPool(data);
-		}
-	}
-
+	/**
+	 * notify the node data change listeners that a data change occurred.
+	 */
 	public void notifyNodeDataChangeListeners() {
 		LOG.debug("STARTED notifyNodeDataChangeListeners");
 		synchronized (LocalControllerNode.this) {
@@ -241,7 +304,7 @@ public class LocalControllerNode {
 				final RemoteNodeData data = new RemoteNodeData(remoteNodeConfig);
 				data.setConnectionPhase(NodeConnectionPhaseEnum.UNKNOWN);
 				data.setTcpAddressAndPort(addressAndPort);
-				addPeerWrapperToPool(data);
+				addRemoteNodeDataToPool(data);
 			}
 
 			synchronized (LocalControllerNode.this) {
@@ -256,6 +319,14 @@ public class LocalControllerNode {
 		}
 	}
 
+	/**
+	 * does something on a "block" message.
+	 *
+	 * @param peer
+	 *            the peer that sent the message.
+	 * @param message
+	 *            the message.
+	 */
 	private void onBlock(final RemoteNodeControllerRunnable peer, final Message message) {
 		final Block newBlock = message.getPayload(Block.class);
 
@@ -273,18 +344,62 @@ public class LocalControllerNode {
 		LocalNodeDataSynchronizedUtil.verifyUnverifiedBlocks(localNodeData);
 	}
 
+	/**
+	 * does something on a "getaddr" message.
+	 *
+	 * @param peer
+	 *            the peer that sent the message.
+	 * @param message
+	 *            the message.
+	 */
 	private void onGetAddr(final RemoteNodeControllerRunnable peer, final Message message) {
+		// TODO: return a list of verified peers.
 	}
 
+	/**
+	 * does something on a "getblocks" message.
+	 *
+	 * @param peer
+	 *            the peer that sent the message.
+	 * @param message
+	 *            the message.
+	 */
 	private void onGetBlocks(final RemoteNodeControllerRunnable peer, final Message message) {
+		// TODO: return a list of blocks.
 	}
 
-	private void onGetdata(final RemoteNodeControllerRunnable peer, final Message message) {
+	/**
+	 * does something on a "getdata" message.
+	 *
+	 * @param peer
+	 *            the peer that sent the message.
+	 * @param message
+	 *            the message.
+	 */
+	private void onGetData(final RemoteNodeControllerRunnable peer, final Message message) {
+		// TODO: return a list of blocks.
 	}
 
-	private void onGetheaders(final RemoteNodeControllerRunnable peer, final Message message) {
+	/**
+	 * does something on a "getheaders" message.
+	 *
+	 * @param peer
+	 *            the peer that sent the message.
+	 * @param message
+	 *            the message.
+	 */
+	private void onGetHeaders(final RemoteNodeControllerRunnable peer, final Message message) {
+		// TODO: return a list of headers.
 	}
 
+	/**
+	 * does something on a "headers" message.
+	 *
+	 * @param peer
+	 *            the peer that sent the message.
+	 * @param message
+	 *            the message.
+	 */
 	private void onHeaders(final RemoteNodeControllerRunnable peer, final Message message) {
 		final HeadersPayload headersPayload = message.getPayload(HeadersPayload.class);
 		LOG.debug("STARTED onHeaders size:{}", headersPayload.getHeaderList().size());
@@ -311,7 +426,16 @@ public class LocalControllerNode {
 		LOG.debug("SUCCESS onHeaders headerChanged:{}", headerChanged);
 	}
 
+	/**
+	 * does something on a "inv" message.
+	 *
+	 * @param peer
+	 *            the peer that sent the message.
+	 * @param message
+	 *            the message.
+	 */
 	private void onInv(final RemoteNodeControllerRunnable peer, final Message message) {
+		// TODO: figure out what to do here.
 		final InvPayload invp = message.getPayload(InvPayload.class);
 		switch (invp.getType()) {
 		case BLOCK:
@@ -324,9 +448,26 @@ public class LocalControllerNode {
 
 	}
 
+	/**
+	 * does something on a "mempool" message.
+	 *
+	 * @param peer
+	 *            the peer that sent the message.
+	 * @param message
+	 *            the message.
+	 */
 	private void onMempool(final RemoteNodeControllerRunnable peer, final Message message) {
+		// TODO: figure out what to do here.
 	}
 
+	/**
+	 * do something when a message is sent to this peer.
+	 *
+	 * @param peer
+	 *            the peer that sent the message.
+	 * @param message
+	 *            the message.
+	 */
 	public void onMessage(final RemoteNodeControllerRunnable peer, final Message message) {
 		if (message == null) {
 			return;
@@ -373,11 +514,11 @@ public class LocalControllerNode {
 				break;
 			case GETDATA:
 				peer.getData().setAcknowledgedPeer(true);
-				onGetdata(peer, message);
+				onGetData(peer, message);
 				break;
 			case GETHEADERS:
 				peer.getData().setAcknowledgedPeer(true);
-				onGetheaders(peer, message);
+				onGetHeaders(peer, message);
 				break;
 			}
 
@@ -390,7 +531,13 @@ public class LocalControllerNode {
 		}
 	}
 
-	public void OnSocketClose(final RemoteNodeControllerRunnable peer) {
+	/**
+	 * do something when a peer closes it's socket.
+	 *
+	 * @param peer
+	 *            the peer that closed the socket.
+	 */
+	public void onSocketClose(final RemoteNodeControllerRunnable peer) {
 		synchronized (this) {
 			if (peer.getData().getVersion() != null) {
 				LOG.debug("OnSocketClose {} {}", peer.getData().getTcpAddressAndPortString(),
@@ -407,9 +554,27 @@ public class LocalControllerNode {
 		notifyNodeDataChangeListeners();
 	}
 
+	/**
+	 * does something on a "verack" message.
+	 *
+	 * @param peer
+	 *            the peer that sent the message.
+	 * @param message
+	 *            the message.
+	 */
 	private void onVerack(final RemoteNodeControllerRunnable peer, final Message message) {
+		// TODO: figure out what to do here.
 	}
 
+	/**
+	 * when a "version" message is received, update the peer's connection phase to
+	 * be "acknowledged" and set it's version to be the user agent in the payload.
+	 *
+	 * @param peer
+	 *            the peer that sent the message.
+	 * @param message
+	 *            the message.
+	 */
 	private void onVersion(final RemoteNodeControllerRunnable peer, final Message message) {
 		synchronized (this) {
 			final VersionPayload payload = message.getPayload(VersionPayload.class);
@@ -420,9 +585,15 @@ public class LocalControllerNode {
 		notifyNodeDataChangeListeners();
 	}
 
-	public void removePeerChangeListener(final NodeDataChangeListener l) {
+	/**
+	 * removes a listener.
+	 *
+	 * @param listener
+	 *            the listener to remove.
+	 */
+	public void removePeerChangeListener(final NodeDataChangeListener listener) {
 		synchronized (this) {
-			peerChangeListeners.remove(l);
+			peerChangeListeners.remove(listener);
 		}
 	}
 
@@ -434,7 +605,7 @@ public class LocalControllerNode {
 	 * @throws Exception
 	 *             if an error occuured.
 	 */
-	private boolean runPeers() throws Exception {
+	private boolean runPeers() {
 		boolean anyChanged = false;
 		final List<RemoteNodeData> peerDataList = new ArrayList<>();
 		synchronized (LocalControllerNode.this) {
@@ -468,7 +639,7 @@ public class LocalControllerNode {
 		coreRpcServerThread.start();
 		while (!coreRpcRunnable.isStarted()) {
 			try {
-				Thread.sleep(1000);
+				Thread.sleep(100);
 			} catch (final InterruptedException e) {
 				throw new RuntimeException(e);
 			}
@@ -500,7 +671,7 @@ public class LocalControllerNode {
 		notifyNodeDataChangeListeners();
 
 		for (final RemoteNodeData data : bootstrapPeerList) {
-			addPeerWrapperToPool(data);
+			addRemoteNodeDataToPool(data);
 		}
 	}
 

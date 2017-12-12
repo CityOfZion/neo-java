@@ -124,6 +124,7 @@ public final class BlockDbImpl implements BlockDb {
 	 *            the hash to use.
 	 * @return the block with the given hash.
 	 */
+	@Override
 	public Block getBlock(final UInt256 hash) {
 		synchronized (this) {
 			if (closed) {

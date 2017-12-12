@@ -134,7 +134,6 @@
     <module name="ArrayTypeStyle"/>
     <module name="FinalParameters"/>
     <module name="CommentsIndentation"/>
-    <module name="TodoComment"/>
     <module name="TrailingComment"/>
     <module name="UpperEll"/>
     <module name="OuterTypeFilename"/>

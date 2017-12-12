@@ -11,6 +11,8 @@ public interface BlockDb {
 
 	Block getBlock(long blockHeight);
 
+	Block getBlock(UInt256 hash);
+
 	long getBlockCount();
 
 	Block getBlockWithMaxIndex();
