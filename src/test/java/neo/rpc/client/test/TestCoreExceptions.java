@@ -22,6 +22,7 @@ import neo.model.core.TransactionAttributeUsage;
 import neo.model.core.TransactionType;
 import neo.model.util.GenesisBlockUtil;
 import neo.rpc.client.test.util.TestUtil;
+import neo.rpc.server.CoreRpcCommandEnum;
 
 /**
  * tests serializing blocks.
@@ -218,6 +219,15 @@ public class TestCoreExceptions {
 	public void test011GenesisBlockDataStatic() {
 		Assert.assertEquals(TestUtil.RESPONSES_MUST_MATCH, GenesisBlockUtil.GENESIS_HASH_HEX_STR,
 				GenesisBlockUtil.GENESIS_HASH.toReverseHexString());
+	}
+
+	/**
+	 * test AssetType.valueOfByte.
+	 */
+	@Test
+	public void test012CoreRpcCommandEnumFromName() {
+		final CoreRpcCommandEnum nullEnum = CoreRpcCommandEnum.fromName("");
+		Assert.assertNull("CoreRpcCommandEnum should be null", nullEnum);
 	}
 
 	/**

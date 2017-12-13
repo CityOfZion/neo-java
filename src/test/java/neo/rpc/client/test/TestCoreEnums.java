@@ -13,6 +13,7 @@ import neo.model.core.AssetType;
 import neo.model.core.ContractParameterType;
 import neo.model.core.TransactionAttributeUsage;
 import neo.model.core.TransactionType;
+import neo.rpc.server.CoreRpcCommandEnum;
 
 /**
  * tests serializing blocks.
@@ -84,6 +85,23 @@ public class TestCoreEnums {
 	@Test
 	public void test004AssetType() {
 		Assert.assertEquals(AssetType.CREDIT_FLAG.name(), AssetType.valueOf(AssetType.CREDIT_FLAG.name()).name());
+	}
+
+	/**
+	 * test CoreRpcCommandEnum.
+	 */
+	@Test
+	public void test005CoreRpcCommandEnum() {
+		Assert.assertEquals(CoreRpcCommandEnum.GETBALANCE.name(),
+				CoreRpcCommandEnum.valueOf(CoreRpcCommandEnum.GETBALANCE.name()).name());
+	}
+
+	/**
+	 * test CoreRpcCommandEnum.
+	 */
+	@Test
+	public void test006CoreRpcCommandEnumValuesJSONArray() {
+		Assert.assertNotNull(CoreRpcCommandEnum.getValuesJSONArray());
 	}
 
 	/**

@@ -98,6 +98,15 @@ public final class CoreRpcServerUtil {
 	 */
 	public static final String METHOD = "method";
 
+	/**
+	 * responds to a "getbestblockhash" command.
+	 *
+	 * @param controller
+	 *            the controller to use.
+	 * @param id
+	 *            the request id to use.
+	 * @return the response.
+	 */
 	private static JSONObject onGetBestBlockHash(final LocalControllerNode controller, final int id) {
 		final Block block = controller.getLocalNodeData().getBlockDb().getBlockWithMaxIndex();
 		if (block == null) {
@@ -116,6 +125,17 @@ public final class CoreRpcServerUtil {
 		}
 	}
 
+	/**
+	 * responds to a "getblock" command.
+	 *
+	 * @param controller
+	 *            the controller to use.
+	 * @param id
+	 *            the request id to use.
+	 * @param params
+	 *            the parameters to use.
+	 * @return the response.
+	 */
 	private static JSONObject onGetBlock(final LocalControllerNode controller, final int id, final JSONArray params) {
 		if (params.length() == 0) {
 			final JSONObject response = new JSONObject();
@@ -173,6 +193,15 @@ public final class CoreRpcServerUtil {
 		}
 	}
 
+	/**
+	 * responds to a "getblockcount" command.
+	 *
+	 * @param controller
+	 *            the controller to use.
+	 * @param id
+	 *            the request id to use.
+	 * @return the response.
+	 */
 	private static JSONObject onGetBlockCount(final LocalControllerNode controller, final int id) {
 		final Block block = controller.getLocalNodeData().getBlockDb().getBlockWithMaxIndex();
 		if (block == null) {
@@ -188,6 +217,44 @@ public final class CoreRpcServerUtil {
 			response.put(ID, id);
 			response.put(JSONRPC, VERSION_2_0);
 			return response;
+		}
+	}
+
+	/**
+	 * responds to a "getblockhash" command.
+	 *
+	 * @param controller
+	 *            the controller to use.
+	 * @param id
+	 *            the request id to use.
+	 * @param params
+	 *            the parameters to use.
+	 * @return the response.
+	 */
+	private static JSONObject onGetBlockHash(final LocalControllerNode controller, final int id,
+			final JSONArray params) {
+		if (params.length() == 0) {
+			final JSONObject response = new JSONObject();
+			response.put(ERROR, "no parameters, expected an index");
+			response.put(EXPECTED, 0);
+			response.put(ACTUAL, NULL);
+			return response;
+		} else {
+			final long index = params.getLong(0);
+			try {
+				final Block block = controller.getLocalNodeData().getBlockDb().getBlock(index);
+				final JSONObject response = new JSONObject();
+				response.put(ID, id);
+				response.put(JSONRPC, VERSION_2_0);
+				response.put(RESULT, block.hash.toHexString());
+				return response;
+			} catch (final RuntimeException e) {
+				final JSONObject response = new JSONObject();
+				response.put(ERROR, e.getMessage());
+				response.put(EXPECTED, 0);
+				response.put(ACTUAL, NULL);
+				return response;
+			}
 		}
 	}
 
@@ -227,10 +294,14 @@ public final class CoreRpcServerUtil {
 			final JSONArray params = request.getJSONArray(PARAMS);
 			return onGetBlock(controller, id, params);
 		}
+		case GETBLOCKHASH: {
+			final JSONArray params = request.getJSONArray(PARAMS);
+			return onGetBlockHash(controller, id, params);
+		}
 		default: {
 			final JSONObject response = new JSONObject();
 			response.put(ERROR, "unknown method");
-			response.put(EXPECTED, CoreRpcCommandEnum.valuesJSONArray());
+			response.put(EXPECTED, CoreRpcCommandEnum.getValuesJSONArray());
 			response.put(ACTUAL, methodStr);
 			return response;
 		}

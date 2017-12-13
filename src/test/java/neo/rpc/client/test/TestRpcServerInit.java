@@ -271,6 +271,26 @@ public class TestRpcServerInit {
 	}
 
 	/**
+	 * test reading block hash.
+	 */
+	@Test
+	public void test005CoreGetBlockHash() {
+		final JSONArray params = new JSONArray();
+		params.put(0);
+		final String method = CoreRpcCommandEnum.GETBLOCKHASH.getName();
+
+		final String expectedStrRaw = TestUtil.getJsonTestResourceAsString(getClass().getSimpleName(),
+				"test005CoreGetBlockHash");
+
+		final String actualStrRaw = getResponse(CoreRpcServerUtil.VERSION_2_0, params, method);
+
+		final String expectedStr = new JSONObject(expectedStrRaw).toString(2);
+		final String actualStr = new JSONObject(actualStrRaw).toString(2);
+
+		Assert.assertEquals(TestUtil.RESPONSES_MUST_MATCH, expectedStr, actualStr);
+	}
+
+	/**
 	 * test reading address balance.
 	 */
 	@Test

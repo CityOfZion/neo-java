@@ -63,7 +63,7 @@ public enum CoreRpcCommandEnum {
 	 *
 	 * @return the values, as a JSON array.
 	 */
-	public static JSONArray valuesJSONArray() {
+	public static JSONArray getValuesJSONArray() {
 		final JSONArray expectedArray = new JSONArray();
 		for (final CoreRpcCommandEnum coreRpcCommand : CoreRpcCommandEnum.values()) {
 			expectedArray.put(coreRpcCommand.getName());
