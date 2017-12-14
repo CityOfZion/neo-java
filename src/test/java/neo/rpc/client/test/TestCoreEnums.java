@@ -92,8 +92,8 @@ public class TestCoreEnums {
 	 */
 	@Test
 	public void test005CoreRpcCommandEnum() {
-		Assert.assertEquals(CoreRpcCommandEnum.GETBALANCE.name(),
-				CoreRpcCommandEnum.valueOf(CoreRpcCommandEnum.GETBALANCE.name()).name());
+		Assert.assertEquals(CoreRpcCommandEnum.GETBESTBLOCKHASH.name(),
+				CoreRpcCommandEnum.valueOf(CoreRpcCommandEnum.GETBESTBLOCKHASH.name()).name());
 	}
 
 	/**

@@ -48,7 +48,7 @@ public final class LocalControllerNodeCoreRpcRunnable implements Runnable {
 			if (LOG.isDebugEnabled()) {
 				LOG.debug("host:{};request:{}", session.getRemoteHostName(), requestStr);
 			}
-			final JSONObject response = CoreRpcServerUtil.process(controller, requestStr);
+			final JSONObject response = CoreRpcServerUtil.process(controller, session.getUri(), requestStr);
 			final String responseStr = response.toString();
 			if (LOG.isDebugEnabled()) {
 				LOG.debug("host:{};response:{}", session.getRemoteHostName(), responseStr);

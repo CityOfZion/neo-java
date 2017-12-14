@@ -6,6 +6,7 @@ import org.apache.commons.codec.binary.Hex;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
+import kotlin.NotImplementedError;
 import neo.model.bytes.UInt256;
 import neo.model.core.Block;
 import neo.model.util.ModelUtil;
@@ -263,48 +264,96 @@ public final class CoreRpcServerUtil {
 	 *
 	 * @param controller
 	 *            the controller to use.
+	 * @param uri
+	 *            the uri to process
 	 * @param requestStr
 	 *            the request to process
 	 *
 	 * @return the response.
 	 */
-	public static JSONObject process(final LocalControllerNode controller, final String requestStr) {
-		final JSONObject request = new JSONObject(requestStr);
+	public static JSONObject process(final LocalControllerNode controller, final String uri, final String requestStr) {
+		if (uri.startsWith("address")) {
+			final AddressCommandEnum addressCommand = AddressCommandEnum.fromName(uri);
+			switch (addressCommand) {
+			case BALANCE: {
+				// TODO : implement.
+				throw new NotImplementedError(addressCommand.getName());
+			}
+			case CLAIMS: {
+				// TODO : implement.
+				throw new NotImplementedError(addressCommand.getName());
+			}
+			case HISTORY: {
+				// TODO : implement.
+				throw new NotImplementedError(addressCommand.getName());
+			}
+			default:
+				// TODO : implement.
+				throw new NotImplementedError(addressCommand.getName());
+			}
+		} else {
 
-		final String versionStr = request.getString(JSONRPC);
-		if (!versionStr.equals(VERSION_2_0)) {
-			final JSONObject response = new JSONObject();
-			response.put(ERROR, "unexpected version");
-			response.put(EXPECTED, VERSION_2_0);
-			response.put(ACTUAL, versionStr);
-			return response;
-		}
-		final String methodStr = request.getString(METHOD);
-		final int id = request.getInt(ID);
-		final CoreRpcCommandEnum coreRpcCommand = CoreRpcCommandEnum.fromName(methodStr);
+			final JSONObject request = new JSONObject(requestStr);
 
-		switch (coreRpcCommand) {
-		case GETBESTBLOCKHASH: {
-			return onGetBestBlockHash(controller, id);
-		}
-		case GETBLOCKCOUNT: {
-			return onGetBlockCount(controller, id);
-		}
-		case GETBLOCK: {
-			final JSONArray params = request.getJSONArray(PARAMS);
-			return onGetBlock(controller, id, params);
-		}
-		case GETBLOCKHASH: {
-			final JSONArray params = request.getJSONArray(PARAMS);
-			return onGetBlockHash(controller, id, params);
-		}
-		default: {
-			final JSONObject response = new JSONObject();
-			response.put(ERROR, "unknown method");
-			response.put(EXPECTED, CoreRpcCommandEnum.getValuesJSONArray());
-			response.put(ACTUAL, methodStr);
-			return response;
-		}
+			final String versionStr = request.getString(JSONRPC);
+			if (!versionStr.equals(VERSION_2_0)) {
+				final JSONObject response = new JSONObject();
+				response.put(ERROR, "unexpected version");
+				response.put(EXPECTED, VERSION_2_0);
+				response.put(ACTUAL, versionStr);
+				return response;
+			}
+			final String methodStr = request.getString(METHOD);
+			final int id = request.getInt(ID);
+			final CoreRpcCommandEnum coreRpcCommand = CoreRpcCommandEnum.fromName(methodStr);
+
+			switch (coreRpcCommand) {
+			case GETBESTBLOCKHASH: {
+				return onGetBestBlockHash(controller, id);
+			}
+			case GETBLOCKCOUNT: {
+				return onGetBlockCount(controller, id);
+			}
+			case GETBLOCK: {
+				final JSONArray params = request.getJSONArray(PARAMS);
+				return onGetBlock(controller, id, params);
+			}
+			case GETBLOCKHASH: {
+				final JSONArray params = request.getJSONArray(PARAMS);
+				return onGetBlockHash(controller, id, params);
+			}
+			case GETCONNECTIONCOUNT: {
+				// TODO : implement.
+				throw new NotImplementedError(coreRpcCommand.getName());
+			}
+			case GETRAWMEMPOOL: {
+				// TODO : implement.
+				throw new NotImplementedError(coreRpcCommand.getName());
+			}
+			case GETRAWTRANSACTION: {
+				// TODO : implement.
+				throw new NotImplementedError(coreRpcCommand.getName());
+			}
+			case GETTXOUT: {
+				// TODO : implement.
+				throw new NotImplementedError(coreRpcCommand.getName());
+			}
+			case SENDRAWTRANSACTION: {
+				// TODO : implement.
+				throw new NotImplementedError(coreRpcCommand.getName());
+			}
+			case SUBMITBLOCK: {
+				// TODO : implement.
+				throw new NotImplementedError(coreRpcCommand.getName());
+			}
+			default: {
+				final JSONObject response = new JSONObject();
+				response.put(ERROR, "unknown method");
+				response.put(EXPECTED, CoreRpcCommandEnum.getValuesJSONArray());
+				response.put(ACTUAL, methodStr);
+				return response;
+			}
+			}
 		}
 	}
 

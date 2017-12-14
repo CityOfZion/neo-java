@@ -12,8 +12,6 @@ import org.json.JSONArray;
  *
  */
 public enum CoreRpcCommandEnum {
-	/** getbalance. */
-	GETBALANCE("getbalance"),
 	/** getbestblockhash. */
 	GETBESTBLOCKHASH("getbestblockhash"),
 	/** getblock. */
@@ -32,8 +30,6 @@ public enum CoreRpcCommandEnum {
 	GETTXOUT("gettxout"),
 	/** sendrawtransaction. */
 	SENDRAWTRANSACTION("sendrawtransaction"),
-	/** sendtoaddress. */
-	SENDTOADDRESS("sendtoaddress"),
 	/** submitblock. */
 	SUBMITBLOCK("submitblock"),
 	/** */
