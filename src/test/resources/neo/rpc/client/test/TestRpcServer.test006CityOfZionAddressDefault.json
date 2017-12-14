@@ -1,0 +1,9 @@
+{
+	"actual": "/address/",
+	"expected": [
+		"/address/balance/",
+		"/address/history/",
+		"/address/claims/"
+	],
+	"error": "unknown address URI"
+}

@@ -5,12 +5,17 @@ import java.nio.ByteBuffer;
 import org.apache.commons.codec.binary.Hex;
 import org.json.JSONArray;
 import org.json.JSONObject;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import kotlin.NotImplementedError;
 import neo.model.bytes.UInt256;
 import neo.model.core.Block;
 import neo.model.util.ModelUtil;
 import neo.network.LocalControllerNode;
+import neo.network.model.LocalNodeData;
+import neo.network.model.NodeConnectionPhaseEnum;
+import neo.network.model.RemoteNodeData;
 
 /**
  * examples.
@@ -38,6 +43,11 @@ import neo.network.LocalControllerNode;
  *
  */
 public final class CoreRpcServerUtil {
+
+	/**
+	 * the logger.
+	 */
+	private static final Logger LOG = LoggerFactory.getLogger(CoreRpcServerUtil.class);
 
 	/**
 	 * error, no blocks in block chain.
@@ -260,6 +270,35 @@ public final class CoreRpcServerUtil {
 	}
 
 	/**
+	 * responds to a "getconnectioncount" command.
+	 *
+	 * @param controller
+	 *            the controller to use.
+	 * @param id
+	 *            the request id to use.
+	 * @return the response.
+	 */
+	private static JSONObject onGetConnectionCount(final LocalControllerNode controller, final int id) {
+		int connectionCount = 0;
+		synchronized (controller) {
+			final LocalNodeData localNodeData = controller.getLocalNodeData();
+			synchronized (localNodeData) {
+				for (final RemoteNodeData data : controller.getPeerDataSet()) {
+					if (data.getConnectionPhase() == NodeConnectionPhaseEnum.ACKNOWLEDGED) {
+						connectionCount++;
+					}
+				}
+
+			}
+		}
+		final JSONObject response = new JSONObject();
+		response.put(RESULT, connectionCount);
+		response.put(ID, id);
+		response.put(JSONRPC, VERSION_2_0);
+		return response;
+	}
+
+	/**
 	 * process the request.
 	 *
 	 * @param controller
@@ -272,7 +311,8 @@ public final class CoreRpcServerUtil {
 	 * @return the response.
 	 */
 	public static JSONObject process(final LocalControllerNode controller, final String uri, final String requestStr) {
-		if (uri.startsWith("address")) {
+		LOG.error("process uri:{};", uri);
+		if (uri.startsWith("/address/")) {
 			final AddressCommandEnum addressCommand = AddressCommandEnum.fromName(uri);
 			switch (addressCommand) {
 			case BALANCE: {
@@ -287,9 +327,13 @@ public final class CoreRpcServerUtil {
 				// TODO : implement.
 				throw new NotImplementedError(addressCommand.getName());
 			}
-			default:
-				// TODO : implement.
-				throw new NotImplementedError(addressCommand.getName());
+			default: {
+				final JSONObject response = new JSONObject();
+				response.put(ERROR, "unknown address URI");
+				response.put(EXPECTED, AddressCommandEnum.getValuesJSONArray());
+				response.put(ACTUAL, uri);
+				return response;
+			}
 			}
 		} else {
 
@@ -323,8 +367,7 @@ public final class CoreRpcServerUtil {
 				return onGetBlockHash(controller, id, params);
 			}
 			case GETCONNECTIONCOUNT: {
-				// TODO : implement.
-				throw new NotImplementedError(coreRpcCommand.getName());
+				return onGetConnectionCount(controller, id);
 			}
 			case GETRAWMEMPOOL: {
 				// TODO : implement.

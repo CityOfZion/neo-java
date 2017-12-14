@@ -125,11 +125,12 @@ public final class NeoMain {
 		addConnectionDetailsPanel(controller, peerTableModel, tabbedPane);
 
 		frame.getContentPane().add(mainPanel);
-		frame.setSize(480, 960);
-		frame.setVisible(true);
 
 		controller.startThreadPool();
 		controller.startRefreshThread();
+
+		frame.setSize(480, 960);
+		frame.setVisible(true);
 
 		LOG.info("SUCCESS main");
 	}

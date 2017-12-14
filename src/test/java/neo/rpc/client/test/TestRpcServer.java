@@ -179,6 +179,8 @@ public class TestRpcServer {
 	/**
 	 * returns the response from the RPC server.
 	 *
+	 * @param uri
+	 *            the uri to send.
 	 * @param rpcVersion
 	 *            the version to send.
 	 * @param params
@@ -187,11 +189,11 @@ public class TestRpcServer {
 	 *            the method to call.
 	 * @return the response from the RPC server.
 	 */
-	private String getResponse(final String rpcVersion, final JSONArray params, final String method) {
+	private String getResponse(final String uri, final String rpcVersion, final JSONArray params, final String method) {
 		final String actualStrRaw;
 		try {
 			final JSONObject inputJson = createInputJson(rpcVersion, method, params);
-			final String coreRpcNode = "http://localhost:" + CONTROLLER.getLocalNodeData().getPort();
+			final String coreRpcNode = "http://localhost:" + CONTROLLER.getLocalNodeData().getPort() + uri;
 			final StringEntity input = new StringEntity(inputJson.toString(), ContentType.APPLICATION_JSON);
 			final HttpPost post = new HttpPost(coreRpcNode);
 			final RequestConfig requestConfig = RequestConfig.custom().setSocketTimeout(TIMEOUT_MILLIS)
@@ -229,7 +231,7 @@ public class TestRpcServer {
 		final String expectedStrRaw = TestUtil.getJsonTestResourceAsString(getClass().getSimpleName(),
 				"test001CoreGetBestBlockHash");
 
-		final String actualStrRaw = getResponse(CoreRpcServerUtil.VERSION_2_0, params, method);
+		final String actualStrRaw = getResponse("", CoreRpcServerUtil.VERSION_2_0, params, method);
 
 		final String expectedStr = new JSONObject(expectedStrRaw).toString(2);
 		final String actualStr = new JSONObject(actualStrRaw).toString(2);
@@ -248,7 +250,7 @@ public class TestRpcServer {
 		final String expectedStrRaw = TestUtil.getJsonTestResourceAsString(getClass().getSimpleName(),
 				"test002CoreGetBlockCount");
 
-		final String actualStrRaw = getResponse(CoreRpcServerUtil.VERSION_2_0, params, method);
+		final String actualStrRaw = getResponse("", CoreRpcServerUtil.VERSION_2_0, params, method);
 
 		final String expectedStr = new JSONObject(expectedStrRaw).toString(2);
 		final String actualStr = new JSONObject(actualStrRaw).toString(2);
@@ -267,7 +269,7 @@ public class TestRpcServer {
 		final String expectedStrRaw = TestUtil.getJsonTestResourceAsString(getClass().getSimpleName(),
 				"test003CoreGetBestBlockHash");
 
-		final String actualStrRaw = getResponse("", params, method);
+		final String actualStrRaw = getResponse("", "", params, method);
 
 		final String expectedStr = new JSONObject(expectedStrRaw).toString(2);
 		final String actualStr = new JSONObject(actualStrRaw).toString(2);
@@ -288,7 +290,7 @@ public class TestRpcServer {
 		final String expectedStrRaw = TestUtil.getJsonTestResourceAsString(getClass().getSimpleName(),
 				"test004CoreGetBlockWithHashVerbose");
 
-		final String actualStrRaw = getResponse(CoreRpcServerUtil.VERSION_2_0, params, method);
+		final String actualStrRaw = getResponse("", CoreRpcServerUtil.VERSION_2_0, params, method);
 
 		final String expectedStr = new JSONObject(expectedStrRaw).toString(2);
 		final String actualStr = new JSONObject(actualStrRaw).toString(2);
@@ -308,7 +310,85 @@ public class TestRpcServer {
 		final String expectedStrRaw = TestUtil.getJsonTestResourceAsString(getClass().getSimpleName(),
 				"test005CoreGetBlockHash");
 
-		final String actualStrRaw = getResponse(CoreRpcServerUtil.VERSION_2_0, params, method);
+		final String actualStrRaw = getResponse("", CoreRpcServerUtil.VERSION_2_0, params, method);
+
+		final String expectedStr = new JSONObject(expectedStrRaw).toString(2);
+		final String actualStr = new JSONObject(actualStrRaw).toString(2);
+
+		Assert.assertEquals(TestUtil.RESPONSES_MUST_MATCH, expectedStr, actualStr);
+	}
+
+	/**
+	 * test reading block hash.
+	 */
+	@Test
+	public void test006CityOfZionAddressDefault() {
+		final JSONArray params = new JSONArray();
+		params.put(0);
+		final String method = "";
+
+		final String expectedStrRaw = TestUtil.getJsonTestResourceAsString(getClass().getSimpleName(),
+				"test006CityOfZionAddressDefault");
+
+		final String actualStrRaw = getResponse("/address/", CoreRpcServerUtil.VERSION_2_0, params, method);
+
+		final String expectedStr = new JSONObject(expectedStrRaw).toString(2);
+		final String actualStr = new JSONObject(actualStrRaw).toString(2);
+
+		Assert.assertEquals(TestUtil.RESPONSES_MUST_MATCH, expectedStr, actualStr);
+	}
+
+	/**
+	 * test reading block hash.
+	 */
+	@Test
+	public void test007CoreGetBlockHashNoParms() {
+		final JSONArray params = new JSONArray();
+		final String method = CoreRpcCommandEnum.GETBLOCKHASH.getName();
+
+		final String expectedStrRaw = TestUtil.getJsonTestResourceAsString(getClass().getSimpleName(),
+				"test007CoreGetBlockHashNoParms");
+
+		final String actualStrRaw = getResponse("", CoreRpcServerUtil.VERSION_2_0, params, method);
+
+		final String expectedStr = new JSONObject(expectedStrRaw).toString(2);
+		final String actualStr = new JSONObject(actualStrRaw).toString(2);
+
+		Assert.assertEquals(TestUtil.RESPONSES_MUST_MATCH, expectedStr, actualStr);
+	}
+
+	/**
+	 * test reading block hash.
+	 */
+	@Test
+	public void test008CoreGetConnectionCount() {
+		final JSONArray params = new JSONArray();
+		final String method = CoreRpcCommandEnum.GETCONNECTIONCOUNT.getName();
+
+		final String expectedStrRaw = TestUtil.getJsonTestResourceAsString(getClass().getSimpleName(),
+				"test008CoreGetConnectionCount");
+
+		final String actualStrRaw = getResponse("", CoreRpcServerUtil.VERSION_2_0, params, method);
+
+		final String expectedStr = new JSONObject(expectedStrRaw).toString(2);
+		final String actualStr = new JSONObject(actualStrRaw).toString(2);
+
+		Assert.assertEquals(TestUtil.RESPONSES_MUST_MATCH, expectedStr, actualStr);
+	}
+
+	/**
+	 * test reading block hash.
+	 */
+	@Test
+	public void test009CoreAddressDefault() {
+		final JSONArray params = new JSONArray();
+		params.put(0);
+		final String method = "";
+
+		final String expectedStrRaw = TestUtil.getJsonTestResourceAsString(getClass().getSimpleName(),
+				"test009CoreAddressDefault");
+
+		final String actualStrRaw = getResponse("", CoreRpcServerUtil.VERSION_2_0, params, method);
 
 		final String expectedStr = new JSONObject(expectedStrRaw).toString(2);
 		final String actualStr = new JSONObject(actualStrRaw).toString(2);

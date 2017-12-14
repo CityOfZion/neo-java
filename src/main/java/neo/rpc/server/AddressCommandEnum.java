@@ -1,5 +1,7 @@
 package neo.rpc.server;
 
+import org.json.JSONArray;
+
 /**
  * an enumeration of all the commands that can be sent to the neo core rpc
  * service.
@@ -11,11 +13,13 @@ package neo.rpc.server;
  */
 public enum AddressCommandEnum {
 	/** address/balance. */
-	BALANCE("balance"),
+	BALANCE("/address/balance/"),
 	/** address/history. */
-	HISTORY("history"),
+	HISTORY("/address/history/"),
 	/** address/claims. */
-	CLAIMS("claims"),
+	CLAIMS("/address/claims/"),
+	/** unknown. */
+	UNKNOWN(""),
 	/** */
 	;
 	/** trailing semicolon */
@@ -31,11 +35,28 @@ public enum AddressCommandEnum {
 	 */
 	public static final AddressCommandEnum fromName(final String name) {
 		for (final AddressCommandEnum command : values()) {
-			if (command.name.equals(name)) {
-				return command;
+			if (command != UNKNOWN) {
+				if (command.name.equals(name)) {
+					return command;
+				}
 			}
 		}
-		return null;
+		return UNKNOWN;
+	}
+
+	/**
+	 * return the values, as a JSON array.
+	 *
+	 * @return the values, as a JSON array.
+	 */
+	public static JSONArray getValuesJSONArray() {
+		final JSONArray expectedArray = new JSONArray();
+		for (final AddressCommandEnum command : AddressCommandEnum.values()) {
+			if (command != UNKNOWN) {
+				expectedArray.put(command.getName());
+			}
+		}
+		return expectedArray;
 	}
 
 	/**

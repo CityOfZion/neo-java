@@ -32,6 +32,8 @@ public enum CoreRpcCommandEnum {
 	SENDRAWTRANSACTION("sendrawtransaction"),
 	/** submitblock. */
 	SUBMITBLOCK("submitblock"),
+	/** submitblock. */
+	UNKNOWN(""),
 	/** */
 	;
 	/** trailing semicolon */
@@ -47,11 +49,13 @@ public enum CoreRpcCommandEnum {
 	 */
 	public static final CoreRpcCommandEnum fromName(final String name) {
 		for (final CoreRpcCommandEnum command : values()) {
-			if (command.name.equals(name)) {
-				return command;
+			if (command != UNKNOWN) {
+				if (command.name.equals(name)) {
+					return command;
+				}
 			}
 		}
-		return null;
+		return UNKNOWN;
 	}
 
 	/**
@@ -61,8 +65,10 @@ public enum CoreRpcCommandEnum {
 	 */
 	public static JSONArray getValuesJSONArray() {
 		final JSONArray expectedArray = new JSONArray();
-		for (final CoreRpcCommandEnum coreRpcCommand : CoreRpcCommandEnum.values()) {
-			expectedArray.put(coreRpcCommand.getName());
+		for (final CoreRpcCommandEnum command : CoreRpcCommandEnum.values()) {
+			if (command != UNKNOWN) {
+				expectedArray.put(command.getName());
+			}
 		}
 		return expectedArray;
 	}

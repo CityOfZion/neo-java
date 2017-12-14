@@ -1,0 +1,16 @@
+{
+	"actual": "",
+	"expected": [
+		"getbestblockhash",
+		"getblock",
+		"getblockcount",
+		"getblockhash",
+		"getconnectioncount",
+		"getrawmempool",
+		"getrawtransaction",
+		"gettxout",
+		"sendrawtransaction",
+		"submitblock"
+	],
+	"error": "unknown method"
+}
