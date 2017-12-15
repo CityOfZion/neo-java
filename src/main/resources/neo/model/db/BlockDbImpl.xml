@@ -1,0 +1,22 @@
+<?xml version="1.0" ?>
+<BlockDbImpl>
+  <create>
+    <sql>
+      CREATE CACHED TABLE IF NOT EXISTS block (
+      hash BINARY(32) not null,
+      prev_hash BINARY(32) not null,
+      index BINARY(4) not null,
+      block LONGVARBINARY not null
+      )
+    </sql>
+    <sql>
+      CREATE INDEX IF NOT EXISTS block_hash ON block (hash)
+    </sql>
+    <sql>
+      CREATE INDEX IF NOT EXISTS block_prev_hash ON block (prev_hash)
+    </sql>
+    <sql>
+      CREATE INDEX IF NOT EXISTS block_index ON block (index)
+    </sql>
+  </create>
+</BlockDbImpl>

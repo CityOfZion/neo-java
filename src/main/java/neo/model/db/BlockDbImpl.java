@@ -1,13 +1,19 @@
 package neo.model.db;
 
 import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
 import java.nio.ByteBuffer;
 import java.sql.SQLException;
 import java.util.List;
 
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.ArrayUtils;
 import org.hsqldb.jdbc.JDBCDataSource;
+import org.json.JSONArray;
+import org.json.JSONObject;
+import org.json.XML;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -30,9 +36,19 @@ public final class BlockDbImpl implements BlockDb {
 	private static final Logger LOG = LoggerFactory.getLogger(BlockDbImpl.class);
 
 	/**
+	 * the SQL cache XML file name.
+	 */
+	private static final String SQL_CACHE_XML = "BlockDbImpl.xml";
+
+	/**
 	 * the data source.
 	 */
 	private final JDBCDataSource ds;
+
+	/**
+	 * the SQL cache.
+	 */
+	private final JSONObject sqlCache;
 
 	/**
 	 * the closed flag.
@@ -43,15 +59,32 @@ public final class BlockDbImpl implements BlockDb {
 	 * the constructor.
 	 */
 	public BlockDbImpl() {
+		try (InputStream resourceAsStream = BlockDbImpl.class.getResourceAsStream(SQL_CACHE_XML);) {
+			final String jsonStr = IOUtils.toString(resourceAsStream, "UTF-8");
+			sqlCache = XML.toJSONObject(jsonStr, true).getJSONObject("BlockDbImpl");
+		} catch (final IOException | NullPointerException e) {
+			throw new RuntimeException("error reading resource\"" + SQL_CACHE_XML + "\"", e);
+		}
+
+		LOG.error(sqlCache.toString(2));
+
 		ds = new JDBCDataSource();
 		ds.setUrl("jdbc:hsqldb:file:java-chain/db/db");
 
 		final JdbcTemplate t = new JdbcTemplate(ds);
-		t.execute("CREATE CACHED TABLE IF NOT EXISTS"
-				+ " block (hash BINARY(32) not null, prev_hash BINARY(32) not null, index BINARY(4) not null, block  LONGVARBINARY not null)");
-		t.execute("CREATE INDEX IF NOT EXISTS block_hash ON block (hash)");
-		t.execute("CREATE INDEX IF NOT EXISTS block_prev_hash ON block (prev_hash)");
-		t.execute("CREATE INDEX IF NOT EXISTS block_index ON block (index)");
+
+		final JSONArray createSqls = sqlCache.getJSONObject("create").getJSONArray("sql");
+		for (int createSqlIx = 0; createSqlIx < createSqls.length(); createSqlIx++) {
+			final String sql = createSqls.getString(createSqlIx);
+			t.execute(sql);
+		}
+
+		// t.execute("CREATE CACHED TABLE IF NOT EXISTS"
+		// + " block (hash BINARY(32) not null, prev_hash BINARY(32) not null, index
+		// BINARY(4) not null, block LONGVARBINARY not null)");
+		// t.execute("CREATE INDEX IF NOT EXISTS block_hash ON block (hash)");
+		// t.execute("CREATE INDEX IF NOT EXISTS block_prev_hash ON block (prev_hash)");
+		// t.execute("CREATE INDEX IF NOT EXISTS block_index ON block (index)");
 	}
 
 	/**
