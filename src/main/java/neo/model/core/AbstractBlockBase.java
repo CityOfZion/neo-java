@@ -177,6 +177,18 @@ public abstract class AbstractBlockBase implements ToJsonObject, ByteArraySerial
 	public abstract byte[] toByteArray();
 
 	/**
+	 *
+	 * @return a byte array containing only the base data. Useful for breaking up
+	 *         the block and storing in a database.
+	 */
+	public final byte[] toHeaderByteArray() {
+		final ByteArrayOutputStream bout = new ByteArrayOutputStream();
+		writeBaseToOutputStream(bout);
+		NetworkUtil.write(bout, (byte) 0);
+		return bout.toByteArray();
+	}
+
+	/**
 	 * write the object to an output stream.
 	 *
 	 * @param out

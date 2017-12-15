@@ -1,5 +1,12 @@
 <?xml version="1.0" ?>
 <BlockDbImpl>
+  <url>jdbc:hsqldb:file:java-chain/db/db</url>
+  <getFileSizeDir>java-chain/db</getFileSizeDir>
+  <close>
+    <sql>
+      SHUTDOWN
+    </sql>
+  </close>
   <create>
     <sql>
       CREATE CACHED TABLE IF NOT EXISTS block (
@@ -18,5 +25,72 @@
     <sql>
       CREATE INDEX IF NOT EXISTS block_index ON block (index)
     </sql>
+    <sql><![CDATA[
+      CREATE CACHED TABLE IF NOT EXISTS transaction (
+      block_index BINARY(4) not null,
+      transaction_index BINARY(4) not null,
+      transaction_hash BINARY(32) not null,
+      transaction LONGVARBINARY not null
+      )
+    ]]></sql>
+    <sql>
+      CREATE INDEX IF NOT EXISTS transaction_index_hash ON transaction (block_index,transaction_hash)
+    </sql>
+    <sql>
+      CREATE INDEX IF NOT EXISTS transaction_index_index_ ON transaction (block_index,transaction_index)
+    </sql>
   </create>
+  <containsHash>
+    <sql>
+      select 1
+      from block
+      where hash = ?
+    </sql>
+  </containsHash>
+  <getBlockWithIndex>
+    <sql>
+      select block
+      from block
+      where index = ?
+    </sql>
+  </getBlockWithIndex>
+  <getBlockWithHash>
+    <sql>
+      select block
+      from block
+      where hash = ?
+    </sql>
+  </getBlockWithHash>
+  <getBlockCount>
+    <sql>
+      select count(1)
+      from block
+    </sql>
+  </getBlockCount>
+  <getBlockWithMaxIndex>
+    <sql>
+      select block
+      from block
+      where index = (select max(index) from block)
+      limit 1
+    </sql>
+  </getBlockWithMaxIndex>
+  <putBlock>
+    <sql>
+      insert into block (hash,prev_hash,index,block) values (?,?,?,?)
+    </sql>
+  </putBlock>
+  <putTransaction>
+    <sql>
+      insert into transaction (block_index,transaction_index,transaction_hash,transaction) values (?,?,?,?)
+    </sql>
+  </putTransaction>
+  <getTransactionsWithIndex>
+    <sql>
+      select transaction
+      from transaction
+      where block_index = ?
+      order by transaction_index desc
+    </sql>
+  </getTransactionsWithIndex>
 </BlockDbImpl>

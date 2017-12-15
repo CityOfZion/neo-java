@@ -16,11 +16,14 @@ import org.json.JSONObject;
 import org.json.XML;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.jdbc.core.JdbcOperations;
 import org.springframework.jdbc.core.JdbcTemplate;
 
 import neo.model.bytes.UInt256;
 import neo.model.bytes.UInt32;
 import neo.model.core.Block;
+import neo.model.core.Transaction;
+import neo.model.util.SHA256HashUtil;
 
 /**
  * the block database.
@@ -29,6 +32,11 @@ import neo.model.core.Block;
  *
  */
 public final class BlockDbImpl implements BlockDb {
+
+	/**
+	 * the JSON key "sql".
+	 */
+	private static final String SQL = "sql";
 
 	/**
 	 * the logger.
@@ -66,25 +74,12 @@ public final class BlockDbImpl implements BlockDb {
 			throw new RuntimeException("error reading resource\"" + SQL_CACHE_XML + "\"", e);
 		}
 
-		LOG.error(sqlCache.toString(2));
-
 		ds = new JDBCDataSource();
-		ds.setUrl("jdbc:hsqldb:file:java-chain/db/db");
+		ds.setUrl(sqlCache.getString("url"));
 
 		final JdbcTemplate t = new JdbcTemplate(ds);
 
-		final JSONArray createSqls = sqlCache.getJSONObject("create").getJSONArray("sql");
-		for (int createSqlIx = 0; createSqlIx < createSqls.length(); createSqlIx++) {
-			final String sql = createSqls.getString(createSqlIx);
-			t.execute(sql);
-		}
-
-		// t.execute("CREATE CACHED TABLE IF NOT EXISTS"
-		// + " block (hash BINARY(32) not null, prev_hash BINARY(32) not null, index
-		// BINARY(4) not null, block LONGVARBINARY not null)");
-		// t.execute("CREATE INDEX IF NOT EXISTS block_hash ON block (hash)");
-		// t.execute("CREATE INDEX IF NOT EXISTS block_prev_hash ON block (prev_hash)");
-		// t.execute("CREATE INDEX IF NOT EXISTS block_index ON block (index)");
+		executeSqlGroup(t, "create");
 	}
 
 	/**
@@ -100,7 +95,7 @@ public final class BlockDbImpl implements BlockDb {
 		}
 		LOG.debug("STARTED shutdown");
 		final JdbcTemplate t = new JdbcTemplate(ds);
-		t.execute("SHUTDOWN");
+		executeSqlGroup(t, "close");
 		LOG.debug("SUCCESS shutdown");
 	}
 
@@ -120,9 +115,39 @@ public final class BlockDbImpl implements BlockDb {
 			}
 		}
 		final JdbcTemplate t = new JdbcTemplate(ds);
-		final List<Integer> data = t.queryForList("select 1 from block where hash = ?", Integer.class,
-				hash.toByteArray());
+		final String sql = getSql("containsHash");
+		final List<Integer> data = t.queryForList(sql, Integer.class, hash.toByteArray());
 		return !data.isEmpty();
+	}
+
+	/**
+	 * executes the group of SQL in the SQL Cache.
+	 *
+	 * @param jdbc
+	 *            the jdbcoperations to use.
+	 *
+	 * @param sqlGroup
+	 *            the group of SQL to pull out of the sqlcache to execute.
+	 */
+	private void executeSqlGroup(final JdbcOperations jdbc, final String sqlGroup) {
+		final JSONObject sqlGroupJo = sqlCache.getJSONObject(sqlGroup);
+		if (!sqlGroupJo.has(SQL)) {
+			throw new RuntimeException("no key \"" + SQL + "\" in " + sqlGroupJo.keySet());
+		}
+
+		if (sqlGroupJo.get(SQL) instanceof JSONArray) {
+			final JSONArray createSqls = sqlGroupJo.getJSONArray(SQL);
+			for (int createSqlIx = 0; createSqlIx < createSqls.length(); createSqlIx++) {
+				final String sql = createSqls.getString(createSqlIx);
+				jdbc.execute(sql);
+			}
+		} else if (sqlGroupJo.get(SQL) instanceof String) {
+			final String sql = sqlGroupJo.getString(SQL);
+			jdbc.execute(sql);
+		} else {
+			throw new RuntimeException(
+					"no key of type String or JSONArray in \"" + SQL + "\" found in " + sqlGroupJo.keySet());
+		}
 	}
 
 	/**
@@ -142,12 +167,13 @@ public final class BlockDbImpl implements BlockDb {
 		final JdbcTemplate t = new JdbcTemplate(ds);
 		final UInt32 indexObj = new UInt32(index);
 		final byte[] indexBa = indexObj.toByteArray();
-		final List<byte[]> data = t.queryForList("select block from block where index = ?", byte[].class, indexBa);
+		final String sql = getSql("getBlockWithIndex");
+		final List<byte[]> data = t.queryForList(sql, byte[].class, indexBa);
 		if (data.isEmpty()) {
 			return null;
 		}
 
-		return new Block(ByteBuffer.wrap(data.get(0)));
+		return getTransactionsWithIndex(new Block(ByteBuffer.wrap(data.get(0))));
 	}
 
 	/**
@@ -165,13 +191,13 @@ public final class BlockDbImpl implements BlockDb {
 			}
 		}
 		final JdbcTemplate t = new JdbcTemplate(ds);
-		final List<byte[]> data = t.queryForList("select block from block where hash = ?", byte[].class,
-				hash.toByteArray());
+		final String sql = getSql("getBlockWithHash");
+		final List<byte[]> data = t.queryForList(sql, byte[].class, hash.toByteArray());
 		if (data.isEmpty()) {
 			return null;
 		}
 
-		return new Block(ByteBuffer.wrap(data.get(0)));
+		return getTransactionsWithIndex(new Block(ByteBuffer.wrap(data.get(0))));
 	}
 
 	/**
@@ -187,7 +213,8 @@ public final class BlockDbImpl implements BlockDb {
 			}
 		}
 		final JdbcTemplate t = new JdbcTemplate(ds);
-		return t.queryForObject("select count(1) from block", Integer.class);
+		final String sql = getSql("getBlockCount");
+		return t.queryForObject(sql, Integer.class);
 	}
 
 	/**
@@ -203,13 +230,13 @@ public final class BlockDbImpl implements BlockDb {
 			}
 		}
 		final JdbcTemplate t = new JdbcTemplate(ds);
-		final List<byte[]> data = t.queryForList(
-				"select block from block where index = (select max(index) from block) limit 1", byte[].class);
+		final String sql = getSql("getBlockWithMaxIndex");
+		final List<byte[]> data = t.queryForList(sql, byte[].class);
 		if (data.isEmpty()) {
 			return null;
 		}
 
-		return new Block(ByteBuffer.wrap(data.get(0)));
+		return getTransactionsWithIndex(new Block(ByteBuffer.wrap(data.get(0))));
 	}
 
 	/**
@@ -219,8 +246,38 @@ public final class BlockDbImpl implements BlockDb {
 	 */
 	@Override
 	public long getFileSize() {
-		final File dir = new File("java-chain/db");
+		final File dir = new File(sqlCache.getString("getFileSizeDir"));
 		return FileUtils.sizeOfDirectory(dir);
+	}
+
+	/**
+	 * returns the SQL in the sqlcache (must be a singleton SQL in the sqlGroup).
+	 *
+	 * @param sqlGroup
+	 *            the group of SQL to pull out of the sqlcache to execute.
+	 * @return the SQL in the sqlcache (must be a singleton SQL in the sqlGroup).
+	 */
+	private String getSql(final String sqlGroup) {
+		return sqlCache.getJSONObject(sqlGroup).getString(SQL);
+	}
+
+	/**
+	 * @param block
+	 *            the block, to add transactions to.
+	 *
+	 * @return the block, with transactions added.
+	 */
+	private Block getTransactionsWithIndex(final Block block) {
+		final JdbcTemplate t = new JdbcTemplate(ds);
+		final String sql = getSql("getTransactionsWithIndex");
+		final List<byte[]> dataList = t.queryForList(sql, byte[].class, block.index.toByteArray());
+
+		for (final byte[] data : dataList) {
+			final Transaction transaction = new Transaction(ByteBuffer.wrap(data));
+			block.getTransactionList().add(transaction);
+		}
+
+		return block;
 	}
 
 	/**
@@ -240,8 +297,18 @@ public final class BlockDbImpl implements BlockDb {
 		final byte[] prevHashBa = block.prevHash.toByteArray();
 		ArrayUtils.reverse(prevHashBa);
 
-		t.update("insert into block (hash,prev_hash,index,block) values (?,?,?,?)", block.hash.toByteArray(),
-				prevHashBa, block.index.toByteArray(), block.toByteArray());
+		final String putBlockSql = getSql("putBlock");
+		final byte[] blockIndexBa = block.index.toByteArray();
+		t.update(putBlockSql, block.hash.toByteArray(), prevHashBa, blockIndexBa, block.toHeaderByteArray());
+
+		final String putTransactionSql = getSql("putTransaction");
+		int transactionIndex = 0;
+		for (final Transaction transaction : block.getTransactionList()) {
+			final byte[] txBa = transaction.toByteArray();
+			final byte[] txHashBa = SHA256HashUtil.getDoubleSHA256Hash(txBa);
+			t.update(putTransactionSql, blockIndexBa, transactionIndex, txHashBa, txBa);
+			transactionIndex++;
+		}
 	}
 
 }
