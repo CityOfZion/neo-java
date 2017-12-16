@@ -302,11 +302,12 @@ public final class BlockDbImpl implements BlockDb {
 		t.update(putBlockSql, block.hash.toByteArray(), prevHashBa, blockIndexBa, block.toHeaderByteArray());
 
 		final String putTransactionSql = getSql("putTransaction");
-		int transactionIndex = 0;
+		long transactionIndex = 0;
 		for (final Transaction transaction : block.getTransactionList()) {
 			final byte[] txBa = transaction.toByteArray();
 			final byte[] txHashBa = SHA256HashUtil.getDoubleSHA256Hash(txBa);
-			t.update(putTransactionSql, blockIndexBa, transactionIndex, txHashBa, txBa);
+			final byte[] txIxByte = new UInt32(transactionIndex).toByteArray();
+			t.update(putTransactionSql, blockIndexBa, txIxByte, txHashBa, txBa);
 			transactionIndex++;
 		}
 	}
