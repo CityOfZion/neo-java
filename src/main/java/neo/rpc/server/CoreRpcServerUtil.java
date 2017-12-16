@@ -11,6 +11,7 @@ import org.slf4j.LoggerFactory;
 import kotlin.NotImplementedError;
 import neo.model.bytes.UInt256;
 import neo.model.core.Block;
+import neo.model.core.Transaction;
 import neo.model.util.ModelUtil;
 import neo.network.LocalControllerNode;
 import neo.network.model.LocalNodeData;
@@ -299,6 +300,65 @@ public final class CoreRpcServerUtil {
 	}
 
 	/**
+	 * responds to a "getrawtransaction" command.
+	 *
+	 * @param controller
+	 *            the controller to use.
+	 * @param id
+	 *            the request id to use.
+	 * @param params
+	 *            the parameters to use.
+	 * @return the response.
+	 */
+	private static JSONObject onGetRawTransaction(final LocalControllerNode controller, final int id,
+			final JSONArray params) {
+		if (params.length() == 0) {
+			final JSONObject response = new JSONObject();
+			response.put(ERROR, "no parameters, expected a txid");
+			response.put(EXPECTED, EXPECTED_GENERIC_HEX);
+			response.put(ACTUAL, NULL);
+			return response;
+		} else {
+			final boolean verbose;
+			if (params.length() >= 2) {
+				if (params.get(1) instanceof Number) {
+					final long index = params.getLong(1);
+					verbose = index == 1;
+				} else {
+					verbose = false;
+				}
+			} else {
+				verbose = false;
+			}
+
+			final String txIdStr = params.getString(0);
+			final byte[] ba = ModelUtil.decodeHex(txIdStr);
+			final UInt256 txId = new UInt256(ByteBuffer.wrap(ba));
+			final Transaction transaction;
+			try {
+				transaction = controller.getLocalNodeData().getBlockDb().getTransactionWithHash(txId);
+			} catch (final RuntimeException e) {
+				final JSONObject response = new JSONObject();
+				response.put(ERROR, e.getMessage());
+				response.put(EXPECTED, EXPECTED_GENERIC_HEX);
+				response.put(ACTUAL, params.get(0));
+				return response;
+			}
+
+			final JSONObject response = new JSONObject();
+			response.put(ID, id);
+			response.put(JSONRPC, VERSION_2_0);
+
+			if (verbose) {
+				response.put(RESULT, transaction.toJSONObject());
+			} else {
+				response.put(RESULT, Hex.encodeHexString(transaction.toByteArray()));
+			}
+			return response;
+		}
+	}
+
+	/**
 	 * process the request.
 	 *
 	 * @param controller
@@ -374,8 +434,8 @@ public final class CoreRpcServerUtil {
 				throw new NotImplementedError(coreRpcCommand.getName());
 			}
 			case GETRAWTRANSACTION: {
-				// TODO : implement.
-				throw new NotImplementedError(coreRpcCommand.getName());
+				final JSONArray params = request.getJSONArray(PARAMS);
+				return onGetRawTransaction(controller, id, params);
 			}
 			case GETTXOUT: {
 				// TODO : implement.

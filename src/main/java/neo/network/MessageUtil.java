@@ -28,7 +28,7 @@ public class MessageUtil {
 	public static void sendGetData(final RemoteNodeData r, final LocalNodeData localNodeData, final UInt256... hashs) {
 		boolean hasDuplicates = false;
 		for (final UInt256 hash : hashs) {
-			if (localNodeData.getBlockDb().containsHash(hash)) {
+			if (localNodeData.getBlockDb().containsBlockWithHash(hash)) {
 				hasDuplicates = true;
 				LOG.debug("sendGetData requesting duplicate block hash:{}", hash);
 			}

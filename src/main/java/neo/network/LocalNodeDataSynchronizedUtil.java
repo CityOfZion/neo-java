@@ -36,9 +36,9 @@ public class LocalNodeDataSynchronizedUtil {
 		final long blockIndex = block.getIndexAsLong();
 		LOG.trace("STARTED addBlockIfNewAndParentExistsUnsynchronized adding block to db : index:{}; hash:{}; prev:{};",
 				blockIndex, block.hash, block.prevHash);
-		if (localNodeData.getBlockDb().containsHash(block.prevHash)
+		if (localNodeData.getBlockDb().containsBlockWithHash(block.prevHash)
 				|| block.hash.equals(GenesisBlockUtil.GENESIS_HASH)) {
-			if (!localNodeData.getBlockDb().containsHash(block.hash)) {
+			if (!localNodeData.getBlockDb().containsBlockWithHash(block.hash)) {
 				localNodeData.getBlockDb().put(block);
 				localNodeData.updateHighestBlockTime();
 

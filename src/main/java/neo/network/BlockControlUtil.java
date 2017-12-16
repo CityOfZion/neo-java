@@ -53,7 +53,7 @@ public class BlockControlUtil {
 				final Entry<Long, Header> headerElt = headerIt.next();
 				final Header header = headerElt.getValue();
 				final UInt256 hashRaw = header.hash;
-				if (localNodeData.getBlockDb().containsHash(hashRaw)) {
+				if (localNodeData.getBlockDb().containsBlockWithHash(hashRaw)) {
 					headerIt.remove();
 				} else {
 					final byte[] ba = hashRaw.getBytesCopy();

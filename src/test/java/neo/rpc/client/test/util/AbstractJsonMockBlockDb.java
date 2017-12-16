@@ -7,6 +7,7 @@ import org.json.JSONObject;
 
 import neo.model.bytes.UInt256;
 import neo.model.core.Block;
+import neo.model.core.Transaction;
 import neo.model.db.BlockDb;
 import neo.model.util.ModelUtil;
 
@@ -57,7 +58,7 @@ public abstract class AbstractJsonMockBlockDb implements BlockDb {
 	}
 
 	@Override
-	public final boolean containsHash(final UInt256 hash) {
+	public final boolean containsBlockWithHash(final UInt256 hash) {
 		final String hashHex = hash.toHexString();
 		final JSONArray mockBlockDb = getMockBlockDb();
 		for (int ix = 0; ix < mockBlockDb.length(); ix++) {
@@ -131,8 +132,23 @@ public abstract class AbstractJsonMockBlockDb implements BlockDb {
 	public abstract JSONArray getMockBlockDb();
 
 	@Override
+	public final Transaction getTransactionWithHash(final UInt256 hash) {
+		final JSONArray mockBlockDb = getMockBlockDb();
+		for (int ix = 0; ix < mockBlockDb.length(); ix++) {
+			final JSONObject mockBlock = mockBlockDb.getJSONObject(ix);
+			final Block block = getBlock(mockBlock);
+			for (final Transaction transaction : block.getTransactionList()) {
+				if (transaction.hash.equals(hash)) {
+					return transaction;
+				}
+			}
+		}
+		throw new RuntimeException("no transaction with hash:" + hash);
+	}
+
+	@Override
 	public final void put(final Block block) {
-		if (containsHash(block.hash)) {
+		if (containsBlockWithHash(block.hash)) {
 			return;
 		}
 		final JSONObject mockBlock = new JSONObject();

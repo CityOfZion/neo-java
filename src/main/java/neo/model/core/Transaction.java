@@ -9,8 +9,10 @@ import org.json.JSONObject;
 
 import neo.model.ByteArraySerializable;
 import neo.model.ToJsonObject;
+import neo.model.bytes.UInt256;
 import neo.model.util.ModelUtil;
 import neo.model.util.NetworkUtil;
+import neo.model.util.SHA256HashUtil;
 import neo.model.util.TransactionUtil;
 
 /**
@@ -59,6 +61,11 @@ public final class Transaction implements ToJsonObject, ByteArraySerializable, S
 	public final List<Witness> scripts;
 
 	/**
+	 * the hash.
+	 */
+	public final UInt256 hash;
+
+	/**
 	 * the constructor.
 	 *
 	 * @param bb
@@ -72,6 +79,18 @@ public final class Transaction implements ToJsonObject, ByteArraySerializable, S
 		inputs = ModelUtil.readArray(bb, CoinReference.class);
 		outputs = ModelUtil.readArray(bb, TransactionOutput.class);
 		scripts = ModelUtil.readArray(bb, Witness.class);
+
+		hash = calculateHash();
+	}
+
+	/**
+	 * return the hash, as calculated from the other parameters.
+	 *
+	 * @return the hash, as calculated from the other parameters.
+	 */
+	private UInt256 calculateHash() {
+		final byte[] hashBa = SHA256HashUtil.getDoubleSHA256Hash(toByteArray());
+		return new UInt256(hashBa);
 	}
 
 	@Override

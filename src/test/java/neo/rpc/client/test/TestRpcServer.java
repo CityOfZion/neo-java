@@ -240,7 +240,7 @@ public class TestRpcServer {
 	}
 
 	/**
-	 * test reading address balance.
+	 * test reading block count.
 	 */
 	@Test
 	public void test002CoreGetBlockCount() {
@@ -278,7 +278,7 @@ public class TestRpcServer {
 	}
 
 	/**
-	 * test reading address balance.
+	 * test reading core block, verbose hash.
 	 */
 	@Test
 	public void test004CoreGetBlockWithHashVerbose() {
@@ -319,7 +319,7 @@ public class TestRpcServer {
 	}
 
 	/**
-	 * test reading block hash.
+	 * test reading address default.
 	 */
 	@Test
 	public void test006CityOfZionAddressDefault() {
@@ -339,7 +339,7 @@ public class TestRpcServer {
 	}
 
 	/**
-	 * test reading block hash.
+	 * test reading block hash, no parameters.
 	 */
 	@Test
 	public void test007CoreGetBlockHashNoParms() {
@@ -358,7 +358,7 @@ public class TestRpcServer {
 	}
 
 	/**
-	 * test reading block hash.
+	 * test reading connection count.
 	 */
 	@Test
 	public void test008CoreGetConnectionCount() {
@@ -377,16 +377,38 @@ public class TestRpcServer {
 	}
 
 	/**
-	 * test reading block hash.
+	 * test reading core address with no subcategory.
 	 */
 	@Test
-	public void test009CoreAddressDefault() {
+	public void test009CoreDefault() {
 		final JSONArray params = new JSONArray();
 		params.put(0);
-		final String method = "";
+		final String method = CoreRpcCommandEnum.UNKNOWN.getName();
 
 		final String expectedStrRaw = TestUtil.getJsonTestResourceAsString(getClass().getSimpleName(),
-				"test009CoreAddressDefault");
+				"test009CoreDefault");
+
+		final String actualStrRaw = getResponse("", CoreRpcServerUtil.VERSION_2_0, params, method);
+
+		final String expectedStr = new JSONObject(expectedStrRaw).toString(2);
+		final String actualStr = new JSONObject(actualStrRaw).toString(2);
+
+		Assert.assertEquals(TestUtil.RESPONSES_MUST_MATCH, expectedStr, actualStr);
+	}
+
+	/**
+	 * test reading core address with no subcategory.
+	 */
+	@Test
+	public void test010CoreGetRawTransaction() {
+		final JSONArray params = new JSONArray();
+		final String txHash = CONTROLLER.getLocalNodeData().getBlockDb().getBlock(0).getTransactionList().get(0).hash
+				.toHexString();
+		params.put(txHash);
+		final String method = CoreRpcCommandEnum.GETRAWTRANSACTION.getName();
+
+		final String expectedStrRaw = TestUtil.getJsonTestResourceAsString(getClass().getSimpleName(),
+				"test010CoreGetRawTransaction");
 
 		final String actualStrRaw = getResponse("", CoreRpcServerUtil.VERSION_2_0, params, method);
 

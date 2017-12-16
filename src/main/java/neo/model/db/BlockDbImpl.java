@@ -23,7 +23,6 @@ import neo.model.bytes.UInt256;
 import neo.model.bytes.UInt32;
 import neo.model.core.Block;
 import neo.model.core.Transaction;
-import neo.model.util.SHA256HashUtil;
 
 /**
  * the block database.
@@ -108,7 +107,7 @@ public final class BlockDbImpl implements BlockDb {
 	 * @return true if the hash is in the database.
 	 */
 	@Override
-	public boolean containsHash(final UInt256 hash) {
+	public boolean containsBlockWithHash(final UInt256 hash) {
 		synchronized (this) {
 			if (closed) {
 				return false;
@@ -280,6 +279,19 @@ public final class BlockDbImpl implements BlockDb {
 		return block;
 	}
 
+	@Override
+	public Transaction getTransactionWithHash(final UInt256 hash) {
+		final JdbcTemplate t = new JdbcTemplate(ds);
+		final String sql = getSql("getTransactionWithHash");
+		final List<byte[]> dataList = t.queryForList(sql, byte[].class, hash.toByteArray());
+
+		if (dataList.isEmpty()) {
+			return null;
+		}
+
+		return new Transaction(ByteBuffer.wrap(dataList.get(0)));
+	}
+
 	/**
 	 * puts the block into the database.
 	 *
@@ -304,10 +316,8 @@ public final class BlockDbImpl implements BlockDb {
 		final String putTransactionSql = getSql("putTransaction");
 		long transactionIndex = 0;
 		for (final Transaction transaction : block.getTransactionList()) {
-			final byte[] txBa = transaction.toByteArray();
-			final byte[] txHashBa = SHA256HashUtil.getDoubleSHA256Hash(txBa);
 			final byte[] txIxByte = new UInt32(transactionIndex).toByteArray();
-			t.update(putTransactionSql, blockIndexBa, txIxByte, txHashBa, txBa);
+			t.update(putTransactionSql, blockIndexBa, txIxByte, transaction.hash, transaction.toByteArray());
 			transactionIndex++;
 		}
 	}
