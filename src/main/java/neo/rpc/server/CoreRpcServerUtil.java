@@ -371,7 +371,7 @@ public final class CoreRpcServerUtil {
 	 * @return the response.
 	 */
 	public static JSONObject process(final LocalControllerNode controller, final String uri, final String requestStr) {
-		LOG.error("process uri:{};", uri);
+		LOG.trace("process uri:{};requestStr:{};", uri, requestStr);
 		if (uri.startsWith("/address/")) {
 			final AddressCommandEnum addressCommand = AddressCommandEnum.fromName(uri);
 			switch (addressCommand) {

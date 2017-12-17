@@ -317,7 +317,8 @@ public final class BlockDbImpl implements BlockDb {
 		long transactionIndex = 0;
 		for (final Transaction transaction : block.getTransactionList()) {
 			final byte[] txIxByte = new UInt32(transactionIndex).toByteArray();
-			t.update(putTransactionSql, blockIndexBa, txIxByte, transaction.hash, transaction.toByteArray());
+			t.update(putTransactionSql, blockIndexBa, txIxByte, transaction.hash.toByteArray(),
+					transaction.toByteArray());
 			transactionIndex++;
 		}
 	}
