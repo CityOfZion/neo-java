@@ -1,20 +1,7 @@
 package neo.rpc.client.test;
 
-import java.net.SocketException;
-import java.net.SocketTimeoutException;
+import java.net.InetSocketAddress;
 
-import org.apache.http.HttpEntity;
-import org.apache.http.NoHttpResponseException;
-import org.apache.http.client.config.RequestConfig;
-import org.apache.http.client.methods.CloseableHttpResponse;
-import org.apache.http.client.methods.HttpGet;
-import org.apache.http.client.methods.HttpPost;
-import org.apache.http.conn.ConnectTimeoutException;
-import org.apache.http.entity.ContentType;
-import org.apache.http.entity.StringEntity;
-import org.apache.http.impl.client.CloseableHttpClient;
-import org.apache.http.impl.client.HttpClients;
-import org.apache.http.util.EntityUtils;
 import org.json.JSONArray;
 import org.json.JSONObject;
 import org.junit.AfterClass;
@@ -27,12 +14,17 @@ import org.junit.runners.MethodSorters;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import neo.model.core.Block;
+import neo.model.core.Transaction;
 import neo.model.util.ConfigurationUtil;
 import neo.model.util.GenesisBlockUtil;
 import neo.network.LocalControllerNode;
-import neo.rpc.client.CityOfZionUtil;
+import neo.network.model.NodeConnectionPhaseEnum;
+import neo.network.model.RemoteNodeData;
 import neo.rpc.client.test.util.AbstractJsonMockBlockDb;
+import neo.rpc.client.test.util.TestRpcServerUtil;
 import neo.rpc.client.test.util.TestUtil;
+import neo.rpc.server.CityOfZionCommandEnum;
 import neo.rpc.server.CoreRpcCommandEnum;
 import neo.rpc.server.CoreRpcServerUtil;
 
@@ -46,14 +38,9 @@ import neo.rpc.server.CoreRpcServerUtil;
 public class TestRpcServer {
 
 	/**
-	 * a connection exception.
+	 * localhost.
 	 */
-	private static final String CONNECTION_EXCEPTION = "connection exception";
-
-	/**
-	 * the connection timeout, in milliseconds.
-	 */
-	private static final int TIMEOUT_MILLIS = 2000;
+	private static final String LOCALHOST = "localhost";
 
 	/**
 	 * the logger.
@@ -68,9 +55,18 @@ public class TestRpcServer {
 	static {
 		final JSONObject controllerNodeConfig = ConfigurationUtil.getConfiguration();
 		final JSONObject localJson = controllerNodeConfig.getJSONObject(ConfigurationUtil.LOCAL);
+		final JSONObject remoteJson = controllerNodeConfig.getJSONObject(ConfigurationUtil.REMOTE);
 		localJson.put(ConfigurationUtil.BLOCK_DB_IMPL, "neo.rpc.client.test.TestRpcServer$JsonBlockDbImpl");
 		localJson.put(ConfigurationUtil.PORT, 30333);
 		CONTROLLER = new LocalControllerNode(controllerNodeConfig);
+		final RemoteNodeData ackRemoteNode = new RemoteNodeData(remoteJson);
+		ackRemoteNode.setTcpAddressAndPort(new InetSocketAddress(LOCALHOST, 30333));
+		ackRemoteNode.setConnectionPhase(NodeConnectionPhaseEnum.ACKNOWLEDGED);
+		CONTROLLER.getPeerDataSet().add(ackRemoteNode);
+		final RemoteNodeData refusedRemoteNode = new RemoteNodeData(remoteJson);
+		refusedRemoteNode.setTcpAddressAndPort(new InetSocketAddress(LOCALHOST, 40333));
+		refusedRemoteNode.setConnectionPhase(NodeConnectionPhaseEnum.REFUSED);
+		CONTROLLER.getPeerDataSet().add(refusedRemoteNode);
 	}
 
 	/**
@@ -100,124 +96,10 @@ public class TestRpcServer {
 	}
 
 	/**
-	 *
-	 * @param input
-	 *            the input to use.
-	 * @param method
-	 *            the method to call.
-	 * @return the reseponse.
-	 */
-	private static String getCityOfZionResponse(final String input, final String method) {
-		try {
-
-			final String url = CityOfZionUtil.MAINNET_API + method + input;
-
-			LOG.debug("url:{}", url);
-
-			final HttpGet httpRequest = new HttpGet(url);
-			final RequestConfig requestConfig = RequestConfig.custom().setSocketTimeout(TIMEOUT_MILLIS)
-					.setConnectTimeout(TIMEOUT_MILLIS).setConnectionRequestTimeout(TIMEOUT_MILLIS).build();
-			httpRequest.setConfig(requestConfig);
-			final CloseableHttpClient client = HttpClients.createDefault();
-			final String responseStr;
-			try {
-				final CloseableHttpResponse response = client.execute(httpRequest);
-				logDebugStatus(response);
-				final HttpEntity entity = response.getEntity();
-				responseStr = EntityUtils.toString(entity);
-			} catch (final ConnectTimeoutException | SocketTimeoutException | NoHttpResponseException
-					| SocketException e) {
-				throw new RuntimeException(CONNECTION_EXCEPTION, e);
-			}
-
-			final JSONObject responseJson = new JSONObject(responseStr);
-
-			final String actualStr = responseJson.toString(2);
-			return actualStr;
-		} catch (final Exception e) {
-			throw new RuntimeException(e);
-		}
-	}
-
-	/**
-	 * logs the response status, at the "debug" log level.
-	 *
-	 * @param response
-	 *            the response to use.
-	 */
-	private static void logDebugStatus(final CloseableHttpResponse response) {
-		LOG.debug("status:{}", response.getStatusLine());
-	}
-
-	/**
 	 * first test, blank, so beforeClass() time doesnt throw off the metrics.
 	 */
 	@Test
 	public void aaaFirstTest() {
-	}
-
-	/**
-	 * creates a RPC input JSON from the method name and parameters.
-	 *
-	 * @param rpcVersion
-	 *            the RPC version to use.
-	 * @param method
-	 *            the method to use.
-	 * @param params
-	 *            the parameters to use.
-	 * @return the input JSON.
-	 */
-	private JSONObject createInputJson(final String rpcVersion, final String method, final JSONArray params) {
-		final JSONObject inputJson = new JSONObject();
-		inputJson.put(CoreRpcServerUtil.JSONRPC, rpcVersion);
-		inputJson.put(CoreRpcServerUtil.METHOD, method);
-		inputJson.put(CoreRpcServerUtil.PARAMS, params);
-		inputJson.put(CoreRpcServerUtil.ID, 1);
-		return inputJson;
-	}
-
-	/**
-	 * returns the response from the RPC server.
-	 *
-	 * @param uri
-	 *            the uri to send.
-	 * @param rpcVersion
-	 *            the version to send.
-	 * @param params
-	 *            the parameters to send.
-	 * @param method
-	 *            the method to call.
-	 * @return the response from the RPC server.
-	 */
-	private String getResponse(final String uri, final String rpcVersion, final JSONArray params, final String method) {
-		final String actualStrRaw;
-		try {
-			final JSONObject inputJson = createInputJson(rpcVersion, method, params);
-			final String coreRpcNode = "http://localhost:" + CONTROLLER.getLocalNodeData().getPort() + uri;
-			final StringEntity input = new StringEntity(inputJson.toString(), ContentType.APPLICATION_JSON);
-			final HttpPost post = new HttpPost(coreRpcNode);
-			final RequestConfig requestConfig = RequestConfig.custom().setSocketTimeout(TIMEOUT_MILLIS)
-					.setConnectTimeout(TIMEOUT_MILLIS).setConnectionRequestTimeout(TIMEOUT_MILLIS).build();
-			post.setConfig(requestConfig);
-			post.setEntity(input);
-			final CloseableHttpClient client = HttpClients.createDefault();
-			final String responseStr;
-			try {
-				final CloseableHttpResponse response = client.execute(post);
-				logDebugStatus(response);
-				final HttpEntity entity = response.getEntity();
-				responseStr = EntityUtils.toString(entity);
-			} catch (final ConnectTimeoutException | SocketTimeoutException | NoHttpResponseException
-					| SocketException e) {
-				throw new RuntimeException(CONNECTION_EXCEPTION, e);
-			}
-			final JSONObject responseJson = new JSONObject(responseStr);
-
-			actualStrRaw = responseJson.toString(2);
-		} catch (final Exception e) {
-			throw new RuntimeException(e);
-		}
-		return actualStrRaw;
 	}
 
 	/**
@@ -231,7 +113,8 @@ public class TestRpcServer {
 		final String expectedStrRaw = TestUtil.getJsonTestResourceAsString(getClass().getSimpleName(),
 				"test001CoreGetBestBlockHash");
 
-		final String actualStrRaw = getResponse("", CoreRpcServerUtil.VERSION_2_0, params, method);
+		final String actualStrRaw = TestRpcServerUtil.getResponse(CONTROLLER, "", CoreRpcServerUtil.VERSION_2_0, params,
+				method);
 
 		final String expectedStr = new JSONObject(expectedStrRaw).toString(2);
 		final String actualStr = new JSONObject(actualStrRaw).toString(2);
@@ -250,7 +133,8 @@ public class TestRpcServer {
 		final String expectedStrRaw = TestUtil.getJsonTestResourceAsString(getClass().getSimpleName(),
 				"test002CoreGetBlockCount");
 
-		final String actualStrRaw = getResponse("", CoreRpcServerUtil.VERSION_2_0, params, method);
+		final String actualStrRaw = TestRpcServerUtil.getResponse(CONTROLLER, "", CoreRpcServerUtil.VERSION_2_0, params,
+				method);
 
 		final String expectedStr = new JSONObject(expectedStrRaw).toString(2);
 		final String actualStr = new JSONObject(actualStrRaw).toString(2);
@@ -269,7 +153,7 @@ public class TestRpcServer {
 		final String expectedStrRaw = TestUtil.getJsonTestResourceAsString(getClass().getSimpleName(),
 				"test003CoreGetBestBlockHash");
 
-		final String actualStrRaw = getResponse("", "", params, method);
+		final String actualStrRaw = TestRpcServerUtil.getResponse(CONTROLLER, "", "", params, method);
 
 		final String expectedStr = new JSONObject(expectedStrRaw).toString(2);
 		final String actualStr = new JSONObject(actualStrRaw).toString(2);
@@ -290,7 +174,8 @@ public class TestRpcServer {
 		final String expectedStrRaw = TestUtil.getJsonTestResourceAsString(getClass().getSimpleName(),
 				"test004CoreGetBlockWithHashVerbose");
 
-		final String actualStrRaw = getResponse("", CoreRpcServerUtil.VERSION_2_0, params, method);
+		final String actualStrRaw = TestRpcServerUtil.getResponse(CONTROLLER, "", CoreRpcServerUtil.VERSION_2_0, params,
+				method);
 
 		final String expectedStr = new JSONObject(expectedStrRaw).toString(2);
 		final String actualStr = new JSONObject(actualStrRaw).toString(2);
@@ -310,7 +195,8 @@ public class TestRpcServer {
 		final String expectedStrRaw = TestUtil.getJsonTestResourceAsString(getClass().getSimpleName(),
 				"test005CoreGetBlockHash");
 
-		final String actualStrRaw = getResponse("", CoreRpcServerUtil.VERSION_2_0, params, method);
+		final String actualStrRaw = TestRpcServerUtil.getResponse(CONTROLLER, "", CoreRpcServerUtil.VERSION_2_0, params,
+				method);
 
 		final String expectedStr = new JSONObject(expectedStrRaw).toString(2);
 		final String actualStr = new JSONObject(actualStrRaw).toString(2);
@@ -330,7 +216,8 @@ public class TestRpcServer {
 		final String expectedStrRaw = TestUtil.getJsonTestResourceAsString(getClass().getSimpleName(),
 				"test006CityOfZionAddressDefault");
 
-		final String actualStrRaw = getResponse("/address/", CoreRpcServerUtil.VERSION_2_0, params, method);
+		final String actualStrRaw = TestRpcServerUtil.getResponse(CONTROLLER, "/address/",
+				CoreRpcServerUtil.VERSION_2_0, params, method);
 
 		final String expectedStr = new JSONObject(expectedStrRaw).toString(2);
 		final String actualStr = new JSONObject(actualStrRaw).toString(2);
@@ -349,7 +236,8 @@ public class TestRpcServer {
 		final String expectedStrRaw = TestUtil.getJsonTestResourceAsString(getClass().getSimpleName(),
 				"test007CoreGetBlockHashNoParms");
 
-		final String actualStrRaw = getResponse("", CoreRpcServerUtil.VERSION_2_0, params, method);
+		final String actualStrRaw = TestRpcServerUtil.getResponse(CONTROLLER, "", CoreRpcServerUtil.VERSION_2_0, params,
+				method);
 
 		final String expectedStr = new JSONObject(expectedStrRaw).toString(2);
 		final String actualStr = new JSONObject(actualStrRaw).toString(2);
@@ -368,7 +256,8 @@ public class TestRpcServer {
 		final String expectedStrRaw = TestUtil.getJsonTestResourceAsString(getClass().getSimpleName(),
 				"test008CoreGetConnectionCount");
 
-		final String actualStrRaw = getResponse("", CoreRpcServerUtil.VERSION_2_0, params, method);
+		final String actualStrRaw = TestRpcServerUtil.getResponse(CONTROLLER, "", CoreRpcServerUtil.VERSION_2_0, params,
+				method);
 
 		final String expectedStr = new JSONObject(expectedStrRaw).toString(2);
 		final String actualStr = new JSONObject(actualStrRaw).toString(2);
@@ -388,7 +277,8 @@ public class TestRpcServer {
 		final String expectedStrRaw = TestUtil.getJsonTestResourceAsString(getClass().getSimpleName(),
 				"test009CoreDefault");
 
-		final String actualStrRaw = getResponse("", CoreRpcServerUtil.VERSION_2_0, params, method);
+		final String actualStrRaw = TestRpcServerUtil.getResponse(CONTROLLER, "", CoreRpcServerUtil.VERSION_2_0, params,
+				method);
 
 		final String expectedStr = new JSONObject(expectedStrRaw).toString(2);
 		final String actualStr = new JSONObject(actualStrRaw).toString(2);
@@ -410,7 +300,105 @@ public class TestRpcServer {
 		final String expectedStrRaw = TestUtil.getJsonTestResourceAsString(getClass().getSimpleName(),
 				"test010CoreGetRawTransaction");
 
-		final String actualStrRaw = getResponse("", CoreRpcServerUtil.VERSION_2_0, params, method);
+		final String actualStrRaw = TestRpcServerUtil.getResponse(CONTROLLER, "", CoreRpcServerUtil.VERSION_2_0, params,
+				method);
+
+		final String expectedStr = new JSONObject(expectedStrRaw).toString(2);
+		final String actualStr = new JSONObject(actualStrRaw).toString(2);
+
+		Assert.assertEquals(TestUtil.RESPONSES_MUST_MATCH, expectedStr, actualStr);
+	}
+
+	/**
+	 * test reading core address with no subcategory.
+	 */
+	@Test
+	public void test011CoreGetTransactionOutputNoOutputs() {
+		final JSONArray params = new JSONArray();
+		final Transaction transaction = CONTROLLER.getLocalNodeData().getBlockDb().getBlock(0).getTransactionList()
+				.get(0);
+		final String txHash = transaction.hash.toHexString();
+		params.put(txHash);
+		params.put(0);
+		final String method = CoreRpcCommandEnum.GETTXOUT.getName();
+
+		final String expectedStrRaw = TestUtil.getJsonTestResourceAsString(getClass().getSimpleName(),
+				"test011CoreGetTransactionOutputNoOutputs");
+
+		final String actualStrRaw = TestRpcServerUtil.getResponse(CONTROLLER, "", CoreRpcServerUtil.VERSION_2_0, params,
+				method);
+
+		final String expectedStr = new JSONObject(expectedStrRaw).toString(2);
+		final String actualStr = new JSONObject(actualStrRaw).toString(2);
+
+		Assert.assertEquals(TestUtil.RESPONSES_MUST_MATCH, expectedStr, actualStr);
+	}
+
+	/**
+	 * test reading core address with no subcategory.
+	 */
+	@Test
+	public void test012CoreGetTransactionOutput() {
+		final JSONArray params = new JSONArray();
+		final Block block = CONTROLLER.getLocalNodeData().getBlockDb().getBlock(0);
+		final Transaction transaction = block.getTransactionList().get(block.getTransactionList().size() - 1);
+		final String txHash = transaction.hash.toHexString();
+		params.put(txHash);
+		params.put(transaction.outputs.size() - 1);
+		final String method = CoreRpcCommandEnum.GETTXOUT.getName();
+
+		final String expectedStrRaw = TestUtil.getJsonTestResourceAsString(getClass().getSimpleName(),
+				"test012CoreGetTransactionOutput");
+
+		final String actualStrRaw = TestRpcServerUtil.getResponse(CONTROLLER, "", CoreRpcServerUtil.VERSION_2_0, params,
+				method);
+
+		final String expectedStr = new JSONObject(expectedStrRaw).toString(2);
+		final String actualStr = new JSONObject(actualStrRaw).toString(2);
+
+		Assert.assertEquals(TestUtil.RESPONSES_MUST_MATCH, expectedStr, actualStr);
+	}
+
+	/**
+	 * test reading core address with no subcategory.
+	 */
+	@Test
+	public void test013CityOfZionGetTransaction() {
+		final JSONArray params = new JSONArray();
+		final Block block = CONTROLLER.getLocalNodeData().getBlockDb().getBlock(0);
+		final Transaction transaction = block.getTransactionList().get(0);
+		final String txHash = transaction.hash.toHexString();
+		final String uri = CityOfZionCommandEnum.TRANSACTION.getUriPrefix() + txHash;
+		final String method = CoreRpcCommandEnum.UNKNOWN.getName();
+		final String expectedStrRaw = TestUtil.getJsonTestResourceAsString(getClass().getSimpleName(),
+				"test013CityOfZionGetTransaction");
+
+		CityOfZionCommandEnum.getCommandStartingWith(uri);
+
+		final String actualStrRaw = TestRpcServerUtil.getResponse(CONTROLLER, uri, CoreRpcServerUtil.VERSION_2_0,
+				params, method);
+
+		final String expectedStr = new JSONObject(expectedStrRaw).toString(2);
+		final String actualStr = new JSONObject(actualStrRaw).toString(2);
+
+		Assert.assertEquals(TestUtil.RESPONSES_MUST_MATCH, expectedStr, actualStr);
+	}
+
+	/**
+	 * test reading core block, verbose hash.
+	 */
+	@Test
+	public void test014CoreGetBlockWithIndexNotVerbose() {
+		final JSONArray params = new JSONArray();
+		params.put(0);
+		params.put(0);
+		final String method = CoreRpcCommandEnum.GETBLOCK.getName();
+
+		final String expectedStrRaw = TestUtil.getJsonTestResourceAsString(getClass().getSimpleName(),
+				"test014CoreGetBlockWithHashNotVerbose");
+
+		final String actualStrRaw = TestRpcServerUtil.getResponse(CONTROLLER, "", CoreRpcServerUtil.VERSION_2_0, params,
+				method);
 
 		final String expectedStr = new JSONObject(expectedStrRaw).toString(2);
 		final String actualStr = new JSONObject(actualStrRaw).toString(2);
@@ -430,50 +418,7 @@ public class TestRpcServer {
 		final String expectedStr = TestUtil.getJsonTestResourceAsString(getClass().getSimpleName(),
 				"test001CityOfZionAddressBalance");
 
-		final String actualStr = getCityOfZionResponse(input, method);
-
-		Assert.assertEquals(TestUtil.RESPONSES_MUST_MATCH, expectedStr, actualStr);
-	}
-
-	/**
-	 * test reading address balance.
-	 */
-	@Test
-	@Ignore
-	public void testCoreGetBestBlockHash() {
-		final JSONArray params = new JSONArray();
-		final String method = "getbestblockhash1";
-
-		final String expectedStr = TestUtil.getJsonTestResourceAsString(getClass().getSimpleName(),
-				"testCoreGetBestBlockHash");
-
-		final String actualStr;
-		try {
-			final JSONObject inputJson = createInputJson(CoreRpcServerUtil.VERSION_2_0, method, params);
-			final String coreRpcNode = CityOfZionUtil.getMainNetRpcNode();
-			final StringEntity input = new StringEntity(inputJson.toString(), ContentType.APPLICATION_JSON);
-			final HttpPost post = new HttpPost(coreRpcNode);
-			final RequestConfig requestConfig = RequestConfig.custom().setSocketTimeout(TIMEOUT_MILLIS)
-					.setConnectTimeout(TIMEOUT_MILLIS).setConnectionRequestTimeout(TIMEOUT_MILLIS).build();
-			post.setConfig(requestConfig);
-			post.setEntity(input);
-			final CloseableHttpClient client = HttpClients.createDefault();
-			final String responseStr;
-			try {
-				final CloseableHttpResponse response = client.execute(post);
-				logDebugStatus(response);
-				final HttpEntity entity = response.getEntity();
-				responseStr = EntityUtils.toString(entity);
-			} catch (final ConnectTimeoutException | SocketTimeoutException | NoHttpResponseException
-					| SocketException e) {
-				throw new RuntimeException(CONNECTION_EXCEPTION, e);
-			}
-			final JSONObject responseJson = new JSONObject(responseStr);
-
-			actualStr = responseJson.toString(2);
-		} catch (final Exception e) {
-			throw new RuntimeException(e);
-		}
+		final String actualStr = TestRpcServerUtil.getCityOfZionResponse(input, method);
 
 		Assert.assertEquals(TestUtil.RESPONSES_MUST_MATCH, expectedStr, actualStr);
 	}

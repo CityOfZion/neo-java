@@ -1,0 +1,5 @@
+{
+	"actual": true,
+	"expected": 0,
+	"error": "bad parameters, expected a hash or an index"
+}

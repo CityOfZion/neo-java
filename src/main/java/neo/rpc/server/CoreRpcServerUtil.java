@@ -184,7 +184,15 @@ public final class CoreRpcServerUtil {
 				}
 			} else if (params.get(0) instanceof Number) {
 				final long index = params.getLong(0);
-				block = controller.getLocalNodeData().getBlockDb().getBlock(index);
+				try {
+					block = controller.getLocalNodeData().getBlockDb().getBlock(index);
+				} catch (final RuntimeException e) {
+					final JSONObject response = new JSONObject();
+					response.put(ERROR, e.getMessage());
+					response.put(EXPECTED, 0);
+					response.put(ACTUAL, params.get(0));
+					return response;
+				}
 			} else {
 				final JSONObject response = new JSONObject();
 				response.put(ERROR, "bad parameters, expected a hash or an index");
@@ -268,6 +276,38 @@ public final class CoreRpcServerUtil {
 				return response;
 			}
 		}
+	}
+
+	/**
+	 * return the transaction as a JSON object.
+	 *
+	 * @param controller
+	 *            the controller to use.
+	 * @param transactionHex
+	 *            the transaction hex to use.
+	 * @return the transaction as a JSON object.
+	 */
+	private static JSONObject onGetCityOfZionTransaction(final LocalControllerNode controller,
+			final String transactionHex) {
+		final Transaction transaction;
+		try {
+			final byte[] ba = ModelUtil.decodeHex(transactionHex);
+			final UInt256 txId = new UInt256(ByteBuffer.wrap(ba));
+			transaction = controller.getLocalNodeData().getBlockDb().getTransactionWithHash(txId);
+		} catch (final RuntimeException e) {
+			final JSONObject response = new JSONObject();
+			if (e.getMessage() == null) {
+				response.put(ERROR, e.getClass().getName());
+			} else {
+				response.put(ERROR, e.getMessage());
+			}
+			response.put(EXPECTED, EXPECTED_GENERIC_HEX);
+			response.put(ACTUAL, transactionHex);
+			return response;
+		}
+
+		return transaction.toJSONObject();
+
 	}
 
 	/**
@@ -359,6 +399,87 @@ public final class CoreRpcServerUtil {
 	}
 
 	/**
+	 * responds to a "gettxout" command.
+	 *
+	 * @param controller
+	 *            the controller to use.
+	 * @param id
+	 *            the request id to use.
+	 * @param params
+	 *            the parameters to use.
+	 * @return the response.
+	 */
+	private static JSONObject onGetTransactionOutput(final LocalControllerNode controller, final int id,
+			final JSONArray params) {
+		if (params.length() == 0) {
+			final JSONObject response = new JSONObject();
+			response.put(ERROR, "no parameters, expected a txid and an index");
+			final JSONArray expectedParams = new JSONArray();
+			expectedParams.put(EXPECTED_GENERIC_HEX);
+			expectedParams.put(0);
+			response.put(EXPECTED, expectedParams);
+			response.put(ACTUAL, new JSONArray());
+			return response;
+		} else if (params.length() == 1) {
+			final JSONObject response = new JSONObject();
+			response.put(ERROR, "only one parameter, expected a txid and an index");
+			final JSONArray expectedParams = new JSONArray();
+			expectedParams.put(EXPECTED_GENERIC_HEX);
+			expectedParams.put(0);
+			response.put(EXPECTED, expectedParams);
+			response.put(ACTUAL, params);
+			return response;
+		} else {
+			final String txIdStr = params.getString(0);
+			final int outputsIndex = params.getInt(1);
+			final byte[] ba = ModelUtil.decodeHex(txIdStr);
+			final UInt256 txId = new UInt256(ByteBuffer.wrap(ba));
+			final Transaction transaction;
+			try {
+				transaction = controller.getLocalNodeData().getBlockDb().getTransactionWithHash(txId);
+			} catch (final RuntimeException e) {
+				final JSONObject response = new JSONObject();
+				response.put(ERROR, e.getMessage());
+				final JSONArray expectedParams = new JSONArray();
+				expectedParams.put(EXPECTED_GENERIC_HEX);
+				expectedParams.put(0);
+				response.put(ACTUAL, params);
+				return response;
+			}
+
+			if (transaction.outputs.isEmpty()) {
+				final JSONObject response = new JSONObject();
+				response.put(ERROR, "transaction with hex \"" + txIdStr + "\" has no outputs.");
+				final JSONArray expectedParams = new JSONArray();
+				expectedParams.put(EXPECTED_GENERIC_HEX);
+				expectedParams.put(0);
+				response.put(EXPECTED, 1);
+				response.put(ACTUAL, 0);
+				return response;
+			}
+
+			if (outputsIndex >= transaction.outputs.size()) {
+				final JSONObject response = new JSONObject();
+				response.put(ERROR, "requested index \"" + outputsIndex + "\" is is too large, needs to be less than \""
+						+ transaction.outputs.size() + "\"");
+				final JSONArray expectedParams = new JSONArray();
+				expectedParams.put(EXPECTED_GENERIC_HEX);
+				expectedParams.put(0);
+				response.put(EXPECTED, transaction.outputs.size() - 1);
+				response.put(ACTUAL, outputsIndex);
+				return response;
+			}
+
+			final JSONObject response = new JSONObject();
+			response.put(ID, id);
+			response.put(JSONRPC, VERSION_2_0);
+			response.put(RESULT, transaction.outputs.get(outputsIndex).toJSONObject());
+
+			return response;
+		}
+	}
+
+	/**
 	 * process the request.
 	 *
 	 * @param controller
@@ -371,32 +492,8 @@ public final class CoreRpcServerUtil {
 	 * @return the response.
 	 */
 	public static JSONObject process(final LocalControllerNode controller, final String uri, final String requestStr) {
-		LOG.trace("process uri:{};requestStr:{};", uri, requestStr);
-		if (uri.startsWith("/address/")) {
-			final AddressCommandEnum addressCommand = AddressCommandEnum.fromName(uri);
-			switch (addressCommand) {
-			case BALANCE: {
-				// TODO : implement.
-				throw new NotImplementedError(addressCommand.getName());
-			}
-			case CLAIMS: {
-				// TODO : implement.
-				throw new NotImplementedError(addressCommand.getName());
-			}
-			case HISTORY: {
-				// TODO : implement.
-				throw new NotImplementedError(addressCommand.getName());
-			}
-			default: {
-				final JSONObject response = new JSONObject();
-				response.put(ERROR, "unknown address URI");
-				response.put(EXPECTED, AddressCommandEnum.getValuesJSONArray());
-				response.put(ACTUAL, uri);
-				return response;
-			}
-			}
-		} else {
-
+		LOG.error("process uri:{};requestStr:{};", uri, requestStr);
+		if (uri.equals("/")) {
 			final JSONObject request = new JSONObject(requestStr);
 
 			final String versionStr = request.getString(JSONRPC);
@@ -438,8 +535,8 @@ public final class CoreRpcServerUtil {
 				return onGetRawTransaction(controller, id, params);
 			}
 			case GETTXOUT: {
-				// TODO : implement.
-				throw new NotImplementedError(coreRpcCommand.getName());
+				final JSONArray params = request.getJSONArray(PARAMS);
+				return onGetTransactionOutput(controller, id, params);
 			}
 			case SENDRAWTRANSACTION: {
 				// TODO : implement.
@@ -454,6 +551,36 @@ public final class CoreRpcServerUtil {
 				response.put(ERROR, "unknown method");
 				response.put(EXPECTED, CoreRpcCommandEnum.getValuesJSONArray());
 				response.put(ACTUAL, methodStr);
+				return response;
+			}
+			}
+		} else {
+			final CityOfZionCommandEnum cityOfZionCommand = CityOfZionCommandEnum.getCommandStartingWith(uri);
+			final String remainder = uri.substring(cityOfZionCommand.getUriPrefix().length());
+			switch (cityOfZionCommand) {
+			case BALANCE: {
+				// TODO : implement.
+				throw new NotImplementedError(cityOfZionCommand.getUriPrefix());
+			}
+			case CLAIMS: {
+				// TODO : implement.
+				throw new NotImplementedError(cityOfZionCommand.getUriPrefix());
+			}
+			case HISTORY: {
+				// TODO : implement.
+				throw new NotImplementedError(cityOfZionCommand.getUriPrefix());
+			}
+			case TRANSACTION: {
+				return onGetCityOfZionTransaction(controller, remainder);
+			}
+			default: {
+				final JSONObject response = new JSONObject();
+				response.put(ERROR, "unknown URI");
+				response.put(EXPECTED, CityOfZionCommandEnum.getValuesJSONArray());
+				final JSONObject actual = new JSONObject();
+				actual.put("uri", uri);
+				actual.put("command", cityOfZionCommand.getUriPrefix());
+				response.put(ACTUAL, actual);
 				return response;
 			}
 			}

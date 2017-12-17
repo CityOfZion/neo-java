@@ -1,0 +1,10 @@
+{
+	"result": {
+		"scriptHash": "5fa99d93303775fe50ca119c327759313eccfa1c",
+		"assetId": "c56f33fc6ecfcd0c225c4ab356fee59390af8560be0e930faebe74a6daff7c9b",
+		"valueHex": "c16ff2862300",
+		"value": 10000000000000000
+	},
+	"id": 1,
+	"jsonrpc": "2.0"
+}

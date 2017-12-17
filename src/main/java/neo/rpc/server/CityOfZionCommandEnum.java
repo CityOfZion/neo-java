@@ -6,18 +6,20 @@ import org.json.JSONArray;
  * an enumeration of all the commands that can be sent to the neo core rpc
  * service.
  * <p>
- * https://github.com/neo-project/neo/wiki/API-Reference
+ * https://github.com/CityOfZion/neon-wallet-db/blob/042d2d00c4fb1a657e2268280c46fb900b4645ce/README.md
  *
  * @author coranos
  *
  */
-public enum AddressCommandEnum {
-	/** address/balance. */
+public enum CityOfZionCommandEnum {
+	/** /address/balance/. */
 	BALANCE("/address/balance/"),
-	/** address/history. */
+	/** /address/history/. */
 	HISTORY("/address/history/"),
-	/** address/claims. */
+	/** /address/claims/. */
 	CLAIMS("/address/claims/"),
+	/** /transaction/. */
+	TRANSACTION("/transaction/"),
 	/** unknown. */
 	UNKNOWN(""),
 	/** */
@@ -33,10 +35,10 @@ public enum AddressCommandEnum {
 	 *
 	 * @return the command with the given name, or null if no command exists.
 	 */
-	public static final AddressCommandEnum fromName(final String name) {
-		for (final AddressCommandEnum command : values()) {
+	public static final CityOfZionCommandEnum getCommandStartingWith(final String name) {
+		for (final CityOfZionCommandEnum command : values()) {
 			if (command != UNKNOWN) {
-				if (command.name.equals(name)) {
+				if (name.startsWith(command.uriPrefix)) {
 					return command;
 				}
 			}
@@ -51,9 +53,9 @@ public enum AddressCommandEnum {
 	 */
 	public static JSONArray getValuesJSONArray() {
 		final JSONArray expectedArray = new JSONArray();
-		for (final AddressCommandEnum command : AddressCommandEnum.values()) {
+		for (final CityOfZionCommandEnum command : CityOfZionCommandEnum.values()) {
 			if (command != UNKNOWN) {
-				expectedArray.put(command.getName());
+				expectedArray.put(command.getUriPrefix());
 			}
 		}
 		return expectedArray;
@@ -62,7 +64,7 @@ public enum AddressCommandEnum {
 	/**
 	 * the command name.
 	 */
-	private final String name;
+	private final String uriPrefix;
 
 	/**
 	 * the constructor.
@@ -70,8 +72,8 @@ public enum AddressCommandEnum {
 	 * @param name
 	 *            the name to use.
 	 */
-	AddressCommandEnum(final String name) {
-		this.name = name;
+	CityOfZionCommandEnum(final String uriPrefix) {
+		this.uriPrefix = uriPrefix;
 	}
 
 	/**
@@ -79,7 +81,7 @@ public enum AddressCommandEnum {
 	 *
 	 * @return the name.
 	 */
-	public String getName() {
-		return name;
+	public String getUriPrefix() {
+		return uriPrefix;
 	}
 }

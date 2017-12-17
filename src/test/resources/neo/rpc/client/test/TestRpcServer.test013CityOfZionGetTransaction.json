@@ -1,0 +1,12 @@
+{
+	"outputs": [],
+	"exclusiveDataType": "MinerExclusiveData",
+	"exclusiveData": {
+		"nonce": "1dac2b7c"
+	},
+	"inputs": [],
+	"attributes": [],
+	"type": "MINER_TRANSACTION",
+	"scripts": [],
+	"version": 0
+}

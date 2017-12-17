@@ -1,0 +1,5 @@
+{
+	"actual": "0",
+	"expected": "0x...",
+	"error": "org.apache.commons.codec.DecoderException: Odd number of characters."
+}
