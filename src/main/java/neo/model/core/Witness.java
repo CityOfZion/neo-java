@@ -35,6 +35,19 @@ public final class Witness implements ToJsonObject, ByteArraySerializable, Seria
 	/**
 	 * the constructor.
 	 *
+	 * @param invocationScript
+	 *            the invocation script to use.
+	 * @param verificationScript
+	 *            the verification script to use.
+	 */
+	public Witness(final byte[] invocationScript, final byte[] verificationScript) {
+		this.invocationScript = invocationScript;
+		this.verificationScript = verificationScript;
+	}
+
+	/**
+	 * the constructor.
+	 *
 	 * @param bb
 	 *            the ByteBuffer to read.
 	 */
@@ -55,6 +68,24 @@ public final class Witness implements ToJsonObject, ByteArraySerializable, Seria
 		}
 
 		return 0;
+	}
+
+	/**
+	 * return a clone of the invocation script.
+	 *
+	 * @return a clone of the invocation script.
+	 */
+	public byte[] getCopyOfInvocationScript() {
+		return invocationScript.clone();
+	}
+
+	/**
+	 * return a clone of the verification script.
+	 *
+	 * @return a clone of the verification script.
+	 */
+	public byte[] getCopyOfVerificationScript() {
+		return verificationScript.clone();
 	}
 
 	@Override

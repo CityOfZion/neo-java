@@ -21,6 +21,11 @@ import neo.model.util.NetworkUtil;
  */
 public final class CoinReference implements ToJsonObject, ByteArraySerializable, Serializable {
 
+	/**
+	 * the hash prefix.
+	 */
+	private static final String HASH_PREFIX = "0x";
+
 	private static final long serialVersionUID = 1L;
 
 	/**
@@ -44,6 +49,19 @@ public final class CoinReference implements ToJsonObject, ByteArraySerializable,
 		prevIndex = ModelUtil.getUInt16(bb);
 	}
 
+	/**
+	 * the constructor.
+	 *
+	 * @param prevHash
+	 *            the previous hash to use.
+	 * @param prevIndex
+	 *            the previous index to use.
+	 */
+	public CoinReference(final UInt256 prevHash, final UInt16 prevIndex) {
+		this.prevHash = prevHash;
+		this.prevIndex = prevIndex;
+	}
+
 	@Override
 	public byte[] toByteArray() {
 		final ByteArrayOutputStream bout = new ByteArrayOutputStream();
@@ -55,8 +73,8 @@ public final class CoinReference implements ToJsonObject, ByteArraySerializable,
 	@Override
 	public JSONObject toJSONObject() {
 		final JSONObject json = new JSONObject();
-		json.put("previousblockhash", "0x" + prevHash.toHexString());
-		json.put("previousindex", "0x" + prevIndex.toHexString());
+		json.put("previousblockhash", HASH_PREFIX + prevHash.toHexString());
+		json.put("previousindex", HASH_PREFIX + prevIndex.toHexString());
 		return json;
 	}
 

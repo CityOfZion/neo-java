@@ -1,8 +1,10 @@
 package neo.model.core;
 
 import java.io.ByteArrayOutputStream;
+import java.io.OutputStream;
 import java.io.Serializable;
 import java.nio.ByteBuffer;
+import java.util.Collections;
 import java.util.List;
 
 import org.json.JSONObject;
@@ -93,13 +95,26 @@ public final class Transaction implements ToJsonObject, ByteArraySerializable, S
 		return new UInt256(hashBa);
 	}
 
+	/**
+	 * return a byte array containing only the base data, no inputs outputs or
+	 * scripts.
+	 *
+	 * @return a byte array containing only the base data, no inputs outputs or
+	 *         scripts.
+	 */
+	public byte[] toBaseByteArray() {
+		final ByteArrayOutputStream bout = new ByteArrayOutputStream();
+		writeBaseData(bout);
+		NetworkUtil.write(bout, Collections.emptyList());
+		NetworkUtil.write(bout, Collections.emptyList());
+		NetworkUtil.write(bout, Collections.emptyList());
+		return bout.toByteArray();
+	}
+
 	@Override
 	public byte[] toByteArray() {
 		final ByteArrayOutputStream bout = new ByteArrayOutputStream();
-		NetworkUtil.write(bout, new byte[] { type.getTypeByte() });
-		NetworkUtil.write(bout, new byte[] { version });
-		NetworkUtil.write(bout, exclusiveData, false);
-		NetworkUtil.write(bout, attributes);
+		writeBaseData(bout);
 		NetworkUtil.write(bout, inputs);
 		NetworkUtil.write(bout, outputs);
 		NetworkUtil.write(bout, scripts);
@@ -125,6 +140,20 @@ public final class Transaction implements ToJsonObject, ByteArraySerializable, S
 	@Override
 	public String toString() {
 		return toJSONObject().toString();
+	}
+
+	/**
+	 * writes the base data (type, version, attributes, exclusiveData) to the output
+	 * stream.
+	 *
+	 * @param bout
+	 *            the output stream to use.
+	 */
+	private void writeBaseData(final OutputStream bout) {
+		NetworkUtil.write(bout, new byte[] { type.getTypeByte() });
+		NetworkUtil.write(bout, new byte[] { version });
+		NetworkUtil.write(bout, exclusiveData, false);
+		NetworkUtil.write(bout, attributes);
 	}
 
 }

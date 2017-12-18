@@ -51,6 +51,22 @@ public final class TransactionOutput implements ToJsonObject, ByteArraySerializa
 		scriptHash = ModelUtil.getUInt160(bb, false);
 	}
 
+	/**
+	 * the constructor.
+	 *
+	 * @param assetId
+	 *            the asset id to use.
+	 * @param value
+	 *            the value to use.
+	 * @param scriptHash
+	 *            the script hash to use.
+	 */
+	public TransactionOutput(final UInt256 assetId, final Fixed8 value, final UInt160 scriptHash) {
+		this.assetId = assetId;
+		this.value = value;
+		this.scriptHash = scriptHash;
+	}
+
 	@Override
 	public byte[] toByteArray() {
 		final ByteArrayOutputStream bout = new ByteArrayOutputStream();

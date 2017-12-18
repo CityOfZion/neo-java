@@ -69,8 +69,8 @@ public enum CityOfZionCommandEnum {
 	/**
 	 * the constructor.
 	 *
-	 * @param name
-	 *            the name to use.
+	 * @param uriPrefix
+	 *            the uriPrefix to use.
 	 */
 	CityOfZionCommandEnum(final String uriPrefix) {
 		this.uriPrefix = uriPrefix;
