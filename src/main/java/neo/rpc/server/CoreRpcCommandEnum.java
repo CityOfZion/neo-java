@@ -32,7 +32,9 @@ public enum CoreRpcCommandEnum {
 	SENDRAWTRANSACTION("sendrawtransaction"),
 	/** submitblock. */
 	SUBMITBLOCK("submitblock"),
-	/** submitblock. */
+	/** getaccountlist. */
+	GETACCOUNTLIST("getaccountlist"),
+	/** default, unknown. */
 	UNKNOWN(""),
 	/** */
 	;

@@ -29,7 +29,7 @@ import neo.rpc.client.CityOfZionUtil;
 import neo.rpc.client.test.util.TestUtil;
 
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
-public class TestCityOfZionUtil {
+public final class TestCityOfZionUtil {
 
 	private static final Logger LOG = LoggerFactory.getLogger(TestCityOfZionUtil.class);
 

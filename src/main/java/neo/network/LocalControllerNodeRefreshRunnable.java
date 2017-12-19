@@ -15,7 +15,7 @@ import neo.network.model.NodeConnectionPhaseEnum;
 import neo.network.model.RemoteNodeData;
 import neo.network.model.TimerTypeEnum;
 
-public class LocalControllerNodeRefreshRunnable implements Runnable {
+public final class LocalControllerNodeRefreshRunnable implements Runnable {
 
 	private static final int REFRESH_THREAD_MAX_MS = 1000;
 

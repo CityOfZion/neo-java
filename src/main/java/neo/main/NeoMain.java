@@ -85,6 +85,7 @@ public final class NeoMain {
 				try {
 					statsTableModel.stop();
 					peerTableModel.stop();
+					controller.stop();
 					LOG.info("STARTED SHUTTING DOWN DB");
 					controller.getLocalNodeData().getBlockDb().close();
 					LOG.info("SUCCESS SHUTTING DOWN DB");

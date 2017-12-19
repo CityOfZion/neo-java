@@ -3,6 +3,8 @@ package neo.model.db;
 import java.nio.ByteBuffer;
 import java.util.Map;
 
+import org.apache.commons.lang3.ArrayUtils;
+
 import neo.model.bytes.Fixed8;
 import neo.model.bytes.UInt160;
 import neo.model.bytes.UInt256;
@@ -20,6 +22,7 @@ public final class TransactionOutputMapToObject extends AbstractMapToObject<Tran
 	public TransactionOutput toObject(final Map<String, Object> map) {
 		final byte[] assetIdBa = getBytes(map, "asset_id");
 		final byte[] valueBa = getBytes(map, "value");
+		ArrayUtils.reverse(valueBa);
 		final byte[] scriptHashBa = getBytes(map, "script_hash");
 
 		final UInt256 assetId = new UInt256(ByteBuffer.wrap(assetIdBa));

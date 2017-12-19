@@ -3,7 +3,8 @@ package neo.model.crypto.ecc;
 import java.math.BigInteger;
 import java.util.Random;
 
-public class ECFieldElement {
+public final class ECFieldElement {
+
 	private static BigInteger[] FastLucasSequence(final BigInteger p, final BigInteger P, final BigInteger Q,
 			final BigInteger k) {
 		final int n = k.bitLength();

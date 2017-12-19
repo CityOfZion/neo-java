@@ -9,6 +9,7 @@ import java.util.ArrayList;
 import java.util.Base64;
 import java.util.List;
 
+import org.apache.commons.codec.DecoderException;
 import org.apache.commons.codec.binary.Hex;
 import org.apache.commons.lang3.ArrayUtils;
 import org.json.JSONArray;
@@ -25,21 +26,87 @@ import neo.model.bytes.UInt256;
 import neo.model.bytes.UInt32;
 import neo.model.bytes.UInt64;
 
-public class ModelUtil {
+/**
+ * the utilities for editing the neo model.
+ *
+ * @author coranos
+ *
+ */
+public final class ModelUtil {
+
+	/**
+	 * gas.
+	 */
+	public static final String GAS = "gas";
+
+	/**
+	 * neo.
+	 */
+	public static final String NEO = "neo";
 
 	/**
 	 * the logger.
 	 */
 	private static final Logger LOG = LoggerFactory.getLogger(ModelUtil.class);
 
+	/**
+	 * the encoded byte to mean a variable length is a long.
+	 */
 	private static final byte LENGTH_LONG = (byte) 0xFF;
 
+	/**
+	 * the encoded byte to mean a variable length is a int.
+	 */
 	private static final byte LENGTH_INT = (byte) 0xFE;
 
+	/**
+	 * the encoded byte to mean a variable length is a short.
+	 */
 	private static final byte LENGTH_SHORT = (byte) 0xFD;
 
-	public static final String ANTSHARES_HASH = "c56f33fc6ecfcd0c225c4ab356fee59390af8560be0e930faebe74a6daff7c9b";
+	/**
+	 * the NEO coin hash.
+	 */
+	public static final String NEO_HASH_HEX_STR = "c56f33fc6ecfcd0c225c4ab356fee59390af8560be0e930faebe74a6daff7c9b";
 
+	/**
+	 * the GAS coin hash.
+	 */
+	public static final String GAS_HASH_HEX_STR = "602c79718b16e442de58778e148d0b1084e3b2dffd5de6b7b16cee7969282de7";
+
+	/**
+	 * the hash of the NEO registration transaction.
+	 */
+	public static final UInt256 NEO_HASH;
+
+	/**
+	 * the hash of the GAS registration transaction.
+	 */
+	public static final UInt256 GAS_HASH;
+
+	/**
+	 * the divisor to use to convert a Fixed8 value to a decimal.
+	 */
+	public static final long DECIMAL_DIVISOR = 100000000;
+
+	static {
+
+		try {
+			final byte[] neoBa = Hex.decodeHex(NEO_HASH_HEX_STR.toCharArray());
+			ArrayUtils.reverse(neoBa);
+			NEO_HASH = new UInt256(neoBa);
+
+			final byte[] gasBa = Hex.decodeHex(GAS_HASH_HEX_STR.toCharArray());
+			ArrayUtils.reverse(gasBa);
+			GAS_HASH = new UInt256(gasBa);
+		} catch (final DecoderException e) {
+			throw new RuntimeException(e);
+		}
+	}
+
+	/**
+	 * the address version.
+	 */
 	public static final byte ADDRESS_VERSION = 23;
 
 	public static byte[] copyAndReverse(final byte[] input) {
@@ -270,6 +337,26 @@ public class ModelUtil {
 		ArrayUtils.reverse(ba);
 		final BigInteger bi = new BigInteger(1, ba);
 		return bi.toString(16);
+	}
+
+	/**
+	 * converts the value to a double, by dividing by DECIMAL_DIVISOR. then formats
+	 * it to a string with two decimal places.
+	 *
+	 * @param value
+	 *            the long value to convert.
+	 * @return the converted value as a string.
+	 */
+	public static String toRoundedDoubleAsString(final long value) {
+		final double input = value / DECIMAL_DIVISOR;
+		return String.format("%.2f", input);
+	}
+
+	/**
+	 * the constructor.
+	 */
+	private ModelUtil() {
+
 	}
 
 }

@@ -5,7 +5,7 @@ import java.nio.ByteBuffer;
 
 import org.apache.commons.lang.ArrayUtils;
 
-public class ECPoint {
+public final class ECPoint {
 
 	private static byte[] concat(final byte[] ba1, final byte[] ba2) {
 		final byte[] ba = new byte[ba1.length + ba2.length];

@@ -31,7 +31,7 @@ import neo.model.network.Message;
 import neo.rpc.client.test.util.TestUtil;
 
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
-public class TestLocalHostTestNetUtil {
+public final class TestLocalHostTestNetUtil {
 
 	private static final Logger LOG = LoggerFactory.getLogger(TestLocalHostTestNetUtil.class);
 
@@ -190,13 +190,13 @@ public class TestLocalHostTestNetUtil {
 					out.write(versionRequest.toByteArray());
 					out.write(verackRequest.toByteArray());
 					out.flush();
-					final Message versionResponse = new Message(in);
+					final Message versionResponse = new Message(-1, in);
 					if (versionResponse.magic != magic) {
 						throw new RuntimeException(
 								"versionResponse magic was " + versionResponse.magic + " expected " + magic);
 					}
 					Assert.assertEquals("version", versionResponse.command);
-					final Message verackResponse = new Message(in);
+					final Message verackResponse = new Message(-1, in);
 					if (verackResponse.magic != magic) {
 						throw new RuntimeException(
 								"verackResponse magic was " + verackResponse.magic + " expected " + magic);
@@ -209,7 +209,7 @@ public class TestLocalHostTestNetUtil {
 					Thread.sleep(1000);
 					LOG.info("baList:{}", baList);
 					while (true) {
-						final Message getaddrResponse = new Message(in);
+						final Message getaddrResponse = new Message(-1, in);
 						if (getaddrResponse.magic != magic) {
 							throw new RuntimeException(
 									"getaddrResponse magic was " + getaddrResponse.magic + " expected " + magic);

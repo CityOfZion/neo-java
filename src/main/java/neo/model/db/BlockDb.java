@@ -1,5 +1,9 @@
 package neo.model.db;
 
+import java.util.Map;
+
+import neo.model.bytes.Fixed8;
+import neo.model.bytes.UInt160;
 import neo.model.bytes.UInt256;
 import neo.model.core.Block;
 import neo.model.core.Transaction;
@@ -25,6 +29,13 @@ public interface BlockDb {
 	 * @return true if the hash is in the database.
 	 */
 	boolean containsBlockWithHash(UInt256 hash);
+
+	/**
+	 * return a map of account, assetid, and value for all accounts.
+	 *
+	 * @return a map of account, assetid, and value for all accounts.
+	 */
+	Map<UInt160, Map<UInt256, Fixed8>> getAccountAssetValueMap();
 
 	/**
 	 * return the block at the given height.

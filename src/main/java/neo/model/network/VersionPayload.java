@@ -26,10 +26,15 @@ public class VersionPayload implements ByteArraySerializable, Payload {
 	private static final Logger LOG = LoggerFactory.getLogger(VersionPayload.class);
 
 	public final UInt32 version;
+
 	public final UInt64 services;
+
 	public final UInt32 timestamp;
+
 	public final UInt16 port;
+
 	public final UInt32 nonce;
+
 	public final String userAgent;
 
 	public final UInt32 startHeight;

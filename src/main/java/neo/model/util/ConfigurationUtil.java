@@ -32,6 +32,11 @@ public final class ConfigurationUtil {
 	public static final String RPC_CLIENT_TIMOUT = "rpc-client-timout";
 
 	/**
+	 * the JSON key, "rpc-client-timout".
+	 */
+	public static final String RPC_SERVER_TIMOUT = "rpc-server-timout";
+
+	/**
 	 * the JSON key, "good-node-file".
 	 */
 	public static final String GOOD_NODE_FILE = "good-node-file";

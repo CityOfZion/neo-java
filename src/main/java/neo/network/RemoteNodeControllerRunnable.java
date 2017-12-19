@@ -17,6 +17,7 @@ import neo.model.network.InvPayload;
 import neo.model.network.Message;
 import neo.model.util.MapUtil;
 import neo.model.util.PayloadUtil;
+import neo.model.util.threadpool.StopRunnable;
 import neo.network.model.LocalNodeData;
 import neo.network.model.RemoteNodeData;
 
@@ -26,7 +27,7 @@ import neo.network.model.RemoteNodeData;
  * @author coranos
  *
  */
-public final class RemoteNodeControllerRunnable implements Runnable {
+public final class RemoteNodeControllerRunnable implements StopRunnable {
 
 	/**
 	 * the logger.
@@ -68,6 +69,8 @@ public final class RemoteNodeControllerRunnable implements Runnable {
 	/**
 	 * returns the message, or returns null if there's a SocketTimeoutException.
 	 *
+	 * @param readTimeOut
+	 *            teh read time out.
 	 * @param in
 	 *            the input stream to read.
 	 *
@@ -75,10 +78,10 @@ public final class RemoteNodeControllerRunnable implements Runnable {
 	 * @throws IOException
 	 *             if an error occurs.
 	 */
-	private Message getMessageOrTimeOut(final InputStream in) throws IOException {
+	private Message getMessageOrTimeOut(final long readTimeOut, final InputStream in) throws IOException {
 		Message messageRecieved;
 		try {
-			messageRecieved = new Message(in);
+			messageRecieved = new Message(readTimeOut, in);
 		} catch (final SocketTimeoutException e) {
 			messageRecieved = null;
 		}
@@ -88,6 +91,8 @@ public final class RemoteNodeControllerRunnable implements Runnable {
 	/**
 	 * recieve messages.
 	 *
+	 * @param readTimeOut
+	 *            the read timeout.
 	 * @param magic
 	 *            the magic number to check for valid messages.
 	 * @param in
@@ -95,8 +100,8 @@ public final class RemoteNodeControllerRunnable implements Runnable {
 	 * @throws IOException
 	 *             if an error occurs.
 	 */
-	private void recieveMessages(final long magic, final InputStream in) throws IOException {
-		Message messageRecieved = getMessageOrTimeOut(in);
+	private void recieveMessages(final long readTimeOut, final long magic, final InputStream in) throws IOException {
+		Message messageRecieved = getMessageOrTimeOut(readTimeOut, in);
 		while (messageRecieved != null) {
 			if (messageRecieved.magic != magic) {
 				LOG.debug(" magic was {} expected {} closing peer.", messageRecieved.magic, magic);
@@ -119,7 +124,7 @@ public final class RemoteNodeControllerRunnable implements Runnable {
 
 				localControllerNode.onMessage(RemoteNodeControllerRunnable.this, messageRecieved);
 			}
-			messageRecieved = getMessageOrTimeOut(in);
+			messageRecieved = getMessageOrTimeOut(readTimeOut, in);
 		}
 	}
 
@@ -131,6 +136,7 @@ public final class RemoteNodeControllerRunnable implements Runnable {
 		LOG.debug("STARTED RemoteNodeControllerRunnable run {}", data.getHostAddress());
 		final long startTimeMs = System.currentTimeMillis();
 		final LocalNodeData localNodeData = localControllerNode.getLocalNodeData();
+		final long readTimeOut = localNodeData.getRpcServerTimeoutMillis();
 		final long magic = localNodeData.getMagic();
 		final int localPort = localNodeData.getPort();
 		final int nonce = localNodeData.getNonce();
@@ -156,8 +162,15 @@ public final class RemoteNodeControllerRunnable implements Runnable {
 					while (data.isGoodPeer()) {
 						sendMessages(out);
 						out.flush();
-						Thread.sleep(data.getSleepIntervalMs());
-						recieveMessages(magic, in);
+						try {
+							Thread.sleep(data.getSleepIntervalMs());
+						} catch (final InterruptedException e) {
+							LOG.debug("InterruptedException[1], stopping. {}", e.getMessage());
+							data.setGoodPeer(false);
+						}
+						if (data.isGoodPeer()) {
+							recieveMessages(readTimeOut, magic, in);
+						}
 						final long currTimeMs = System.currentTimeMillis();
 						final long recycleTimeMs = startTimeMs + data.getRecycleIntervalMs();
 						if (recycleTimeMs < currTimeMs) {
@@ -166,7 +179,12 @@ public final class RemoteNodeControllerRunnable implements Runnable {
 						}
 
 						if (data.isGoodPeer()) {
-							Thread.sleep(data.getSleepIntervalMs());
+							try {
+								Thread.sleep(data.getSleepIntervalMs());
+							} catch (final InterruptedException e) {
+								LOG.debug("InterruptedException[2], stopping. {}", e.getMessage());
+								data.setGoodPeer(false);
+							}
 						}
 					}
 				}
@@ -233,11 +251,9 @@ public final class RemoteNodeControllerRunnable implements Runnable {
 
 	/**
 	 * stops the run method.
-	 *
-	 * @throws InterruptedException
-	 *             if an error occurs.
 	 */
-	public void stop() throws InterruptedException {
+	@Override
+	public void stop() {
 		data.setGoodPeer(false);
 		data.getSendQueue().clear();
 	}

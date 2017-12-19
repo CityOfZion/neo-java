@@ -20,7 +20,7 @@ import neo.network.model.RemoteNodeData;
 import neo.rpc.client.CityOfZionUtil;
 import neo.rpc.client.RpcClientUtil;
 
-public class BlockControlUtil {
+public final class BlockControlUtil {
 
 	/**
 	 * the logger.

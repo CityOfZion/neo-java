@@ -1,13 +1,19 @@
 package neo.rpc.client.test.util;
 
+import java.math.BigInteger;
 import java.nio.ByteBuffer;
+import java.util.Map;
+import java.util.TreeMap;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
 
+import neo.model.bytes.Fixed8;
+import neo.model.bytes.UInt160;
 import neo.model.bytes.UInt256;
 import neo.model.core.Block;
 import neo.model.core.Transaction;
+import neo.model.core.TransactionOutput;
 import neo.model.db.BlockDb;
 import neo.model.util.ModelUtil;
 
@@ -68,6 +74,35 @@ public abstract class AbstractJsonMockBlockDb implements BlockDb {
 			}
 		}
 		return false;
+	}
+
+	@Override
+	public final Map<UInt160, Map<UInt256, Fixed8>> getAccountAssetValueMap() {
+		final Map<UInt160, Map<UInt256, Fixed8>> accountAssetValueMap = new TreeMap<>();
+		final JSONArray mockBlockDb = getMockBlockDb();
+		for (int ix = 0; ix < mockBlockDb.length(); ix++) {
+			final JSONObject mockBlock = mockBlockDb.getJSONObject(ix);
+			final Block block = getBlock(mockBlock);
+			for (final Transaction transaction : block.getTransactionList()) {
+				for (final TransactionOutput output : transaction.outputs) {
+					if (!accountAssetValueMap.containsKey(output.scriptHash)) {
+						accountAssetValueMap.put(output.scriptHash, new TreeMap<>());
+					}
+					final Map<UInt256, Fixed8> assetValueMap = accountAssetValueMap.get(output.scriptHash);
+					if (assetValueMap.containsKey(output.assetId)) {
+						final Fixed8 oldValue = assetValueMap.get(output.assetId);
+						final BigInteger oldBi = new BigInteger(1, oldValue.toByteArray());
+						final BigInteger valBi = new BigInteger(1, output.value.toByteArray());
+						final BigInteger newBi = oldBi.add(valBi);
+						final Fixed8 newValue = new Fixed8(ByteBuffer.wrap(newBi.toByteArray()));
+						assetValueMap.put(output.assetId, newValue);
+					} else {
+						assetValueMap.put(output.assetId, output.value);
+					}
+				}
+			}
+		}
+		return accountAssetValueMap;
 	}
 
 	@Override
@@ -157,5 +192,4 @@ public abstract class AbstractJsonMockBlockDb implements BlockDb {
 		mockBlock.put(BLOCK, ModelUtil.toHexString(block.toByteArray()));
 		getMockBlockDb().put(mockBlock);
 	}
-
 }

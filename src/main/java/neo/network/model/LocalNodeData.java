@@ -78,6 +78,11 @@ public class LocalNodeData {
 	private final long rpcClientTimeoutMillis;
 
 	/**
+	 * the RPC server timeout, in millisconds.
+	 */
+	private final long rpcServerTimeoutMillis;
+
+	/**
 	 * the nonce.
 	 */
 	private final int nonce;
@@ -123,6 +128,8 @@ public class LocalNodeData {
 	 *            the active thread count to use.
 	 * @param rpcClientTimeoutMillis
 	 *            the RPC client timeout to use, in milliseconds.
+	 * @param rpcServerTimeoutMillis
+	 *            the RPC server timeout to use, in milliseconds.
 	 * @param timersMap
 	 *            the timers map to use, which governs when to send automatic
 	 *            messages.
@@ -139,12 +146,14 @@ public class LocalNodeData {
 	 *            the block DB class.
 	 */
 	public LocalNodeData(final long magic, final int activeThreadCount, final long rpcClientTimeoutMillis,
-			final Class<BlockDb> blockDbClass, final Map<String, TimerData> timersMap, final int nonce, final int port,
-			final File seedNodeFile, final File goodNodeFile) {
+			final long rpcServerTimeoutMillis, final Class<BlockDb> blockDbClass,
+			final Map<String, TimerData> timersMap, final int nonce, final int port, final File seedNodeFile,
+			final File goodNodeFile) {
 		startTime = System.currentTimeMillis();
 		this.magic = magic;
 		this.activeThreadCount = activeThreadCount;
 		this.rpcClientTimeoutMillis = rpcClientTimeoutMillis;
+		this.rpcServerTimeoutMillis = rpcServerTimeoutMillis;
 		this.timersMap = timersMap;
 		this.nonce = nonce;
 		this.port = port;
@@ -254,6 +263,10 @@ public class LocalNodeData {
 	 */
 	public long getRpcClientTimeoutMillis() {
 		return rpcClientTimeoutMillis;
+	}
+
+	public long getRpcServerTimeoutMillis() {
+		return rpcServerTimeoutMillis;
 	}
 
 	/**

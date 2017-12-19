@@ -22,7 +22,9 @@ import org.slf4j.LoggerFactory;
 import org.springframework.jdbc.core.JdbcOperations;
 import org.springframework.jdbc.core.JdbcTemplate;
 
+import neo.model.bytes.Fixed8;
 import neo.model.bytes.UInt16;
+import neo.model.bytes.UInt160;
 import neo.model.bytes.UInt256;
 import neo.model.bytes.UInt32;
 import neo.model.core.Block;
@@ -77,7 +79,7 @@ public final class BlockDbImpl implements BlockDb {
 			final String jsonStr = IOUtils.toString(resourceAsStream, "UTF-8");
 			sqlCache = XML.toJSONObject(jsonStr, true).getJSONObject("BlockDbImpl");
 		} catch (final IOException | NullPointerException e) {
-			throw new RuntimeException("error reading resource\"" + SQL_CACHE_XML + "\"", e);
+			throw new RuntimeException("error reading resource\"" + SQL_CACHE_XML + "\" ", e);
 		}
 
 		ds = new JDBCDataSource();
@@ -154,6 +156,30 @@ public final class BlockDbImpl implements BlockDb {
 			throw new RuntimeException(
 					"no key of type String or JSONArray in \"" + SQL + "\" found in " + sqlGroupJo.keySet());
 		}
+	}
+
+	@Override
+	public Map<UInt160, Map<UInt256, Fixed8>> getAccountAssetValueMap() {
+		final JdbcTemplate jdbcOperations = new JdbcTemplate(ds);
+		final String sql = getSql("getAccountAssetValueMap");
+
+		final List<Map<String, Object>> mapList = jdbcOperations.queryForList(sql);
+
+		final Map<UInt160, Map<UInt256, Fixed8>> accountAssetValueMap = new TreeMap<>();
+
+		final TransactionOutputMapToObject mapToObject = new TransactionOutputMapToObject();
+
+		for (final Map<String, Object> map : mapList) {
+			final TransactionOutput output = mapToObject.toObject(map);
+
+			if (!accountAssetValueMap.containsKey(output.scriptHash)) {
+				accountAssetValueMap.put(output.scriptHash, new TreeMap<>());
+			}
+			final Map<UInt256, Fixed8> assetValueMap = accountAssetValueMap.get(output.scriptHash);
+			assetValueMap.put(output.assetId, output.value);
+		}
+
+		return accountAssetValueMap;
 	}
 
 	/**
@@ -319,7 +345,14 @@ public final class BlockDbImpl implements BlockDb {
 				blockIndexBa, new CoinReferenceMapToObject());
 		for (final int txIx : inputsMap.keySet()) {
 			final List<CoinReference> inputs = inputsMap.get(txIx);
-			block.getTransactionList().get(txIx).inputs.addAll(inputs);
+
+			if (txIx >= block.getTransactionList().size()) {
+				throw new RuntimeException(
+						"txIx \"" + txIx + "\" exceeds txList.size \"" + block.getTransactionList().size()
+								+ "\" for block index \"" + block.getIndexAsLong() + "\" hash \"" + block.hash + "\"");
+			} else {
+				block.getTransactionList().get(txIx).inputs.addAll(inputs);
+			}
 		}
 	}
 

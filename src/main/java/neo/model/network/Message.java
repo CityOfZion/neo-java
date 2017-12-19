@@ -21,7 +21,7 @@ import neo.model.util.ModelUtil;
 import neo.model.util.NetworkUtil;
 import neo.model.util.SHA256HashUtil;
 
-public class Message {
+public final class Message {
 
 	/**
 	 * the logger.
@@ -29,7 +29,9 @@ public class Message {
 	private static final Logger LOG = LoggerFactory.getLogger(Message.class);
 
 	public final long magic;
+
 	public final String command;
+
 	private final byte[] payloadBa;
 
 	public final Payload payload;
@@ -52,9 +54,9 @@ public class Message {
 		commandEnum = CommandEnum.fromName(command);
 	}
 
-	public Message(final InputStream in) throws IOException {
+	public Message(final long readTimeOut, final InputStream in) throws IOException {
 		final byte[] headerBa = new byte[24];
-		InputStreamUtil.readUntilFull(in, headerBa);
+		InputStreamUtil.readUntilFull(readTimeOut, in, headerBa);
 		final ByteBuffer headerBb = ByteBuffer.wrap(headerBa);
 		final UInt32 magicObj = ModelUtil.getUInt32(headerBb);
 		magic = magicObj.toPositiveBigInteger().intValue();
@@ -83,7 +85,7 @@ public class Message {
 				LOG.error("OutOfMemoryError getting command \"{}\" payload of size:{}", command, length);
 				throw e;
 			}
-			InputStreamUtil.readUntilFull(in, payloadBa);
+			InputStreamUtil.readUntilFull(readTimeOut, in, payloadBa);
 		}
 		final ByteBuffer payloadBb = ByteBuffer.wrap(payloadBa);
 		this.payloadBa = ModelUtil.getByteArray(payloadBb, length, false);

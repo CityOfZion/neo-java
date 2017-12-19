@@ -10,7 +10,8 @@
 		"getrawtransaction",
 		"gettxout",
 		"sendrawtransaction",
-		"submitblock"
+		"submitblock",
+		"getaccountlist"
 	],
 	"error": "unknown method"
 }

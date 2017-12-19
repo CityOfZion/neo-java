@@ -23,6 +23,8 @@ public class InputStreamUtil {
 	/**
 	 * reads the input stream until full.
 	 *
+	 * @param readTimeOut
+	 *            the read timeout.
 	 * @param in
 	 *            the input stream to read.
 	 * @param ba
@@ -30,9 +32,13 @@ public class InputStreamUtil {
 	 * @throws IOException
 	 *             if an error occurs.
 	 */
-	public static void readUntilFull(final InputStream in, final byte[] ba) throws IOException {
+	public static void readUntilFull(final long readTimeOut, final InputStream in, final byte[] ba) throws IOException {
 		int bytesRead = 0;
+		final long timeoutMs = System.currentTimeMillis() + readTimeOut;
 		while (bytesRead < ba.length) {
+			if (System.currentTimeMillis() > timeoutMs) {
+				throw new SocketTimeoutException();
+			}
 			if (LOG.isTraceEnabled()) {
 				LOG.trace("STARTED readUntilFull {} of {} ", bytesRead, ba.length);
 			}

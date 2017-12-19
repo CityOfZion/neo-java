@@ -133,7 +133,7 @@
       select transaction
       from transaction
       where block_index = ?
-      order by transaction_index desc
+      order by transaction_index asc
     </sql>
   </getTransactionsWithIndex>
   <putTransactionOutput>
@@ -154,7 +154,7 @@
       from transaction_output
       where block_index = ?
       order by transaction_index, transaction_output_index
-      desc
+      asc
     </sql>
   </getTransactionOutputsWithIndex>
   <putTransactionInput>
@@ -173,7 +173,7 @@
       select transaction_index,prev_transaction_hash,prev_transaction_output_index
       from transaction_input
       where block_index = ?
-      order by transaction_input_index desc
+      order by transaction_input_index asc
     ]]></sql>
   </getTransactionInputsWithIndex>
   <putTransactionScript>
@@ -190,9 +190,9 @@
   <getTransactionScriptsWithIndex>
     <sql><![CDATA[
       select transaction_index,invocation_script,verification_script
-      from transaction_input
+      from transaction_script
       where block_index = ?
-      order by transaction_script_index desc
+      order by transaction_script_index asc
     ]]></sql>
   </getTransactionScriptsWithIndex>
 </BlockDbImpl>

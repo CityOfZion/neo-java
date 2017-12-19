@@ -22,7 +22,7 @@ import org.slf4j.LoggerFactory;
 
 import neo.network.LocalControllerNode;
 import neo.rpc.client.CityOfZionUtil;
-import neo.rpc.server.CoreRpcServerUtil;
+import neo.rpc.server.RpcServerUtil;
 
 /**
  * the utilities for testing the RPC server.
@@ -60,10 +60,10 @@ public final class TestRpcServerUtil {
 	 */
 	private static JSONObject createInputJson(final String rpcVersion, final String method, final JSONArray params) {
 		final JSONObject inputJson = new JSONObject();
-		inputJson.put(CoreRpcServerUtil.JSONRPC, rpcVersion);
-		inputJson.put(CoreRpcServerUtil.METHOD, method);
-		inputJson.put(CoreRpcServerUtil.PARAMS, params);
-		inputJson.put(CoreRpcServerUtil.ID, 1);
+		inputJson.put(RpcServerUtil.JSONRPC, rpcVersion);
+		inputJson.put(RpcServerUtil.METHOD, method);
+		inputJson.put(RpcServerUtil.PARAMS, params);
+		inputJson.put(RpcServerUtil.ID, 1);
 		return inputJson;
 	}
 

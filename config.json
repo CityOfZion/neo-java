@@ -7,6 +7,9 @@
 		"rpc-client-timout": {
 			"seconds": 5
 		},
+		"rpc-server-timout": {
+			"seconds": 5
+		},
 		"block-db-impl": "neo.model.db.BlockDbImpl",
 		"thread-pool-count": 8,
 		"active-thread-count": 4,

@@ -11,7 +11,7 @@ import neo.model.CommandEnum;
 import neo.network.model.TimerData;
 import neo.network.model.TimerTypeEnum;
 
-public class TimerUtil {
+public final class TimerUtil {
 
 	private static final String SEND = "send";
 

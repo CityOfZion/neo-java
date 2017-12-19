@@ -2,9 +2,11 @@ package neo.network;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.charset.Charset;
 import java.util.Iterator;
 
 import org.apache.commons.codec.DecoderException;
+import org.apache.commons.io.FileUtils;
 import org.apache.http.client.ClientProtocolException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -14,10 +16,11 @@ import neo.model.core.Block;
 import neo.model.core.Header;
 import neo.model.util.GenesisBlockUtil;
 import neo.model.util.MapUtil;
+import neo.model.util.ModelUtil;
 import neo.network.model.LocalNodeData;
 import neo.network.model.RemoteNodeData;
 
-public class LocalNodeDataSynchronizedUtil {
+public final class LocalNodeDataSynchronizedUtil {
 
 	private static final String TOO_HIGH_IN_BLOCK = "too-high-in-block";
 
@@ -40,6 +43,28 @@ public class LocalNodeDataSynchronizedUtil {
 				|| block.hash.equals(GenesisBlockUtil.GENESIS_HASH)) {
 			if (!localNodeData.getBlockDb().containsBlockWithHash(block.hash)) {
 				localNodeData.getBlockDb().put(block);
+				final Block checkBlock = localNodeData.getBlockDb().getBlock(block.hash);
+
+				final String blockBaHash = ModelUtil.toHexString(block.toByteArray());
+				final String checkBlockBaHash = ModelUtil.toHexString(checkBlock.toByteArray());
+
+				if (!blockBaHash.equals(checkBlockBaHash)) {
+					LOG.error("checkBlock does not match block.");
+					LOG.error("blockBaHash     :{}", blockBaHash);
+					LOG.error("checkBlockBaHash:{}", checkBlockBaHash);
+					LOG.error("block     :{}", block.toJSONObject().toString(2));
+					LOG.error("checkBlock:{}", checkBlock.toJSONObject().toString(2));
+
+					try {
+						FileUtils.write(new File("java-chain/block.json"), block.toJSONObject().toString(2),
+								Charset.defaultCharset());
+						FileUtils.write(new File("java-chain/checkBlock.json"), checkBlock.toJSONObject().toString(2),
+								Charset.defaultCharset());
+					} catch (final Exception e) {
+						throw new RuntimeException(e);
+					}
+				}
+
 				localNodeData.updateHighestBlockTime();
 
 				localNodeData.getVerifiedHeaderPoolMap().remove(blockIndex);

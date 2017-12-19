@@ -18,7 +18,7 @@ import org.slf4j.LoggerFactory;
 import neo.model.core.Block;
 
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
-public class TestLoadSave {
+public final class TestLoadSave {
 
 	private static final Logger LOG = LoggerFactory.getLogger(TestLoadSave.class);
 

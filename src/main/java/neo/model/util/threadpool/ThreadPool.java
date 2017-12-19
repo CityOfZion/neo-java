@@ -16,7 +16,7 @@ public class ThreadPool {
 	/**
 	 * the task queue.
 	 */
-	private final BlockingDeque<Runnable> taskQueue;
+	private final BlockingDeque<StopRunnable> taskQueue;
 
 	/**
 	 * the list of threads.
@@ -51,7 +51,7 @@ public class ThreadPool {
 	 * @param task
 	 *            the task to execute.
 	 */
-	public synchronized void execute(final Runnable task) {
+	public synchronized void execute(final StopRunnable task) {
 		if (isStopped) {
 			throw new IllegalStateException("ThreadPool is stopped");
 		}
@@ -74,6 +74,13 @@ public class ThreadPool {
 		isStopped = true;
 		for (final PoolThread thread : threads) {
 			thread.doStop();
+		}
+		for (final PoolThread thread : threads) {
+			try {
+				thread.join();
+			} catch (final InterruptedException e) {
+				throw new RuntimeException(e);
+			}
 		}
 	}
 }

@@ -5,26 +5,61 @@ import java.util.concurrent.BlockingDeque;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class PoolThread extends Thread {
+/**
+ * a thread in a threadpool.
+ *
+ * @author coranos
+ *
+ */
+public final class PoolThread extends Thread {
 
 	/**
 	 * the logger.
 	 */
 	private static final Logger LOG = LoggerFactory.getLogger(PoolThread.class);
 
-	private BlockingDeque<Runnable> taskQueue = null;
+	/**
+	 * the task queue to use.
+	 */
+	private BlockingDeque<StopRunnable> taskQueue = null;
 
+	/**
+	 * if true, the pool thread is stopped.
+	 */
 	private boolean isStopped = false;
 
-	public PoolThread(final BlockingDeque<Runnable> queue) {
+	/**
+	 * the currently running runnable.
+	 */
+	private StopRunnable runnable;
+
+	/**
+	 * the constructor.
+	 *
+	 * @param queue
+	 *            the queue to use.
+	 */
+	public PoolThread(final BlockingDeque<StopRunnable> queue) {
 		taskQueue = queue;
 	}
 
+	/**
+	 * calls stop() in the runnable, and stops adding new runnables.
+	 */
 	public synchronized void doStop() {
 		isStopped = true;
-		interrupt(); // break pool thread out of dequeue() call.
+		if (runnable != null) {
+			runnable.stop();
+		}
+		// break pool thread out of dequeue() call.
+		interrupt();
 	}
 
+	/**
+	 * return true if the thread is stopped.
+	 *
+	 * @return true if the thread is stopped.
+	 */
 	public synchronized boolean isStopped() {
 		return isStopped;
 	}
@@ -33,11 +68,21 @@ public class PoolThread extends Thread {
 	public void run() {
 		while (!isStopped()) {
 			try {
-				final Runnable runnable = taskQueue.takeFirst();
+				takeFirstRunnable();
 				runnable.run();
 			} catch (final Exception e) {
 				LOG.error("error", e);
 			}
 		}
+	}
+
+	/**
+	 * sets the runnable field to the first available runnable in the taskQueue.
+	 *
+	 * @throws InterruptedException
+	 *             if an error occurs.
+	 */
+	private synchronized void takeFirstRunnable() throws InterruptedException {
+		runnable = taskQueue.takeFirst();
 	}
 }

@@ -135,14 +135,15 @@ public class LocalControllerNode {
 		final JSONObject timersJson = localJson.getJSONObject(ConfigurationUtil.TIMERS);
 		final Map<String, TimerData> timersMap = TimerUtil.getTimerMap(timersJson);
 		final long rpcClientTimeoutMillis = JsonUtil.getTime(localJson, ConfigurationUtil.RPC_CLIENT_TIMOUT);
+		final long rpcServerTimeoutMillis = JsonUtil.getTime(localJson, ConfigurationUtil.RPC_SERVER_TIMOUT);
 		final String blockDbImplStr = localJson.getString(ConfigurationUtil.BLOCK_DB_IMPL);
 		final Class<BlockDb> blockDbImplClass = getBlockDbImplClass(blockDbImplStr);
 		final int nonce = config.getInt(ConfigurationUtil.NONCE);
 		final int port = localJson.getInt(ConfigurationUtil.PORT);
 		final File seedNodeFile = new File(localJson.getString(ConfigurationUtil.SEED_NODE_FILE));
 		final File goodNodeFile = new File(localJson.getString(ConfigurationUtil.GOOD_NODE_FILE));
-		localNodeData = new LocalNodeData(magic, activeThreadCount, rpcClientTimeoutMillis, blockDbImplClass, timersMap,
-				nonce, port, seedNodeFile, goodNodeFile);
+		localNodeData = new LocalNodeData(magic, activeThreadCount, rpcClientTimeoutMillis, rpcServerTimeoutMillis,
+				blockDbImplClass, timersMap, nonce, port, seedNodeFile, goodNodeFile);
 		threadPool = new ThreadPool(localJson.getInt(ConfigurationUtil.THREAD_POOL_COUNT));
 		LocalNodeDataSynchronizedUtil.initUnknownBlockHashHeightSet(localNodeData);
 		refreshRunnable = new LocalControllerNodeRefreshRunnable(this);
@@ -688,6 +689,7 @@ public class LocalControllerNode {
 		stopCoreRpcServer();
 		refreshRunnable.setStop(true);
 		refreshThread.join();
+		threadPool.stop();
 		if (LOG.isDebugEnabled()) {
 			LOG.debug("SUCCESS stop");
 		}

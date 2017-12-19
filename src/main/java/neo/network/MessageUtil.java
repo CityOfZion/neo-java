@@ -13,9 +13,10 @@ import neo.model.util.MapUtil;
 import neo.network.model.LocalNodeData;
 import neo.network.model.RemoteNodeData;
 
-public class MessageUtil {
+public final class MessageUtil {
 
 	private static final String DUPLICATE_OUT_BLOCK = "duplicate-out-block";
+
 	/**
 	 * the logger.
 	 */

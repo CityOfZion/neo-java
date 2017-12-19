@@ -10,7 +10,7 @@ import org.slf4j.LoggerFactory;
 import fi.iki.elonen.NanoHTTPD;
 import fi.iki.elonen.NanoHTTPD.IHTTPSession;
 import neo.model.util.InputStreamUtil;
-import neo.rpc.server.CoreRpcServerUtil;
+import neo.rpc.server.RpcServerUtil;
 
 /**
  * the Runnable responsible for handling the CoreRpc server listener thread.
@@ -36,19 +36,20 @@ public final class LocalControllerNodeCoreRpcRunnable implements Runnable {
 	 */
 	private static String processRequest(final LocalControllerNode controller, final IHTTPSession session) {
 		try {
+			final long readTimeOut = controller.getLocalNodeData().getRpcClientTimeoutMillis();
 			final InputStream in = session.getInputStream();
 			if (LOG.isDebugEnabled()) {
 				LOG.debug("host:{};headers:{}", session.getRemoteHostName(), session.getHeaders());
 			}
 			final int contentLength = Integer.valueOf(session.getHeaders().get("content-length"));
 			final byte[] ba = new byte[contentLength];
-			InputStreamUtil.readUntilFull(in, ba);
+			InputStreamUtil.readUntilFull(readTimeOut, in, ba);
 			final String requestStr = new String(ba);
 
 			if (LOG.isDebugEnabled()) {
 				LOG.debug("host:{};request:{}", session.getRemoteHostName(), requestStr);
 			}
-			final JSONObject response = CoreRpcServerUtil.process(controller, session.getUri(), requestStr);
+			final JSONObject response = RpcServerUtil.process(controller, session.getUri(), requestStr);
 			final String responseStr = response.toString();
 			if (LOG.isDebugEnabled()) {
 				LOG.debug("host:{};response:{}", session.getRemoteHostName(), responseStr);

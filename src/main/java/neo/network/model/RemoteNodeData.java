@@ -16,7 +16,7 @@ import neo.model.network.Message;
 import neo.model.util.JsonUtil;
 import neo.network.TimerUtil;
 
-public class RemoteNodeData {
+public final class RemoteNodeData {
 
 	public static final String OUT_BYTES = "out-bytes";
 

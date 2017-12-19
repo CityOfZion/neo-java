@@ -26,7 +26,7 @@ import neo.rpc.client.test.util.TestRpcServerUtil;
 import neo.rpc.client.test.util.TestUtil;
 import neo.rpc.server.CityOfZionCommandEnum;
 import neo.rpc.server.CoreRpcCommandEnum;
-import neo.rpc.server.CoreRpcServerUtil;
+import neo.rpc.server.RpcServerUtil;
 
 /**
  * tests serializing blocks.
@@ -113,7 +113,7 @@ public class TestRpcServer {
 		final String expectedStrRaw = TestUtil.getJsonTestResourceAsString(getClass().getSimpleName(),
 				"test001CoreGetBestBlockHash");
 
-		final String actualStrRaw = TestRpcServerUtil.getResponse(CONTROLLER, "", CoreRpcServerUtil.VERSION_2_0, params,
+		final String actualStrRaw = TestRpcServerUtil.getResponse(CONTROLLER, "", RpcServerUtil.VERSION_2_0, params,
 				method);
 
 		final String expectedStr = new JSONObject(expectedStrRaw).toString(2);
@@ -133,7 +133,7 @@ public class TestRpcServer {
 		final String expectedStrRaw = TestUtil.getJsonTestResourceAsString(getClass().getSimpleName(),
 				"test002CoreGetBlockCount");
 
-		final String actualStrRaw = TestRpcServerUtil.getResponse(CONTROLLER, "", CoreRpcServerUtil.VERSION_2_0, params,
+		final String actualStrRaw = TestRpcServerUtil.getResponse(CONTROLLER, "", RpcServerUtil.VERSION_2_0, params,
 				method);
 
 		final String expectedStr = new JSONObject(expectedStrRaw).toString(2);
@@ -174,7 +174,7 @@ public class TestRpcServer {
 		final String expectedStrRaw = TestUtil.getJsonTestResourceAsString(getClass().getSimpleName(),
 				"test004CoreGetBlockWithHashVerbose");
 
-		final String actualStrRaw = TestRpcServerUtil.getResponse(CONTROLLER, "", CoreRpcServerUtil.VERSION_2_0, params,
+		final String actualStrRaw = TestRpcServerUtil.getResponse(CONTROLLER, "", RpcServerUtil.VERSION_2_0, params,
 				method);
 
 		final String expectedStr = new JSONObject(expectedStrRaw).toString(2);
@@ -195,7 +195,7 @@ public class TestRpcServer {
 		final String expectedStrRaw = TestUtil.getJsonTestResourceAsString(getClass().getSimpleName(),
 				"test005CoreGetBlockHash");
 
-		final String actualStrRaw = TestRpcServerUtil.getResponse(CONTROLLER, "", CoreRpcServerUtil.VERSION_2_0, params,
+		final String actualStrRaw = TestRpcServerUtil.getResponse(CONTROLLER, "", RpcServerUtil.VERSION_2_0, params,
 				method);
 
 		final String expectedStr = new JSONObject(expectedStrRaw).toString(2);
@@ -216,8 +216,8 @@ public class TestRpcServer {
 		final String expectedStrRaw = TestUtil.getJsonTestResourceAsString(getClass().getSimpleName(),
 				"test006CityOfZionAddressDefault");
 
-		final String actualStrRaw = TestRpcServerUtil.getResponse(CONTROLLER, "/address/",
-				CoreRpcServerUtil.VERSION_2_0, params, method);
+		final String actualStrRaw = TestRpcServerUtil.getResponse(CONTROLLER, "/address/", RpcServerUtil.VERSION_2_0,
+				params, method);
 
 		final String expectedStr = new JSONObject(expectedStrRaw).toString(2);
 		final String actualStr = new JSONObject(actualStrRaw).toString(2);
@@ -236,7 +236,7 @@ public class TestRpcServer {
 		final String expectedStrRaw = TestUtil.getJsonTestResourceAsString(getClass().getSimpleName(),
 				"test007CoreGetBlockHashNoParms");
 
-		final String actualStrRaw = TestRpcServerUtil.getResponse(CONTROLLER, "", CoreRpcServerUtil.VERSION_2_0, params,
+		final String actualStrRaw = TestRpcServerUtil.getResponse(CONTROLLER, "", RpcServerUtil.VERSION_2_0, params,
 				method);
 
 		final String expectedStr = new JSONObject(expectedStrRaw).toString(2);
@@ -256,7 +256,7 @@ public class TestRpcServer {
 		final String expectedStrRaw = TestUtil.getJsonTestResourceAsString(getClass().getSimpleName(),
 				"test008CoreGetConnectionCount");
 
-		final String actualStrRaw = TestRpcServerUtil.getResponse(CONTROLLER, "", CoreRpcServerUtil.VERSION_2_0, params,
+		final String actualStrRaw = TestRpcServerUtil.getResponse(CONTROLLER, "", RpcServerUtil.VERSION_2_0, params,
 				method);
 
 		final String expectedStr = new JSONObject(expectedStrRaw).toString(2);
@@ -277,7 +277,7 @@ public class TestRpcServer {
 		final String expectedStrRaw = TestUtil.getJsonTestResourceAsString(getClass().getSimpleName(),
 				"test009CoreDefault");
 
-		final String actualStrRaw = TestRpcServerUtil.getResponse(CONTROLLER, "", CoreRpcServerUtil.VERSION_2_0, params,
+		final String actualStrRaw = TestRpcServerUtil.getResponse(CONTROLLER, "", RpcServerUtil.VERSION_2_0, params,
 				method);
 
 		final String expectedStr = new JSONObject(expectedStrRaw).toString(2);
@@ -300,7 +300,7 @@ public class TestRpcServer {
 		final String expectedStrRaw = TestUtil.getJsonTestResourceAsString(getClass().getSimpleName(),
 				"test010CoreGetRawTransaction");
 
-		final String actualStrRaw = TestRpcServerUtil.getResponse(CONTROLLER, "", CoreRpcServerUtil.VERSION_2_0, params,
+		final String actualStrRaw = TestRpcServerUtil.getResponse(CONTROLLER, "", RpcServerUtil.VERSION_2_0, params,
 				method);
 
 		final String expectedStr = new JSONObject(expectedStrRaw).toString(2);
@@ -325,7 +325,7 @@ public class TestRpcServer {
 		final String expectedStrRaw = TestUtil.getJsonTestResourceAsString(getClass().getSimpleName(),
 				"test011CoreGetTransactionOutputNoOutputs");
 
-		final String actualStrRaw = TestRpcServerUtil.getResponse(CONTROLLER, "", CoreRpcServerUtil.VERSION_2_0, params,
+		final String actualStrRaw = TestRpcServerUtil.getResponse(CONTROLLER, "", RpcServerUtil.VERSION_2_0, params,
 				method);
 
 		final String expectedStr = new JSONObject(expectedStrRaw).toString(2);
@@ -350,7 +350,7 @@ public class TestRpcServer {
 		final String expectedStrRaw = TestUtil.getJsonTestResourceAsString(getClass().getSimpleName(),
 				"test012CoreGetTransactionOutput");
 
-		final String actualStrRaw = TestRpcServerUtil.getResponse(CONTROLLER, "", CoreRpcServerUtil.VERSION_2_0, params,
+		final String actualStrRaw = TestRpcServerUtil.getResponse(CONTROLLER, "", RpcServerUtil.VERSION_2_0, params,
 				method);
 
 		final String expectedStr = new JSONObject(expectedStrRaw).toString(2);
@@ -375,8 +375,8 @@ public class TestRpcServer {
 
 		CityOfZionCommandEnum.getCommandStartingWith(uri);
 
-		final String actualStrRaw = TestRpcServerUtil.getResponse(CONTROLLER, uri, CoreRpcServerUtil.VERSION_2_0,
-				params, method);
+		final String actualStrRaw = TestRpcServerUtil.getResponse(CONTROLLER, uri, RpcServerUtil.VERSION_2_0, params,
+				method);
 
 		final String expectedStr = new JSONObject(expectedStrRaw).toString(2);
 		final String actualStr = new JSONObject(actualStrRaw).toString(2);
@@ -397,7 +397,7 @@ public class TestRpcServer {
 		final String expectedStrRaw = TestUtil.getJsonTestResourceAsString(getClass().getSimpleName(),
 				"test014CoreGetBlockWithHashNotVerbose");
 
-		final String actualStrRaw = TestRpcServerUtil.getResponse(CONTROLLER, "", CoreRpcServerUtil.VERSION_2_0, params,
+		final String actualStrRaw = TestRpcServerUtil.getResponse(CONTROLLER, "", RpcServerUtil.VERSION_2_0, params,
 				method);
 
 		final String expectedStr = new JSONObject(expectedStrRaw).toString(2);
