@@ -76,13 +76,10 @@ public class ThreadPool {
 	}
 
 	/**
-	 * stops all the threads in the queue.
+	 * stops all the threads in the queue, and wait for them to stop.
 	 */
-	public synchronized void stop() {
-		isStopped = true;
-		for (final PoolThread thread : threads) {
-			thread.doStop();
-		}
+	public void stop() {
+		doStop();
 		LOG.error("STARTED Joining {} Stopping Threads", threads.size());
 		int threadNbr = 0;
 		for (final PoolThread thread : threads) {
@@ -95,5 +92,15 @@ public class ThreadPool {
 			}
 		}
 		LOG.error("SUCCESS Joining Stopping Threads");
+	}
+
+	/**
+	 * stops all the threads in the queue.
+	 */
+	private synchronized void doStop() {
+		isStopped = true;
+		for (final PoolThread thread : threads) {
+			thread.doStop();
+		}
 	}
 }

@@ -31,6 +31,24 @@ public final class NeoMain {
 	private static final Logger LOG = LoggerFactory.getLogger(NeoMain.class);
 
 	/**
+	 * adds the blockchain statistics panel.
+	 *
+	 * @param controller
+	 *            the controller to use.
+	 * @param statsTableModel
+	 *            the table model to use.
+	 * @param tabbedPane
+	 *            the tabbed pane to use.
+	 */
+	private static void addBlockchainStatsPanel(final LocalControllerNode controller, final StatsModel statsTableModel,
+			final JTabbedPane tabbedPane) {
+		controller.addPeerChangeListener(statsTableModel);
+		final JTable table = new JTable(statsTableModel);
+		final JScrollPane scrollPane = new JScrollPane(table);
+		tabbedPane.add("Blockchain Stats", scrollPane);
+	}
+
+	/**
 	 * adds the connection details panel.
 	 *
 	 * @param controller
@@ -40,30 +58,12 @@ public final class NeoMain {
 	 * @param tabbedPane
 	 *            the tabbed pane to use.
 	 */
-	private static void addConnectionDetailsPanel(final LocalControllerNode controller,
+	private static void addRemotePeerDetailsPanel(final LocalControllerNode controller,
 			final RemotePeerDataModel peerTableModel, final JTabbedPane tabbedPane) {
 		controller.addPeerChangeListener(peerTableModel);
 		final JTable table = new JTable(peerTableModel);
 		final JScrollPane scrollPane = new JScrollPane(table);
-		tabbedPane.add("Connection Details", scrollPane);
-	}
-
-	/**
-	 * adds the connection statistics panel.
-	 *
-	 * @param controller
-	 *            the controller to use.
-	 * @param statsTableModel
-	 *            the table model to use.
-	 * @param tabbedPane
-	 *            the tabbed pane to use.
-	 */
-	private static void addConnectionStatsPanel(final LocalControllerNode controller, final StatsModel statsTableModel,
-			final JTabbedPane tabbedPane) {
-		controller.addPeerChangeListener(statsTableModel);
-		final JTable table = new JTable(statsTableModel);
-		final JScrollPane scrollPane = new JScrollPane(table);
-		tabbedPane.add("Connection Stats", scrollPane);
+		tabbedPane.add("Remote Peer Details", scrollPane);
 	}
 
 	/**
@@ -122,8 +122,8 @@ public final class NeoMain {
 		mainPanel.setLayout(new BoxLayout(mainPanel, BoxLayout.X_AXIS));
 		mainPanel.add(tabbedPane);
 
-		addConnectionStatsPanel(controller, statsTableModel, tabbedPane);
-		addConnectionDetailsPanel(controller, peerTableModel, tabbedPane);
+		addBlockchainStatsPanel(controller, statsTableModel, tabbedPane);
+		addRemotePeerDetailsPanel(controller, peerTableModel, tabbedPane);
 
 		frame.getContentPane().add(mainPanel);
 
