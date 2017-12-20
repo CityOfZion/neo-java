@@ -5,6 +5,9 @@ import java.util.List;
 import java.util.concurrent.BlockingDeque;
 import java.util.concurrent.LinkedBlockingDeque;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 /**
  * the thread pool class.
  *
@@ -12,6 +15,11 @@ import java.util.concurrent.LinkedBlockingDeque;
  *
  */
 public class ThreadPool {
+
+	/**
+	 * the logger.
+	 */
+	private static final Logger LOG = LoggerFactory.getLogger(ThreadPool.class);
 
 	/**
 	 * the task queue.
@@ -75,12 +83,17 @@ public class ThreadPool {
 		for (final PoolThread thread : threads) {
 			thread.doStop();
 		}
+		LOG.error("STARTED Joining {} Stopping Threads", threads.size());
+		int threadNbr = 0;
 		for (final PoolThread thread : threads) {
+			threadNbr++;
+			LOG.error("INTERIM Joining {} Stopping Threads, #{}", threads.size(), threadNbr);
 			try {
 				thread.join();
 			} catch (final InterruptedException e) {
 				throw new RuntimeException(e);
 			}
 		}
+		LOG.error("SUCCESS Joining Stopping Threads");
 	}
 }

@@ -1,12 +1,9 @@
 package neo.network;
 
-import java.io.File;
 import java.io.IOException;
-import java.nio.charset.Charset;
 import java.util.Iterator;
 
 import org.apache.commons.codec.DecoderException;
-import org.apache.commons.io.FileUtils;
 import org.apache.http.client.ClientProtocolException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -20,10 +17,22 @@ import neo.model.util.ModelUtil;
 import neo.network.model.LocalNodeData;
 import neo.network.model.RemoteNodeData;
 
+/**
+ * the local node data utility methods that require synchronization.
+ *
+ * @author coranos
+ *
+ */
 public final class LocalNodeDataSynchronizedUtil {
 
+	/**
+	 * the block height exceeds the header height.
+	 */
 	private static final String TOO_HIGH_IN_BLOCK = "too-high-in-block";
 
+	/**
+	 * the block is a duplicate.
+	 */
 	private static final String DUPLICATE_IN_BLOCK = "duplicate-in-block";
 
 	/**
@@ -31,8 +40,15 @@ public final class LocalNodeDataSynchronizedUtil {
 	 */
 	private static final Logger LOG = LoggerFactory.getLogger(LocalNodeDataSynchronizedUtil.class);
 
-	public static final File BLOCKCHAIN_DIR = new File("java-chain");
-
+	/**
+	 * add the block if it is new, and the parent hash exists.
+	 *
+	 * @param localNodeData
+	 *            the local node data to use.
+	 * @param block
+	 *            the block to add.
+	 * @return true if added, gfalse if not.
+	 */
 	private static boolean addBlockIfNewAndParentExistsUnsynchronized(final LocalNodeData localNodeData,
 			final Block block) {
 		boolean blockChanged = false;
@@ -49,20 +65,9 @@ public final class LocalNodeDataSynchronizedUtil {
 				final String checkBlockBaHash = ModelUtil.toHexString(checkBlock.toByteArray());
 
 				if (!blockBaHash.equals(checkBlockBaHash)) {
-					LOG.error("checkBlock does not match block.");
+					LOG.error("checkBlockBaHash does not match blockBaHash.");
 					LOG.error("blockBaHash     :{}", blockBaHash);
 					LOG.error("checkBlockBaHash:{}", checkBlockBaHash);
-					LOG.error("block     :{}", block.toJSONObject().toString(2));
-					LOG.error("checkBlock:{}", checkBlock.toJSONObject().toString(2));
-
-					try {
-						FileUtils.write(new File("java-chain/block.json"), block.toJSONObject().toString(2),
-								Charset.defaultCharset());
-						FileUtils.write(new File("java-chain/checkBlock.json"), checkBlock.toJSONObject().toString(2),
-								Charset.defaultCharset());
-					} catch (final Exception e) {
-						throw new RuntimeException(e);
-					}
 				}
 
 				localNodeData.updateHighestBlockTime();
@@ -88,18 +93,36 @@ public final class LocalNodeDataSynchronizedUtil {
 		return blockChanged;
 	}
 
+	/**
+	 * add the header if it is new.
+	 *
+	 * @param localNodeData
+	 *            the local node data to use.
+	 * @param header
+	 *            the header to add.
+	 * @return true if added, gfalse if not.
+	 */
 	public static boolean addHeaderIfNew(final LocalNodeData localNodeData, final Header header) {
 		final long headerIndex = header.getIndexAsLong();
 		LOG.trace("STARTED addHeaderIfNew adding header : index:{}; hash:{};", headerIndex, header.hash);
-		boolean hashChanged = false;
+		boolean headerChanged = false;
 		synchronized (localNodeData) {
-			hashChanged = addHeaderIfNewUnsynchronized(localNodeData, header);
+			headerChanged = addHeaderIfNewUnsynchronized(localNodeData, header);
 		}
-		LOG.trace("SUCCESS addHeaderIfNew adding header changed:{}; index:{}; hash:{};", hashChanged, headerIndex,
+		LOG.trace("SUCCESS addHeaderIfNew adding header changed:{}; index:{}; hash:{};", headerChanged, headerIndex,
 				header.hash);
-		return hashChanged;
+		return headerChanged;
 	}
 
+	/**
+	 * add the header if it is new, this is the unsynchronized helper method.
+	 *
+	 * @param localNodeData
+	 *            the local node data to use.
+	 * @param header
+	 *            the header to add.
+	 * @return true if added, gfalse if not.
+	 */
 	private static boolean addHeaderIfNewUnsynchronized(final LocalNodeData localNodeData, final Header header) {
 		final long headerIndex = header.getIndexAsLong();
 		LOG.trace("STARTED addHeaderIfNewUnsynchronized adding header : index:{}; hash:{};", headerIndex, header.hash);
@@ -107,38 +130,38 @@ public final class LocalNodeDataSynchronizedUtil {
 		if (highestBlock != null) {
 			final long maxBlockIndex = highestBlock.getIndexAsLong();
 			if (headerIndex <= maxBlockIndex) {
-				LOG.trace(
-						"FAILURE addHeaderIfNewUnsynchronized (headerIndex[{}] <= maxBlockIndex[{}])  adding header : index:{}; hash:{};",
-						headerIndex, maxBlockIndex, headerIndex, header.hash);
+				final String message = "FAILURE addHeaderIfNewUnsynchronized[1]"
+						+ " (headerIndex[{}] <= maxBlockIndex[{}]) adding header : index:{}; hash:{};";
+				LOG.trace(message, headerIndex, maxBlockIndex, headerIndex, header.hash);
 				return false;
 			}
 		}
 		if (!localNodeData.getUnverifiedBlockPoolSet().isEmpty()) {
 			final long maxUnverifiedBlockIndex = localNodeData.getUnverifiedBlockPoolSet().last().getIndexAsLong();
 			if (headerIndex <= maxUnverifiedBlockIndex) {
-				LOG.trace(
-						"FAILURE addHeaderIfNewUnsynchronized (headerIndex[{}] <= maxUnverifiedBlockIndex[{}])  adding header : index:{}; hash:{};",
-						headerIndex, maxUnverifiedBlockIndex, headerIndex, header.hash);
+				final String message = "FAILURE addHeaderIfNewUnsynchronized[2]"
+						+ " (headerIndex[{}] <= maxUnverifiedBlockIndex[{}]) adding header : index:{}; hash:{};";
+				LOG.trace(message, headerIndex, maxUnverifiedBlockIndex, headerIndex, header.hash);
 				return false;
 			}
 		}
 		if (localNodeData.getVerifiedHeaderPoolMap().containsKey(headerIndex)) {
-			LOG.trace(
-					"FAILURE addHeaderIfNewUnsynchronized getVerifiedHeaderPoolMap().containsKey():true; adding header : index:{}; hash:{};",
-					headerIndex, header.hash);
+			final String message = "FAILURE addHeaderIfNewUnsynchronized[3]"
+					+ " getVerifiedHeaderPoolMap().containsKey():true; adding header : index:{}; hash:{};";
+			LOG.trace(message, headerIndex, header.hash);
 			return false;
 		}
 		if (localNodeData.getVerifiedHeaderPoolMap().containsKey(headerIndex)) {
-			LOG.trace(
-					"FAILURE addHeaderIfNewUnsynchronized getVerifiedHeaderPoolMap().containsKey(headerIndex):true; adding header : index:{}; hash:{};",
-					headerIndex, header.hash);
+			final String message = "FAILURE addHeaderIfNewUnsynchronized[4]"
+					+ " getVerifiedHeaderPoolMap().containsKey(headerIndex):true; adding header : index:{}; hash:{};";
+			LOG.trace(message, headerIndex, header.hash);
 			return false;
 		}
 
 		if (localNodeData.getUnverifiedHeaderPoolSet().contains(header)) {
-			LOG.trace(
-					"FAILURE addHeaderIfNewUnsynchronized getUnverifiedHeaderPoolSet().contains(header):true; adding header : index:{}; hash:{};",
-					headerIndex, header.hash);
+			final String message = "FAILURE addHeaderIfNewUnsynchronized[5]"
+					+ " getUnverifiedHeaderPoolSet().contains(header):true; adding header : index:{}; hash:{};";
+			LOG.trace(message, headerIndex, header.hash);
 			return false;
 		}
 
@@ -148,12 +171,28 @@ public final class LocalNodeDataSynchronizedUtil {
 		return true;
 	}
 
+	/**
+	 * add an unverified block ( blocks may come out of order, verification ensures
+	 * the hash is in the correct order).
+	 *
+	 * @param localNodeData
+	 *            the local node data to use.
+	 * @param block
+	 *            the block to add.
+	 */
 	public static void addUnverifiedBlock(final LocalNodeData localNodeData, final Block block) {
 		synchronized (localNodeData) {
 			localNodeData.getUnverifiedBlockPoolSet().add(block);
 		}
 	}
 
+	/**
+	 * return the magic number.
+	 *
+	 * @param localNodeData
+	 *            the local node data to use.
+	 * @return the magic number.
+	 */
 	public static long getMagic(final LocalNodeData localNodeData) {
 		final long magic;
 		synchronized (localNodeData) {
@@ -349,5 +388,12 @@ public final class LocalNodeDataSynchronizedUtil {
 			LOG.debug("SUCCESS verifyUnverifiedHeaders, anyHeaderChanged:{};", anyHeaderChanged);
 			return anyHeaderChanged;
 		}
+	}
+
+	/**
+	 * the constructor.
+	 */
+	private LocalNodeDataSynchronizedUtil() {
+
 	}
 }
