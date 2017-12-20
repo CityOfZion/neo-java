@@ -142,10 +142,12 @@ public class LocalControllerNode {
 		final int port = localJson.getInt(ConfigurationUtil.PORT);
 		final File seedNodeFile = new File(localJson.getString(ConfigurationUtil.SEED_NODE_FILE));
 		final File goodNodeFile = new File(localJson.getString(ConfigurationUtil.GOOD_NODE_FILE));
+
 		localNodeData = new LocalNodeData(magic, activeThreadCount, rpcClientTimeoutMillis, rpcServerTimeoutMillis,
 				blockDbImplClass, timersMap, nonce, port, seedNodeFile, goodNodeFile);
+		LocalNodeDataSynchronizedUtil.refreshCityOfZionBlockHeight(localNodeData);
+
 		threadPool = new ThreadPool(localJson.getInt(ConfigurationUtil.THREAD_POOL_COUNT));
-		LocalNodeDataSynchronizedUtil.initUnknownBlockHashHeightSet(localNodeData);
 		refreshRunnable = new LocalControllerNodeRefreshRunnable(this);
 		refreshThread = new Thread(refreshRunnable, "Refresh Thread");
 
