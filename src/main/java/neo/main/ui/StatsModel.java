@@ -119,7 +119,7 @@ public final class StatsModel extends AbstractRefreshingModel {
 		addNameAndValue(BLOCKCHAIN_BLOCK_COUNT, allChainBlockCount);
 		addNameAndValue(KNOWN_BLOCK_COUNT, blockCount);
 
-		final Block highestBlock = localNodeData.getBlockDb().getBlockWithMaxIndex();
+		final Block highestBlock = localNodeData.getBlockDb().getBlockWithMaxIndex(false);
 		if (highestBlock != null) {
 			addNameAndValue(MAX_BLOCK_HEIGHT, highestBlock.getIndexAsLong());
 		}

@@ -5,12 +5,12 @@ import java.util.Map;
 import java.util.TreeMap;
 
 import org.apache.commons.codec.binary.Hex;
+import org.apache.commons.lang.NotImplementedException;
 import org.json.JSONArray;
 import org.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import kotlin.NotImplementedError;
 import neo.model.bytes.Fixed8;
 import neo.model.bytes.UInt160;
 import neo.model.bytes.UInt256;
@@ -174,7 +174,7 @@ public final class RpcServerUtil {
 		if ((midHeight == minHeight) || (midHeight == maxHeight)) {
 			return minHeight;
 		}
-		final Block midBlock = controller.getLocalNodeData().getBlockDb().getBlock(midHeight);
+		final Block midBlock = controller.getLocalNodeData().getBlockDb().getBlock(midHeight, false);
 		final long midBlockTs = midBlock.timestamp.asLong();
 		if (ts == midBlockTs) {
 			return midHeight;
@@ -231,7 +231,7 @@ public final class RpcServerUtil {
 		for (long index = fromHeight; index < toHeight; index++) {
 			// Console.WriteLine($"getaccountlist 2 fromHeight:{fromHeight};
 			// toHeight:{toHeight}; index:{index};");
-			final Block block = controller.getLocalNodeData().getBlockDb().getBlock(index);
+			final Block block = controller.getLocalNodeData().getBlockDb().getBlock(index, true);
 
 			// Console.WriteLine("getaccountlist 2.1");
 			for (final Transaction t : block.getTransactionList()) {
@@ -385,7 +385,7 @@ public final class RpcServerUtil {
 	 * @return the response.
 	 */
 	private static JSONObject onGetBestBlockHash(final LocalControllerNode controller, final int id) {
-		final Block block = controller.getLocalNodeData().getBlockDb().getBlockWithMaxIndex();
+		final Block block = controller.getLocalNodeData().getBlockDb().getBlockWithMaxIndex(true);
 		if (block == null) {
 			final JSONObject response = new JSONObject();
 			response.put(ERROR, ERROR_NO_BLOCKS_IN_BLOCKCHAIN);
@@ -439,7 +439,7 @@ public final class RpcServerUtil {
 				final byte[] ba = ModelUtil.decodeHex(hashStr);
 				final UInt256 hash = new UInt256(ByteBuffer.wrap(ba));
 				try {
-					block = controller.getLocalNodeData().getBlockDb().getBlock(hash);
+					block = controller.getLocalNodeData().getBlockDb().getBlock(hash, true);
 				} catch (final RuntimeException e) {
 					final JSONObject response = new JSONObject();
 					response.put(ERROR, e.getMessage());
@@ -450,7 +450,7 @@ public final class RpcServerUtil {
 			} else if (params.get(0) instanceof Number) {
 				final long index = params.getLong(0);
 				try {
-					block = controller.getLocalNodeData().getBlockDb().getBlock(index);
+					block = controller.getLocalNodeData().getBlockDb().getBlock(index, true);
 				} catch (final RuntimeException e) {
 					final JSONObject response = new JSONObject();
 					response.put(ERROR, e.getMessage());
@@ -488,7 +488,7 @@ public final class RpcServerUtil {
 	 * @return the response.
 	 */
 	private static JSONObject onGetBlockCount(final LocalControllerNode controller, final int id) {
-		final Block block = controller.getLocalNodeData().getBlockDb().getBlockWithMaxIndex();
+		final Block block = controller.getLocalNodeData().getBlockDb().getBlockWithMaxIndex(false);
 		if (block == null) {
 			final JSONObject response = new JSONObject();
 			response.put(RESULT, 0);
@@ -527,7 +527,7 @@ public final class RpcServerUtil {
 		} else {
 			final long index = params.getLong(0);
 			try {
-				final Block block = controller.getLocalNodeData().getBlockDb().getBlock(index);
+				final Block block = controller.getLocalNodeData().getBlockDb().getBlock(index, false);
 				final JSONObject response = new JSONObject();
 				response.put(ID, id);
 				response.put(JSONRPC, VERSION_2_0);
@@ -793,7 +793,7 @@ public final class RpcServerUtil {
 			}
 			case GETRAWMEMPOOL: {
 				// TODO : implement.
-				throw new NotImplementedError(coreRpcCommand.getName());
+				throw new NotImplementedException(coreRpcCommand.getName());
 			}
 			case GETRAWTRANSACTION: {
 				final JSONArray params = request.getJSONArray(PARAMS);
@@ -805,11 +805,11 @@ public final class RpcServerUtil {
 			}
 			case SENDRAWTRANSACTION: {
 				// TODO : implement.
-				throw new NotImplementedError(coreRpcCommand.getName());
+				throw new NotImplementedException(coreRpcCommand.getName());
 			}
 			case SUBMITBLOCK: {
 				// TODO : implement.
-				throw new NotImplementedError(coreRpcCommand.getName());
+				throw new NotImplementedException(coreRpcCommand.getName());
 			}
 			case GETACCOUNTLIST: {
 				final JSONArray params = request.getJSONArray(PARAMS);
@@ -829,15 +829,15 @@ public final class RpcServerUtil {
 			switch (cityOfZionCommand) {
 			case BALANCE: {
 				// TODO : implement.
-				throw new NotImplementedError(cityOfZionCommand.getUriPrefix());
+				throw new NotImplementedException(cityOfZionCommand.getUriPrefix());
 			}
 			case CLAIMS: {
 				// TODO : implement.
-				throw new NotImplementedError(cityOfZionCommand.getUriPrefix());
+				throw new NotImplementedException(cityOfZionCommand.getUriPrefix());
 			}
 			case HISTORY: {
 				// TODO : implement.
-				throw new NotImplementedError(cityOfZionCommand.getUriPrefix());
+				throw new NotImplementedException(cityOfZionCommand.getUriPrefix());
 			}
 			case TRANSACTION: {
 				return onGetCityOfZionTransaction(controller, remainder);

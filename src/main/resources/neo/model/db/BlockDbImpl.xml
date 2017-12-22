@@ -1,6 +1,6 @@
 <?xml version="1.0" ?>
 <BlockDbImpl>
-  <url>jdbc:hsqldb:file:java-chain/db/db</url>
+  <url>jdbc:h2:./java-chain/db/db;DB_CLOSE_DELAY=10</url>
   <getFileSizeDir>java-chain/db</getFileSizeDir>
   <close>
     <sql>

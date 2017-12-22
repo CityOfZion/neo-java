@@ -13,7 +13,7 @@ import java.util.TreeMap;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.ArrayUtils;
-import org.hsqldb.jdbc.JDBCDataSource;
+import org.h2.jdbcx.JdbcDataSource;
 import org.json.JSONArray;
 import org.json.JSONObject;
 import org.json.XML;
@@ -59,7 +59,7 @@ public final class BlockDbImpl implements BlockDb {
 	/**
 	 * the data source.
 	 */
-	private final JDBCDataSource ds;
+	private final JdbcDataSource ds;
 
 	/**
 	 * the SQL cache.
@@ -82,7 +82,7 @@ public final class BlockDbImpl implements BlockDb {
 			throw new RuntimeException("error reading resource\"" + SQL_CACHE_XML + "\" ", e);
 		}
 
-		ds = new JDBCDataSource();
+		ds = new JdbcDataSource();
 		ds.setUrl(sqlCache.getString("url"));
 
 		final JdbcTemplate t = new JdbcTemplate(ds);
@@ -99,6 +99,9 @@ public final class BlockDbImpl implements BlockDb {
 	@Override
 	public void close() {
 		synchronized (this) {
+			if (closed) {
+				return;
+			}
 			closed = true;
 		}
 		LOG.debug("STARTED shutdown");
@@ -182,15 +185,8 @@ public final class BlockDbImpl implements BlockDb {
 		return accountAssetValueMap;
 	}
 
-	/**
-	 * returns the block with the given index.
-	 *
-	 * @param index
-	 *            the index to use.
-	 * @return the block with the given index.
-	 */
 	@Override
-	public Block getBlock(final long index) {
+	public Block getBlock(final long index, final boolean withTransactions) {
 		synchronized (this) {
 			if (closed) {
 				return null;
@@ -205,7 +201,11 @@ public final class BlockDbImpl implements BlockDb {
 			return null;
 		}
 
-		return getTransactionsWithIndex(new Block(ByteBuffer.wrap(data.get(0))));
+		final Block block = new Block(ByteBuffer.wrap(data.get(0)));
+		if (withTransactions) {
+			getTransactionsForBlock(block);
+		}
+		return block;
 	}
 
 	/**
@@ -213,10 +213,12 @@ public final class BlockDbImpl implements BlockDb {
 	 *
 	 * @param hash
 	 *            the hash to use.
+	 * @param withTransactions
+	 *            if true, add transactions. If false, only return the block header.
 	 * @return the block with the given hash.
 	 */
 	@Override
-	public Block getBlock(final UInt256 hash) {
+	public Block getBlock(final UInt256 hash, final boolean withTransactions) {
 		synchronized (this) {
 			if (closed) {
 				return null;
@@ -229,7 +231,11 @@ public final class BlockDbImpl implements BlockDb {
 			return null;
 		}
 
-		return getTransactionsWithIndex(new Block(ByteBuffer.wrap(data.get(0))));
+		final Block block = new Block(ByteBuffer.wrap(data.get(0)));
+		if (withTransactions) {
+			getTransactionsForBlock(block);
+		}
+		return block;
 	}
 
 	/**
@@ -255,7 +261,7 @@ public final class BlockDbImpl implements BlockDb {
 	 * @return the block with the maximum value in the index column.
 	 */
 	@Override
-	public Block getBlockWithMaxIndex() {
+	public Block getBlockWithMaxIndex(final boolean withTransactions) {
 		synchronized (this) {
 			if (closed) {
 				return null;
@@ -268,7 +274,11 @@ public final class BlockDbImpl implements BlockDb {
 			return null;
 		}
 
-		return getTransactionsWithIndex(new Block(ByteBuffer.wrap(data.get(0))));
+		final Block block = new Block(ByteBuffer.wrap(data.get(0)));
+		if (withTransactions) {
+			getTransactionsForBlock(block);
+		}
+		return block;
 	}
 
 	/**
@@ -283,6 +293,7 @@ public final class BlockDbImpl implements BlockDb {
 	}
 
 	/**
+	 * return a map of the objects, divided into their transactions indexes.
 	 *
 	 * @param jdbcOperations
 	 *            the jdbc operations to use.
@@ -399,12 +410,12 @@ public final class BlockDbImpl implements BlockDb {
 	}
 
 	/**
+	 * return the block, with transactions added.
+	 *
 	 * @param block
 	 *            the block, to add transactions to.
-	 *
-	 * @return the block, with transactions added.
 	 */
-	private Block getTransactionsWithIndex(final Block block) {
+	private void getTransactionsForBlock(final Block block) {
 		final JdbcTemplate t = new JdbcTemplate(ds);
 		final String sql = getSql("getTransactionsWithIndex");
 		final byte[] blockIndexBa = block.index.toByteArray();
@@ -420,8 +431,6 @@ public final class BlockDbImpl implements BlockDb {
 		getTransactionInputsWithIndex(block, t, blockIndexBa);
 
 		getTransactionScriptsWithIndex(block, t, blockIndexBa);
-
-		return block;
 	}
 
 	@Override

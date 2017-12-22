@@ -183,12 +183,12 @@ public class TestBlockSerialization {
 				return new JSONArray();
 			}
 		};
-		final long maxBlockIx = blockDb.getBlockWithMaxIndex().getIndexAsLong();
+		final long maxBlockIx = blockDb.getBlockWithMaxIndex(false).getIndexAsLong();
 
 		final Set<TransactionType> knownTypeSet = new TreeSet<>();
 
 		for (long blockIx = 0; blockIx <= maxBlockIx; blockIx++) {
-			final Block block = blockDb.getBlock(blockIx);
+			final Block block = blockDb.getBlock(blockIx, true);
 			for (int txIx = 0; txIx < block.getTransactionList().size(); txIx++) {
 				final Transaction tx = block.getTransactionList().get(txIx);
 				if (!knownTypeSet.contains(tx.type)) {
@@ -217,7 +217,7 @@ public class TestBlockSerialization {
 			final int blockIx = 1271700;
 			final String expectedBlockJsonStr = IOUtils.toString(this.getClass()
 					.getResourceAsStream("/neo/rpc/client/test/TestBlockSerialization." + testName + ".json"), "UTF-8");
-			final Block block = blockDb.getBlock(blockIx);
+			final Block block = blockDb.getBlock(blockIx, true);
 
 			final String actualBlockHex = ModelUtil.toHexString(block.toByteArray());
 

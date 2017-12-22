@@ -140,7 +140,7 @@ public final class RemoteNodeControllerRunnable implements StopRunnable {
 		final long magic = localNodeData.getMagic();
 		final int localPort = localNodeData.getPort();
 		final int nonce = localNodeData.getNonce();
-		final Block maxStartHeightBlock = localNodeData.getBlockDb().getBlockWithMaxIndex();
+		final Block maxStartHeightBlock = localNodeData.getBlockDb().getBlockWithMaxIndex(false);
 		final long startHeight;
 		if (maxStartHeightBlock == null) {
 			startHeight = 0;

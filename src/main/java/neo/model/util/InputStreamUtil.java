@@ -13,7 +13,7 @@ import org.slf4j.LoggerFactory;
  * @author coranos
  *
  */
-public class InputStreamUtil {
+public final class InputStreamUtil {
 
 	/**
 	 * the logger.
@@ -34,9 +34,9 @@ public class InputStreamUtil {
 	 */
 	public static void readUntilFull(final long readTimeOut, final InputStream in, final byte[] ba) throws IOException {
 		int bytesRead = 0;
-		final long currentTimeMillis = System.currentTimeMillis();
-		final long timeoutMs = currentTimeMillis + readTimeOut;
 		while (bytesRead < ba.length) {
+			final long currentTimeMillis = System.currentTimeMillis();
+			final long timeoutMs = currentTimeMillis + readTimeOut;
 			if (currentTimeMillis > timeoutMs) {
 				throw new SocketTimeoutException();
 			}

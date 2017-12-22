@@ -45,11 +45,16 @@ public abstract class AbstractJsonMockBlockDb implements BlockDb {
 	 *
 	 * @param mockBlock
 	 *            the mock block to use.
+	 * @param withTransactions
+	 *            if true, add transactions. If false, only return the block header.
 	 * @return the Block in the given mock block.
 	 */
-	private static Block getBlock(final JSONObject mockBlock) {
+	private static Block getBlock(final JSONObject mockBlock, final boolean withTransactions) {
 		final String blockHex = mockBlock.getString(BLOCK);
 		final Block block = new Block(ByteBuffer.wrap(ModelUtil.decodeHex(blockHex)));
+		if (!withTransactions) {
+			block.getTransactionList().clear();
+		}
 		return block;
 	}
 
@@ -82,7 +87,7 @@ public abstract class AbstractJsonMockBlockDb implements BlockDb {
 		final JSONArray mockBlockDb = getMockBlockDb();
 		for (int ix = 0; ix < mockBlockDb.length(); ix++) {
 			final JSONObject mockBlock = mockBlockDb.getJSONObject(ix);
-			final Block block = getBlock(mockBlock);
+			final Block block = getBlock(mockBlock, true);
 			for (final Transaction transaction : block.getTransactionList()) {
 				for (final TransactionOutput output : transaction.outputs) {
 					if (!accountAssetValueMap.containsKey(output.scriptHash)) {
@@ -106,12 +111,12 @@ public abstract class AbstractJsonMockBlockDb implements BlockDb {
 	}
 
 	@Override
-	public final Block getBlock(final long blockHeight) {
+	public final Block getBlock(final long blockHeight, final boolean withTransactions) {
 		final JSONArray mockBlockDb = getMockBlockDb();
 		for (int ix = 0; ix < mockBlockDb.length(); ix++) {
 			final JSONObject mockBlock = mockBlockDb.getJSONObject(ix);
 			if (mockBlock.getLong(INDEX) == blockHeight) {
-				final Block block = getBlock(mockBlock);
+				final Block block = getBlock(mockBlock, withTransactions);
 				return block;
 			}
 		}
@@ -119,13 +124,13 @@ public abstract class AbstractJsonMockBlockDb implements BlockDb {
 	}
 
 	@Override
-	public final Block getBlock(final UInt256 hash) {
+	public final Block getBlock(final UInt256 hash, final boolean withTransactions) {
 		final String hashHex = hash.toHexString();
 		final JSONArray mockBlockDb = getMockBlockDb();
 		for (int ix = 0; ix < mockBlockDb.length(); ix++) {
 			final JSONObject mockBlock = mockBlockDb.getJSONObject(ix);
 			if (mockBlock.getString(HASH).equals(hashHex)) {
-				final Block block = getBlock(mockBlock);
+				final Block block = getBlock(mockBlock, withTransactions);
 				return block;
 			}
 		}
@@ -138,16 +143,16 @@ public abstract class AbstractJsonMockBlockDb implements BlockDb {
 	}
 
 	@Override
-	public final Block getBlockWithMaxIndex() {
+	public final Block getBlockWithMaxIndex(final boolean withTransactions) {
 		Block maxBlock = null;
 		final JSONArray mockBlockDb = getMockBlockDb();
 		for (int ix = 0; ix < mockBlockDb.length(); ix++) {
 			final JSONObject mockBlock = mockBlockDb.getJSONObject(ix);
 			if (maxBlock == null) {
-				maxBlock = getBlock(mockBlock);
+				maxBlock = getBlock(mockBlock, withTransactions);
 			} else {
 				if (mockBlock.getLong(INDEX) > maxBlock.getIndexAsLong()) {
-					maxBlock = getBlock(mockBlock);
+					maxBlock = getBlock(mockBlock, withTransactions);
 				}
 			}
 		}
@@ -171,7 +176,7 @@ public abstract class AbstractJsonMockBlockDb implements BlockDb {
 		final JSONArray mockBlockDb = getMockBlockDb();
 		for (int ix = 0; ix < mockBlockDb.length(); ix++) {
 			final JSONObject mockBlock = mockBlockDb.getJSONObject(ix);
-			final Block block = getBlock(mockBlock);
+			final Block block = getBlock(mockBlock, true);
 			for (final Transaction transaction : block.getTransactionList()) {
 				if (transaction.hash.equals(hash)) {
 					return transaction;

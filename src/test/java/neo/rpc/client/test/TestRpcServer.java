@@ -85,7 +85,7 @@ public class TestRpcServer {
 	public static void beforeClass() {
 		LOG.debug("beforeClass");
 
-		if (CONTROLLER.getLocalNodeData().getBlockDb().getBlockWithMaxIndex() == null) {
+		if (CONTROLLER.getLocalNodeData().getBlockDb().getBlockWithMaxIndex(false) == null) {
 			// final BlockDb realDb = new BlockDbImpl();
 			// CONTROLLER.getLocalNodeData().getBlockDb().put(realDb.getBlock(0));
 			// realDb.close();
@@ -292,8 +292,8 @@ public class TestRpcServer {
 	@Test
 	public void test010CoreGetRawTransaction() {
 		final JSONArray params = new JSONArray();
-		final String txHash = CONTROLLER.getLocalNodeData().getBlockDb().getBlock(0).getTransactionList().get(0).hash
-				.toHexString();
+		final String txHash = CONTROLLER.getLocalNodeData().getBlockDb().getBlock(0, true).getTransactionList()
+				.get(0).hash.toHexString();
 		params.put(txHash);
 		final String method = CoreRpcCommandEnum.GETRAWTRANSACTION.getName();
 
@@ -315,8 +315,8 @@ public class TestRpcServer {
 	@Test
 	public void test011CoreGetTransactionOutputNoOutputs() {
 		final JSONArray params = new JSONArray();
-		final Transaction transaction = CONTROLLER.getLocalNodeData().getBlockDb().getBlock(0).getTransactionList()
-				.get(0);
+		final Transaction transaction = CONTROLLER.getLocalNodeData().getBlockDb().getBlock(0, true)
+				.getTransactionList().get(0);
 		final String txHash = transaction.hash.toHexString();
 		params.put(txHash);
 		params.put(0);
@@ -340,7 +340,7 @@ public class TestRpcServer {
 	@Test
 	public void test012CoreGetTransactionOutput() {
 		final JSONArray params = new JSONArray();
-		final Block block = CONTROLLER.getLocalNodeData().getBlockDb().getBlock(0);
+		final Block block = CONTROLLER.getLocalNodeData().getBlockDb().getBlock(0, true);
 		final Transaction transaction = block.getTransactionList().get(block.getTransactionList().size() - 1);
 		final String txHash = transaction.hash.toHexString();
 		params.put(txHash);
@@ -365,7 +365,7 @@ public class TestRpcServer {
 	@Test
 	public void test013CityOfZionGetTransaction() {
 		final JSONArray params = new JSONArray();
-		final Block block = CONTROLLER.getLocalNodeData().getBlockDb().getBlock(0);
+		final Block block = CONTROLLER.getLocalNodeData().getBlockDb().getBlock(0, true);
 		final Transaction transaction = block.getTransactionList().get(0);
 		final String txHash = transaction.hash.toHexString();
 		final String uri = CityOfZionCommandEnum.TRANSACTION.getUriPrefix() + txHash;

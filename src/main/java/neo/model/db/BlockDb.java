@@ -42,18 +42,22 @@ public interface BlockDb {
 	 *
 	 * @param blockHeight
 	 *            the block height to use.
+	 * @param withTransactions
+	 *            if true, add transactions. If false, only return the block header.
 	 * @return the block at the given height.
 	 */
-	Block getBlock(long blockHeight);
+	Block getBlock(long blockHeight, boolean withTransactions);
 
 	/**
 	 * return the block with the given hash.
 	 *
 	 * @param hash
 	 *            the hash to use.
+	 * @param withTransactions
+	 *            if true, add transactions. If false, only return the block header.
 	 * @return the block with the given hash.
 	 */
-	Block getBlock(UInt256 hash);
+	Block getBlock(UInt256 hash, boolean withTransactions);
 
 	/**
 	 * return the block count.
@@ -65,9 +69,11 @@ public interface BlockDb {
 	/**
 	 * return the block with the highest index.
 	 *
+	 * @param withTransactions
+	 *            if true, add transactions. If false, only return the block header.
 	 * @return the block with the highest index.
 	 */
-	Block getBlockWithMaxIndex();
+	Block getBlockWithMaxIndex(boolean withTransactions);
 
 	/**
 	 * return the filze size of the database.

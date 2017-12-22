@@ -54,6 +54,16 @@ public class ThreadPool {
 	}
 
 	/**
+	 * stops all the threads in the queue.
+	 */
+	private synchronized void doStop() {
+		isStopped = true;
+		for (final PoolThread thread : threads) {
+			thread.doStop();
+		}
+	}
+
+	/**
 	 * executes a runnable task.
 	 *
 	 * @param task
@@ -92,15 +102,5 @@ public class ThreadPool {
 			}
 		}
 		LOG.error("SUCCESS Joining Stopping Threads");
-	}
-
-	/**
-	 * stops all the threads in the queue.
-	 */
-	private synchronized void doStop() {
-		isStopped = true;
-		for (final PoolThread thread : threads) {
-			thread.doStop();
-		}
 	}
 }
