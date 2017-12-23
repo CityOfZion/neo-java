@@ -34,9 +34,9 @@ public final class InputStreamUtil {
 	 */
 	public static void readUntilFull(final long readTimeOut, final InputStream in, final byte[] ba) throws IOException {
 		int bytesRead = 0;
+		final long timeoutMs = System.currentTimeMillis() + readTimeOut;
 		while (bytesRead < ba.length) {
 			final long currentTimeMillis = System.currentTimeMillis();
-			final long timeoutMs = currentTimeMillis + readTimeOut;
 			if (currentTimeMillis > timeoutMs) {
 				throw new SocketTimeoutException();
 			}

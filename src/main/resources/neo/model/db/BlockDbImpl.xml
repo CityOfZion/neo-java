@@ -1,6 +1,6 @@
 <?xml version="1.0" ?>
 <BlockDbImpl>
-  <url>jdbc:h2:./java-chain/db/db;DB_CLOSE_DELAY=10;DB_CLOSE_ON_EXIT=FALSE;</url>
+  <url>jdbc:h2:./java-chain/db/db</url>
   <getFileSizeDir>java-chain/db</getFileSizeDir>
   <close>
     <sql>
@@ -8,6 +8,9 @@
     </sql>
   </close>
   <create>
+    <sql>SET DB_CLOSE_DELAY=10</sql>
+    <sql>SET DB_CLOSE_ON_EXIT=FALSE</sql>
+    <sql>SET MULTI_THREADED=TRUE</sql>
     <sql>
       CREATE CACHED TABLE IF NOT EXISTS block (
       hash BINARY(32) not null,
