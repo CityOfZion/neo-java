@@ -149,7 +149,7 @@ public final class StatsModel extends AbstractRefreshingModel {
 			addNameAndValue(AVG_FILE_SIZE_PER_BLOCK, blockFileSize / blockCount);
 			addNameAndValue(EST_FILE_SIZE_FOR_BLOCKCHAIN, (blockFileSize / blockCount) * allChainBlockCount);
 
-			final long numBlocks = blockCount - localNodeData.getStartTime();
+			final long numBlocks = blockCount - localNodeData.getStartBlockCount();
 			final long durationInSeconds = getDurationInSeconds(localNodeData);
 			final long secondsForChain = (allChainBlockCount * durationInSeconds) / numBlocks;
 			addNameAndValue(EST_TIME_UNTIL_FULL_BLOCKCHAIN, secondsForChain);

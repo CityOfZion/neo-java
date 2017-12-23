@@ -7,6 +7,7 @@ import java.net.ConnectException;
 import java.net.Socket;
 import java.net.SocketException;
 import java.net.SocketTimeoutException;
+import java.text.NumberFormat;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -101,8 +102,20 @@ public final class RemoteNodeControllerRunnable implements StopRunnable {
 	 *             if an error occurs.
 	 */
 	private void recieveMessages(final long readTimeOut, final long magic, final InputStream in) throws IOException {
+		final long timeoutMs = System.currentTimeMillis() + readTimeOut;
 		Message messageRecieved = getMessageOrTimeOut(readTimeOut, in);
 		while (messageRecieved != null) {
+			final long currentTimeMillis = System.currentTimeMillis();
+			final boolean isTimeRanOut = currentTimeMillis > timeoutMs;
+			if (LOG.isDebugEnabled()) {
+				LOG.debug("STARTED recieveMessages {} > {} ? {}",
+						NumberFormat.getIntegerInstance().format(currentTimeMillis),
+						NumberFormat.getIntegerInstance().format(timeoutMs), isTimeRanOut);
+			}
+
+			if (isTimeRanOut) {
+				throw new SocketTimeoutException();
+			}
 			if (messageRecieved.magic != magic) {
 				LOG.debug(" magic was {} expected {} closing peer.", messageRecieved.magic, magic);
 				data.setGoodPeer(false);

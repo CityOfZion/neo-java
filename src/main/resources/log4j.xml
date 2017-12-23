@@ -42,7 +42,7 @@
   </logger>
 
   <logger name="neo.network.RemoteNodeControllerRunnable">
-    <level value="error" />
+    <level value="debug" />
   </logger>
 
   <logger name="neo.network.LocalControllerNode">
