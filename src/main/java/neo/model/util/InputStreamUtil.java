@@ -3,6 +3,7 @@ package neo.model.util;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.SocketTimeoutException;
+import java.text.NumberFormat;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -37,7 +38,13 @@ public final class InputStreamUtil {
 		final long timeoutMs = System.currentTimeMillis() + readTimeOut;
 		while (bytesRead < ba.length) {
 			final long currentTimeMillis = System.currentTimeMillis();
-			if (currentTimeMillis > timeoutMs) {
+			final boolean isTimeRanOut = currentTimeMillis > timeoutMs;
+			if (LOG.isTraceEnabled()) {
+				LOG.trace("STARTED readUntilFull {} > {} ? {}",
+						NumberFormat.getIntegerInstance().format(currentTimeMillis),
+						NumberFormat.getIntegerInstance().format(timeoutMs), isTimeRanOut);
+			}
+			if (isTimeRanOut) {
 				throw new SocketTimeoutException();
 			}
 			if (LOG.isTraceEnabled()) {

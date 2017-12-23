@@ -36,6 +36,11 @@ public final class StatsModel extends AbstractRefreshingModel {
 	private static final String EST_FILE_SIZE_FOR_BLOCKCHAIN = "Est File Size For Blockchain";
 
 	/**
+	 * estimated tfor blockchain.
+	 */
+	private static final String EST_TIME_UNTIL_FULL_BLOCKCHAIN = "Est Time Until Full Blockchain (Seconds)";
+
+	/**
 	 * average file size per block.
 	 */
 	private static final String AVG_FILE_SIZE_PER_BLOCK = "Avg File Size Per Block";
@@ -143,6 +148,11 @@ public final class StatsModel extends AbstractRefreshingModel {
 		if (blockCount > 0) {
 			addNameAndValue(AVG_FILE_SIZE_PER_BLOCK, blockFileSize / blockCount);
 			addNameAndValue(EST_FILE_SIZE_FOR_BLOCKCHAIN, (blockFileSize / blockCount) * allChainBlockCount);
+
+			final long numBlocks = blockCount - localNodeData.getStartTime();
+			final long durationInSeconds = getDurationInSeconds(localNodeData);
+			final long secondsForChain = (allChainBlockCount * durationInSeconds) / numBlocks;
+			addNameAndValue(EST_TIME_UNTIL_FULL_BLOCKCHAIN, secondsForChain);
 		}
 	}
 
@@ -244,6 +254,17 @@ public final class StatsModel extends AbstractRefreshingModel {
 		throw new RuntimeException("unknown column name index:" + columnIndex);
 	}
 
+	/**
+	 * return the duration in seconds.
+	 *
+	 * @param localNodeData
+	 *            the local node data to use.
+	 * @return the duration in seconds.
+	 */
+	public long getDurationInSeconds(final LocalNodeData localNodeData) {
+		return (System.currentTimeMillis() - localNodeData.getStartTime()) / 1000;
+	}
+
 	@Override
 	public int getRowCount() {
 		synchronized (StatsModel.this) {
@@ -278,8 +299,7 @@ public final class StatsModel extends AbstractRefreshingModel {
 				statsValueList.clear();
 
 				addNameAndValue("Start Time", new Date(localNodeData.getStartTime()));
-				addNameAndValue("Duration (Seconds)",
-						(System.currentTimeMillis() - localNodeData.getStartTime()) / 1000);
+				addNameAndValue("Duration (Seconds)", getDurationInSeconds(localNodeData));
 
 				addNodeConnectionPhaseStats(peerDataSet);
 

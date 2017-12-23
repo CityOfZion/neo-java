@@ -53,6 +53,11 @@ public class LocalNodeData {
 	private final long startTime;
 
 	/**
+	 * the start block count.
+	 */
+	private final long startBlockCount;
+
+	/**
 	 * the blockchain block count.
 	 */
 	private int blockchainBlockCount;
@@ -164,6 +169,7 @@ public class LocalNodeData {
 		} catch (InstantiationException | IllegalAccessException e) {
 			throw new RuntimeException(e);
 		}
+		startBlockCount = blockDb.getBlockCount();
 	}
 
 	/**
@@ -265,6 +271,11 @@ public class LocalNodeData {
 		return rpcClientTimeoutMillis;
 	}
 
+	/**
+	 * return the RPC server timeout.
+	 *
+	 * @return the RPC server timeout.
+	 */
 	public long getRpcServerTimeoutMillis() {
 		return rpcServerTimeoutMillis;
 	}
@@ -276,6 +287,15 @@ public class LocalNodeData {
 	 */
 	public File getSeedNodeFile() {
 		return seedNodeFile;
+	}
+
+	/**
+	 * return the start block count.
+	 *
+	 * @return the start block count.
+	 */
+	public long getStartBlockCount() {
+		return startBlockCount;
 	}
 
 	/**
