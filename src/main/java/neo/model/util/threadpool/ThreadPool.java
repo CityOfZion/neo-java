@@ -90,17 +90,17 @@ public class ThreadPool {
 	 */
 	public void stop() {
 		doStop();
-		LOG.error("STARTED Joining {} Stopping Threads", threads.size());
+		LOG.info("STARTED Joining {} Stopping Threads", threads.size());
 		int threadNbr = 0;
 		for (final PoolThread thread : threads) {
 			threadNbr++;
-			LOG.error("INTERIM Joining {} Stopping Threads, #{}", threads.size(), threadNbr);
+			LOG.info("INTERIM Joining {} Stopping Threads, #{}", threads.size(), threadNbr);
 			try {
 				thread.join();
 			} catch (final InterruptedException e) {
 				throw new RuntimeException(e);
 			}
 		}
-		LOG.error("SUCCESS Joining Stopping Threads");
+		LOG.info("SUCCESS Joining Stopping Threads");
 	}
 }
