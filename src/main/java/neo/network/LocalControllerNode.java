@@ -589,14 +589,11 @@ public class LocalControllerNode {
 	}
 
 	/**
-	 * removes a listener.
-	 *
-	 * @param listener
-	 *            the listener to remove.
+	 * removes all listeners.
 	 */
-	public void removePeerChangeListener(final NodeDataChangeListener listener) {
+	public void removePeerChangeListeners() {
 		synchronized (this) {
-			peerChangeListeners.remove(listener);
+			peerChangeListeners.clear();
 		}
 	}
 
@@ -688,6 +685,7 @@ public class LocalControllerNode {
 		if (LOG.isDebugEnabled()) {
 			LOG.debug("STARTED stop");
 		}
+		removePeerChangeListeners();
 		stopCoreRpcServer();
 		refreshRunnable.setStop(true);
 		refreshThread.join();
