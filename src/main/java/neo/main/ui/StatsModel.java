@@ -31,14 +31,24 @@ import neo.network.model.RemoteNodeData;
 public final class StatsModel extends AbstractRefreshingModel {
 
 	/**
+	 * number of blocks since this session started.
+	 */
+	private static final String NUM_BLOCKS_SINCE_START = "Num Blocks Since Start";
+
+	/**
+	 * block height at session start.
+	 */
+	private static final String STARTING_BLOCK_HEIGHT = "Starting Block Height";
+
+	/**
 	 * estimated file size for blockchain.
 	 */
 	private static final String EST_FILE_SIZE_FOR_BLOCKCHAIN = "Est File Size For Blockchain";
 
 	/**
-	 * estimated tfor blockchain.
+	 * estimated time for full blockchain.
 	 */
-	private static final String EST_TIME_UNTIL_FULL_BLOCKCHAIN = "Est Time Until Full Blockchain (Seconds)";
+	private static final String EST_TIME_FOR_BLOCKCHAIN = "Est Time For Blockchain (Seconds)";
 
 	/**
 	 * average file size per block.
@@ -149,11 +159,14 @@ public final class StatsModel extends AbstractRefreshingModel {
 			addNameAndValue(AVG_FILE_SIZE_PER_BLOCK, blockFileSize / blockCount);
 			addNameAndValue(EST_FILE_SIZE_FOR_BLOCKCHAIN, (blockFileSize / blockCount) * allChainBlockCount);
 
-			final long numBlocks = blockCount - localNodeData.getStartBlockCount();
+			final long startBlockCount = localNodeData.getStartBlockCount();
+			addNameAndValue(STARTING_BLOCK_HEIGHT, startBlockCount);
+			final long numBlocks = blockCount - startBlockCount;
+			addNameAndValue(NUM_BLOCKS_SINCE_START, numBlocks);
 			if (numBlocks > 0) {
 				final long durationInSeconds = getDurationInSeconds(localNodeData);
 				final long secondsForChain = (allChainBlockCount * durationInSeconds) / numBlocks;
-				addNameAndValue(EST_TIME_UNTIL_FULL_BLOCKCHAIN, secondsForChain);
+				addNameAndValue(EST_TIME_FOR_BLOCKCHAIN, secondsForChain);
 			}
 		}
 	}
