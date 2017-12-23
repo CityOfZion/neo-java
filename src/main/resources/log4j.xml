@@ -30,7 +30,7 @@
   </logger>
 
   <logger name="neo.model.util.InputStreamUtil">
-    <level value="trace" />
+    <level value="debug" />
   </logger>
 
   <logger name="neo.rpc.client">

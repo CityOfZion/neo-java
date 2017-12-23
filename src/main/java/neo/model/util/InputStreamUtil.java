@@ -39,8 +39,8 @@ public final class InputStreamUtil {
 		while (bytesRead < ba.length) {
 			final long currentTimeMillis = System.currentTimeMillis();
 			final boolean isTimeRanOut = currentTimeMillis > timeoutMs;
-			if (LOG.isTraceEnabled()) {
-				LOG.trace("STARTED readUntilFull {} > {} ? {}",
+			if (LOG.isDebugEnabled()) {
+				LOG.debug("STARTED readUntilFull {} > {} ? {}",
 						NumberFormat.getIntegerInstance().format(currentTimeMillis),
 						NumberFormat.getIntegerInstance().format(timeoutMs), isTimeRanOut);
 			}
