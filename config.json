@@ -10,7 +10,8 @@
 		"rpc-server-timout": {
 			"seconds": 5
 		},
-		"block-db-impl": "neo.model.db.BlockDbImpl",
+		"block-db-impl": "neo.perfmon.PerformanceMonitoringBlockDb",
+		"block-db-impl2": "neo.model.db.BlockDbImpl",
 		"thread-pool-count": 8,
 		"active-thread-count": 4,
 		"timers": {

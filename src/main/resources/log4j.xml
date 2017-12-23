@@ -21,10 +21,14 @@
     <!-- <filter class="org.apache.log4j.varia.LevelMatchFilter"> <param name="LevelToMatch" value="ERROR" /> <param name="AcceptOnMatch" value="false" /> </filter> -->
   </appender>
 
+  <logger name="neo.perfmon">
+    <level value="info" />
+  </logger>
+
   <logger name="neo.main.NeoMain">
     <level value="info" />
   </logger>
-  
+
   <logger name="neo.model.util.threadpool.ThreadPool">
     <level value="info" />
   </logger>

@@ -15,6 +15,7 @@ import java.util.TreeMap;
 import org.apache.commons.text.WordUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.spf4j.perf.impl.RecorderFactory;
 
 import neo.model.core.Block;
 import neo.model.util.MapUtil;
@@ -324,6 +325,11 @@ public final class StatsModel extends AbstractRefreshingModel {
 
 				addApiCallStats();
 
+				try {
+					RecorderFactory.MEASUREMENT_STORE.flush();
+				} catch (final IOException e) {
+					throw new RuntimeException(e);
+				}
 				try (FileOutputStream fout = new FileOutputStream("LocalControllerStatsModel.txt");
 						PrintWriter pw = new PrintWriter(fout, true)) {
 					for (int columnIndex = 0; columnIndex < getColumnCount(); columnIndex++) {

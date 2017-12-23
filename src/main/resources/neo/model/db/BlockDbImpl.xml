@@ -109,7 +109,7 @@
   </getBlockWithHash>
   <getBlockCount>
     <sql>
-      select count(1)
+      select count(*)
       from block
     </sql>
   </getBlockCount>

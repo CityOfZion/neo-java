@@ -91,6 +91,18 @@ public final class BlockDbImpl implements BlockDb {
 	}
 
 	/**
+	 * add the parameters to the list.
+	 *
+	 * @param list
+	 *            the list to use.
+	 * @param parms
+	 *            the parameters to add to the list.
+	 */
+	private void add(final List<Object[]> list, final Object... parms) {
+		list.add(parms);
+	}
+
+	/**
 	 * close the database.
 	 *
 	 * @throws SQLException
@@ -472,34 +484,46 @@ public final class BlockDbImpl implements BlockDb {
 		final String putTransactionOutputSql = getSql("putTransactionOutput");
 		final String putTransactionScriptSql = getSql("putTransactionScript");
 		int transactionIndex = 0;
+
+		final List<Object[]> putTransactionList = new ArrayList<>();
+		final List<Object[]> putTransactionInputList = new ArrayList<>();
+		final List<Object[]> putTransactionOutputList = new ArrayList<>();
+		final List<Object[]> putTransactionScriptList = new ArrayList<>();
+
 		for (final Transaction transaction : block.getTransactionList()) {
 			final byte[] txIxByte = new UInt16(transactionIndex).toByteArray();
 			final byte[] transactionBaseBa = transaction.toBaseByteArray();
-			t.update(putTransactionSql, blockIndexBa, txIxByte, transaction.hash.toByteArray(), transactionBaseBa);
+			add(putTransactionList, blockIndexBa, txIxByte, transaction.hash.toByteArray(), transactionBaseBa);
 
 			for (int inputIx = 0; inputIx < transaction.inputs.size(); inputIx++) {
 				final byte[] txInputIxByte = new UInt32(inputIx).toByteArray();
 				final CoinReference input = transaction.inputs.get(inputIx);
-				t.update(putTransactionInputSql, blockIndexBa, txIxByte, txInputIxByte, input.prevHash.toByteArray(),
+				add(putTransactionInputList, blockIndexBa, txIxByte, txInputIxByte, input.prevHash.toByteArray(),
 						input.prevIndex.toByteArray());
 			}
 
 			for (int outputIx = 0; outputIx < transaction.outputs.size(); outputIx++) {
 				final byte[] txOutputIxByte = new UInt16(outputIx).toByteArray();
 				final TransactionOutput output = transaction.outputs.get(outputIx);
-				t.update(putTransactionOutputSql, blockIndexBa, txIxByte, txOutputIxByte, output.assetId.toByteArray(),
+				add(putTransactionOutputList, blockIndexBa, txIxByte, txOutputIxByte, output.assetId.toByteArray(),
 						output.value.toByteArray(), output.scriptHash.toByteArray());
 			}
 
 			for (int scriptIx = 0; scriptIx < transaction.scripts.size(); scriptIx++) {
 				final byte[] txScriptIxByte = new UInt32(scriptIx).toByteArray();
 				final Witness script = transaction.scripts.get(scriptIx);
-				t.update(putTransactionScriptSql, blockIndexBa, txIxByte, txScriptIxByte,
+				add(putTransactionScriptList, blockIndexBa, txIxByte, txScriptIxByte,
 						script.getCopyOfInvocationScript(), script.getCopyOfVerificationScript());
 			}
 
 			transactionIndex++;
 		}
+
+		t.batchUpdate(putTransactionSql, putTransactionList);
+		t.batchUpdate(putTransactionInputSql, putTransactionInputList);
+		t.batchUpdate(putTransactionOutputSql, putTransactionOutputList);
+		t.batchUpdate(putTransactionScriptSql, putTransactionScriptList);
+
 	}
 
 }
