@@ -30,7 +30,7 @@
   </logger>
 
   <logger name="neo.model.util.InputStreamUtil">
-    <level value="debug" />
+    <level value="error" />
   </logger>
 
   <logger name="neo.rpc.client">
@@ -42,7 +42,7 @@
   </logger>
 
   <logger name="neo.network.RemoteNodeControllerRunnable">
-    <level value="debug" />
+    <level value="error" />
   </logger>
 
   <logger name="neo.network.LocalControllerNode">
