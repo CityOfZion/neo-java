@@ -15,10 +15,8 @@ import java.util.TreeMap;
 import org.apache.commons.text.WordUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.spf4j.perf.impl.RecorderFactory;
 
 import neo.model.core.Block;
-import neo.model.util.MapUtil;
 import neo.network.model.LocalNodeData;
 import neo.network.model.NodeConnectionPhaseEnum;
 import neo.network.model.RemoteNodeData;
@@ -107,19 +105,6 @@ public final class StatsModel extends AbstractRefreshingModel {
 	 * lists of the values of the statistics, converted from numbers to strings.
 	 */
 	private final List<String> statsValueList = new ArrayList<>();
-
-	/**
-	 * add stats about what API calls were made.
-	 */
-	private void addApiCallStats() {
-		final Map<String, Long> apiCallMap = new TreeMap<>();
-		MapUtil.increment(apiCallMap, LocalNodeData.API_CALL_MAP);
-
-		for (final String key : apiCallMap.keySet()) {
-			final long value = apiCallMap.get(key);
-			addNameAndValue(key, value);
-		}
-	}
 
 	/**
 	 * add stats about the blockchain.
@@ -323,14 +308,7 @@ public final class StatsModel extends AbstractRefreshingModel {
 
 				addBlockchainStats(localNodeData);
 
-				addApiCallStats();
-
-				try {
-					RecorderFactory.MEASUREMENT_STORE.flush();
-				} catch (final IOException e) {
-					throw new RuntimeException(e);
-				}
-				try (FileOutputStream fout = new FileOutputStream("LocalControllerStatsModel.txt");
+				try (FileOutputStream fout = new FileOutputStream("StatsModel.txt");
 						PrintWriter pw = new PrintWriter(fout, true)) {
 					for (int columnIndex = 0; columnIndex < getColumnCount(); columnIndex++) {
 						pw.print(getColumnName(columnIndex));

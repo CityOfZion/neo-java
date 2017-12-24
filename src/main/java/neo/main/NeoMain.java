@@ -15,6 +15,7 @@ import org.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import neo.main.ui.ApiCallModel;
 import neo.main.ui.RemotePeerDataModel;
 import neo.main.ui.StatsModel;
 import neo.model.util.ConfigurationUtil;
@@ -29,6 +30,24 @@ public final class NeoMain {
 	 * the logger.
 	 */
 	private static final Logger LOG = LoggerFactory.getLogger(NeoMain.class);
+
+	/**
+	 * adds the api statistics panel.
+	 *
+	 * @param controller
+	 *            the controller to use.
+	 * @param apiTableModel
+	 *            the table model to use.
+	 * @param tabbedPane
+	 *            the tabbed pane to use.
+	 */
+	private static void addApiStatsPanel(final LocalControllerNode controller, final ApiCallModel apiTableModel,
+			final JTabbedPane tabbedPane) {
+		controller.addPeerChangeListener(apiTableModel);
+		final JTable table = new JTable(apiTableModel);
+		final JScrollPane scrollPane = new JScrollPane(table);
+		tabbedPane.add("API Stats", scrollPane);
+	}
 
 	/**
 	 * adds the blockchain statistics panel.
@@ -75,16 +94,20 @@ public final class NeoMain {
 	 *            the stats table model.
 	 * @param peerTableModel
 	 *            the peers table model.
+	 * @param apiCallModel
+	 *            the api call model.
 	 * @return the WindowAdapter.
 	 */
 	private static WindowAdapter getWindowClosingAdapter(final LocalControllerNode controller,
-			final StatsModel statsTableModel, final RemotePeerDataModel peerTableModel) {
+			final StatsModel statsTableModel, final RemotePeerDataModel peerTableModel,
+			final ApiCallModel apiCallModel) {
 		return new WindowAdapter() {
 			@Override
 			public void windowClosing(final WindowEvent evt) {
 				try {
 					statsTableModel.stop();
 					peerTableModel.stop();
+					apiCallModel.stop();
 					controller.stop();
 					LOG.info("STARTED SHUTTING DOWN DB");
 					controller.getLocalNodeData().getBlockDb().close();
@@ -112,11 +135,12 @@ public final class NeoMain {
 		controller.loadNodeFiles();
 
 		final StatsModel statsTableModel = new StatsModel();
+		final ApiCallModel apiCallModel = new ApiCallModel();
 		final RemotePeerDataModel peerTableModel = new RemotePeerDataModel();
 
 		final JFrame frame = new JFrame("NEO Main");
 		frame.setDefaultCloseOperation(WindowConstants.DO_NOTHING_ON_CLOSE);
-		frame.addWindowListener(getWindowClosingAdapter(controller, statsTableModel, peerTableModel));
+		frame.addWindowListener(getWindowClosingAdapter(controller, statsTableModel, peerTableModel, apiCallModel));
 		final JPanel mainPanel = new JPanel();
 		final JTabbedPane tabbedPane = new JTabbedPane();
 		mainPanel.setLayout(new BoxLayout(mainPanel, BoxLayout.X_AXIS));
@@ -124,6 +148,7 @@ public final class NeoMain {
 
 		addBlockchainStatsPanel(controller, statsTableModel, tabbedPane);
 		addRemotePeerDetailsPanel(controller, peerTableModel, tabbedPane);
+		addApiStatsPanel(controller, apiCallModel, tabbedPane);
 
 		frame.getContentPane().add(mainPanel);
 
