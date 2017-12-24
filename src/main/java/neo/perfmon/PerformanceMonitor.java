@@ -34,7 +34,7 @@ public final class PerformanceMonitor implements AutoCloseable {
 	/**
 	 * the api logging name.
 	 */
-	private final String apiLogName;
+	private final String millisName;
 
 	/**
 	 * the constructor.
@@ -45,15 +45,15 @@ public final class PerformanceMonitor implements AutoCloseable {
 	public PerformanceMonitor(final String name) {
 		startTime = System.currentTimeMillis();
 		this.name = name;
-		apiLogName = name + "Millis";
+		millisName = name + "Millis";
 		LOG.debug("STARTED {}", name);
 	}
 
 	@Override
 	public void close() {
 		final long measurement = System.currentTimeMillis() - startTime;
-		MapUtil.increment(LocalNodeData.API_CALL_MAP, apiLogName, measurement);
-		MapUtil.increment(LocalNodeData.API_CALL_MAP, name, measurement);
+		MapUtil.increment(LocalNodeData.API_CALL_MAP, millisName, measurement);
+		MapUtil.increment(LocalNodeData.API_CALL_MAP, name);
 		LOG.debug("SUCCESS {}, {} ms", name, NumberFormat.getIntegerInstance().format(measurement));
 	}
 
