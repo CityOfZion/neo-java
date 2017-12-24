@@ -30,6 +30,11 @@ import neo.network.model.RemoteNodeData;
 public final class StatsModel extends AbstractRefreshingModel {
 
 	/**
+	 * remaining blockchain block count.
+	 */
+	private static final String REMAINING_BLOCKCHAIN_BLOCK_COUNT = "Remaining Blockchain Block Count";
+
+	/**
 	 * duration of this session, in seconds.
 	 */
 	private static final String DURATION_SECONDS = "Duration (Seconds)";
@@ -58,6 +63,11 @@ public final class StatsModel extends AbstractRefreshingModel {
 	 * estimated file size for blockchain.
 	 */
 	private static final String EST_FILE_SIZE_FOR_BLOCKCHAIN = "Est File Size For Blockchain";
+
+	/**
+	 * estimated time for a single block.
+	 */
+	private static final String EST_TIME_FOR_BLOCK = "Est Time For Block (Seconds)";
 
 	/**
 	 * estimated time for full blockchain.
@@ -166,8 +176,13 @@ public final class StatsModel extends AbstractRefreshingModel {
 			addNameAndValue(NUM_BLOCKS_SINCE_START, numBlocks);
 			if (numBlocks > 0) {
 				final long durationInSeconds = getDurationInSeconds(localNodeData);
-				final long secondsForChain = (allChainBlockCount * durationInSeconds) / numBlocks;
 
+				final long secondsPerBlock = numBlocks / durationInSeconds;
+				final long remainingChainBlockCount = allChainBlockCount - blockCount;
+				final long secondsForChain = remainingChainBlockCount * secondsPerBlock;
+
+				addNameAndValue(EST_TIME_FOR_BLOCK, secondsPerBlock);
+				addNameAndValue(REMAINING_BLOCKCHAIN_BLOCK_COUNT, remainingChainBlockCount);
 				addNameAndValue(EST_TIME_FOR_BLOCKCHAIN, secondsForChain);
 				addNameAndValue(EST_END_TIME, new Date(localNodeData.getStartTime() + (secondsForChain * 1000)));
 			}

@@ -54,15 +54,15 @@ public final class NeoMain {
 	 *
 	 * @param controller
 	 *            the controller to use.
-	 * @param statsTableModel
+	 * @param statsModel
 	 *            the table model to use.
 	 * @param tabbedPane
 	 *            the tabbed pane to use.
 	 */
-	private static void addBlockchainStatsPanel(final LocalControllerNode controller, final StatsModel statsTableModel,
+	private static void addBlockchainStatsPanel(final LocalControllerNode controller, final StatsModel statsModel,
 			final JTabbedPane tabbedPane) {
-		controller.addPeerChangeListener(statsTableModel);
-		final JTable table = new JTable(statsTableModel);
+		controller.addPeerChangeListener(statsModel);
+		final JTable table = new JTable(statsModel);
 		final JScrollPane scrollPane = new JScrollPane(table);
 		tabbedPane.add("Blockchain Stats", scrollPane);
 	}
@@ -72,15 +72,15 @@ public final class NeoMain {
 	 *
 	 * @param controller
 	 *            the controller to use.
-	 * @param peerTableModel
+	 * @param remotePeerDataModel
 	 *            the table model to use.
 	 * @param tabbedPane
 	 *            the tabbed pane to use.
 	 */
 	private static void addRemotePeerDetailsPanel(final LocalControllerNode controller,
-			final RemotePeerDataModel peerTableModel, final JTabbedPane tabbedPane) {
-		controller.addPeerChangeListener(peerTableModel);
-		final JTable table = new JTable(peerTableModel);
+			final RemotePeerDataModel remotePeerDataModel, final JTabbedPane tabbedPane) {
+		controller.addPeerChangeListener(remotePeerDataModel);
+		final JTable table = new JTable(remotePeerDataModel);
 		final JScrollPane scrollPane = new JScrollPane(table);
 		tabbedPane.add("Remote Peer Details", scrollPane);
 	}
@@ -90,40 +90,18 @@ public final class NeoMain {
 	 *
 	 * @param controller
 	 *            the controller.
-	 * @param statsTableModel
+	 * @param statsModel
 	 *            the stats table model.
-	 * @param peerTableModel
+	 * @param remotePeerDataModel
 	 *            the peers table model.
 	 * @param apiCallModel
 	 *            the api call model.
 	 * @return the WindowAdapter.
 	 */
 	private static WindowAdapter getWindowClosingAdapter(final LocalControllerNode controller,
-			final StatsModel statsTableModel, final RemotePeerDataModel peerTableModel,
+			final StatsModel statsModel, final RemotePeerDataModel remotePeerDataModel,
 			final ApiCallModel apiCallModel) {
-		return new WindowAdapter() {
-			@Override
-			public void windowClosing(final WindowEvent evt) {
-				try {
-					LOG.info("STARTED SHUTTING DOWN");
-					LOG.info("STARTED SHUTTING DOWN GUI REFRESH");
-					statsTableModel.stop();
-					peerTableModel.stop();
-					apiCallModel.stop();
-					LOG.info("SUCCESS SHUTTING DOWN GUI REFRESH");
-					LOG.info("STARTED SHUTTING DOWN NETWORK");
-					controller.stop();
-					LOG.info("SUCCESS SHUTTING DOWN NETWORK");
-					LOG.info("STARTED SHUTTING DOWN DATABASE");
-					controller.getLocalNodeData().getBlockDb().close();
-					LOG.info("SUCCESS SHUTTING DOWN DATABASE");
-					LOG.info("SUCCESS SHUTTING DOWN");
-				} catch (final InterruptedException ex) {
-					LOG.error("error closing", ex);
-				}
-				System.exit(0);
-			}
-		};
+		return new WindowClosingAdapter(apiCallModel, remotePeerDataModel, statsModel, controller);
 	}
 
 	/**
@@ -140,20 +118,20 @@ public final class NeoMain {
 		final LocalControllerNode controller = new LocalControllerNode(controllerNodeConfig);
 		controller.loadNodeFiles();
 
-		final StatsModel statsTableModel = new StatsModel();
+		final StatsModel statsModel = new StatsModel();
 		final ApiCallModel apiCallModel = new ApiCallModel();
-		final RemotePeerDataModel peerTableModel = new RemotePeerDataModel();
+		final RemotePeerDataModel remotePeerDataModel = new RemotePeerDataModel();
 
 		final JFrame frame = new JFrame("NEO Main");
 		frame.setDefaultCloseOperation(WindowConstants.DO_NOTHING_ON_CLOSE);
-		frame.addWindowListener(getWindowClosingAdapter(controller, statsTableModel, peerTableModel, apiCallModel));
+		frame.addWindowListener(getWindowClosingAdapter(controller, statsModel, remotePeerDataModel, apiCallModel));
 		final JPanel mainPanel = new JPanel();
 		final JTabbedPane tabbedPane = new JTabbedPane();
 		mainPanel.setLayout(new BoxLayout(mainPanel, BoxLayout.X_AXIS));
 		mainPanel.add(tabbedPane);
 
-		addBlockchainStatsPanel(controller, statsTableModel, tabbedPane);
-		addRemotePeerDetailsPanel(controller, peerTableModel, tabbedPane);
+		addBlockchainStatsPanel(controller, statsModel, tabbedPane);
+		addRemotePeerDetailsPanel(controller, remotePeerDataModel, tabbedPane);
 		addApiStatsPanel(controller, apiCallModel, tabbedPane);
 
 		frame.getContentPane().add(mainPanel);
@@ -171,5 +149,76 @@ public final class NeoMain {
 	 * the constructor.
 	 */
 	private NeoMain() {
+	}
+
+	/**
+	 * the adapter that handles the window closing event.
+	 *
+	 * @author coranos
+	 *
+	 */
+	private static final class WindowClosingAdapter extends WindowAdapter {
+
+		/**
+		 * the api call model.
+		 */
+		private final ApiCallModel apiCallModel;
+
+		/**
+		 * the remote peer data model.
+		 */
+		private final RemotePeerDataModel remotePeerDataModel;
+
+		/**
+		 * the stats model.
+		 */
+		private final StatsModel statsModel;
+
+		/**
+		 * the controller.
+		 */
+		private final LocalControllerNode controller;
+
+		/**
+		 * the constructor.
+		 *
+		 * @param apiCallModel
+		 *            the api call model.
+		 * @param remotePeerDataModel
+		 *            the remote peer data model.
+		 * @param statsModel
+		 *            the stats model.
+		 * @param controller
+		 *            the controller.
+		 */
+		private WindowClosingAdapter(final ApiCallModel apiCallModel, final RemotePeerDataModel remotePeerDataModel,
+				final StatsModel statsModel, final LocalControllerNode controller) {
+			this.apiCallModel = apiCallModel;
+			this.remotePeerDataModel = remotePeerDataModel;
+			this.statsModel = statsModel;
+			this.controller = controller;
+		}
+
+		@Override
+		public void windowClosing(final WindowEvent evt) {
+			try {
+				LOG.info("STARTED SHUTTING DOWN");
+				LOG.info("STARTED SHUTTING DOWN GUI REFRESH");
+				statsModel.stop();
+				remotePeerDataModel.stop();
+				apiCallModel.stop();
+				LOG.info("SUCCESS SHUTTING DOWN GUI REFRESH");
+				LOG.info("STARTED SHUTTING DOWN NETWORK");
+				controller.stop();
+				LOG.info("SUCCESS SHUTTING DOWN NETWORK");
+				LOG.info("STARTED SHUTTING DOWN DATABASE");
+				controller.getLocalNodeData().getBlockDb().close();
+				LOG.info("SUCCESS SHUTTING DOWN DATABASE");
+				LOG.info("SUCCESS SHUTTING DOWN");
+			} catch (final InterruptedException ex) {
+				LOG.error("error closing", ex);
+			}
+			System.exit(0);
+		}
 	}
 }
