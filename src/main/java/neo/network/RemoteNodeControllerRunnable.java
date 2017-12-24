@@ -239,6 +239,9 @@ public final class RemoteNodeControllerRunnable implements StopRunnable {
 	private void sendMessages(final OutputStream out) throws IOException {
 		Message messageToSend = data.getSendQueue().poll();
 		while (messageToSend != null) {
+			if (!data.isGoodPeer()) {
+				return;
+			}
 			final byte[] outBa = messageToSend.toByteArray();
 			out.write(outBa);
 			if (messageToSend.commandEnum != null) {

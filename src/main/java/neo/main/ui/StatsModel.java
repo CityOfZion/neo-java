@@ -30,6 +30,21 @@ import neo.network.model.RemoteNodeData;
 public final class StatsModel extends AbstractRefreshingModel {
 
 	/**
+	 * duration of this session, in seconds.
+	 */
+	private static final String DURATION_SECONDS = "Duration (Seconds)";
+
+	/**
+	 * start time.
+	 */
+	private static final String START_TIME = "Start Time";
+
+	/**
+	 * estimated time when the blockchain is fully synched.
+	 */
+	private static final String EST_END_TIME = "Est End Time";
+
+	/**
 	 * number of blocks since this session started.
 	 */
 	private static final String NUM_BLOCKS_SINCE_START = "Num Blocks Since Start";
@@ -154,7 +169,7 @@ public final class StatsModel extends AbstractRefreshingModel {
 				final long secondsForChain = (allChainBlockCount * durationInSeconds) / numBlocks;
 
 				addNameAndValue(EST_TIME_FOR_BLOCKCHAIN, secondsForChain);
-				addNameAndValue("End Time", new Date(localNodeData.getStartTime() + (secondsForChain * 1000)));
+				addNameAndValue(EST_END_TIME, new Date(localNodeData.getStartTime() + (secondsForChain * 1000)));
 			}
 		}
 	}
@@ -301,8 +316,8 @@ public final class StatsModel extends AbstractRefreshingModel {
 				statsNameList.clear();
 				statsValueList.clear();
 
-				addNameAndValue("Start Time", new Date(localNodeData.getStartTime()));
-				addNameAndValue("Duration (Seconds)", getDurationInSeconds(localNodeData));
+				addNameAndValue(START_TIME, new Date(localNodeData.getStartTime()));
+				addNameAndValue(DURATION_SECONDS, getDurationInSeconds(localNodeData));
 
 				addNodeConnectionPhaseStats(peerDataSet);
 

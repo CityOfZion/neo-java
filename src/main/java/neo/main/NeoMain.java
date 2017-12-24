@@ -105,13 +105,19 @@ public final class NeoMain {
 			@Override
 			public void windowClosing(final WindowEvent evt) {
 				try {
+					LOG.info("STARTED SHUTTING DOWN");
+					LOG.info("STARTED SHUTTING DOWN GUI REFRESH");
 					statsTableModel.stop();
 					peerTableModel.stop();
 					apiCallModel.stop();
+					LOG.info("SUCCESS SHUTTING DOWN GUI REFRESH");
+					LOG.info("STARTED SHUTTING DOWN NETWORK");
 					controller.stop();
-					LOG.info("STARTED SHUTTING DOWN DB");
+					LOG.info("SUCCESS SHUTTING DOWN NETWORK");
+					LOG.info("STARTED SHUTTING DOWN DATABASE");
 					controller.getLocalNodeData().getBlockDb().close();
-					LOG.info("SUCCESS SHUTTING DOWN DB");
+					LOG.info("SUCCESS SHUTTING DOWN DATABASE");
+					LOG.info("SUCCESS SHUTTING DOWN");
 				} catch (final InterruptedException ex) {
 					LOG.error("error closing", ex);
 				}
