@@ -62,6 +62,7 @@ public final class PerformanceMonitor implements AutoCloseable {
 		final long measurement = System.currentTimeMillis() - startTime;
 		RECORDER.getRecorder(name).recordAt(startTime, measurement);
 		MapUtil.increment(LocalNodeData.API_CALL_MAP, apiLogName, measurement);
+		MapUtil.increment(LocalNodeData.API_CALL_MAP, name, measurement);
 		LOG.debug("SUCCESS {}, {} ms", name, NumberFormat.getIntegerInstance().format(measurement));
 	}
 
