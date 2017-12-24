@@ -1,6 +1,9 @@
 package neo.perfmon;
 
 import java.text.NumberFormat;
+import java.util.Collections;
+import java.util.Map;
+import java.util.TreeMap;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -20,6 +23,11 @@ public final class PerformanceMonitor implements AutoCloseable {
 	 * the logger.
 	 */
 	private static final Logger LOG = LoggerFactory.getLogger(PerformanceMonitor.class);
+
+	/**
+	 * the API Call map, used to track call stats.
+	 */
+	public static final Map<String, Long> PERF_DATA_MAP = Collections.synchronizedMap(new TreeMap<>());
 
 	/**
 	 * the start time.
@@ -58,11 +66,12 @@ public final class PerformanceMonitor implements AutoCloseable {
 	@Override
 	public void close() {
 		final long measurement = System.currentTimeMillis() - startTime;
-		MapUtil.increment(LocalNodeData.API_CALL_MAP, totalMillisName, measurement);
-		MapUtil.increment(LocalNodeData.API_CALL_MAP, name);
-		final long averageMillis = LocalNodeData.API_CALL_MAP.get(totalMillisName)
-				/ LocalNodeData.API_CALL_MAP.get(name);
-		LocalNodeData.API_CALL_MAP.put(averageMillisName, averageMillis);
+		MapUtil.increment(PERF_DATA_MAP, totalMillisName, measurement);
+		MapUtil.increment(PERF_DATA_MAP, name);
+		final long count = PERF_DATA_MAP.get(name);
+		final long averageMillis = PERF_DATA_MAP.get(totalMillisName) / count;
+		LocalNodeData.API_CALL_MAP.put(name, count);
+		LocalNodeData.API_CALL_MAP.put(averageMillisName, Math.max(1, averageMillis));
 		LOG.debug("SUCCESS {}, {} ms", name, NumberFormat.getIntegerInstance().format(measurement));
 	}
 
