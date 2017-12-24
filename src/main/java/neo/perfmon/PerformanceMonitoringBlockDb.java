@@ -36,63 +36,63 @@ public final class PerformanceMonitoringBlockDb implements BlockDb {
 
 	@Override
 	public boolean containsBlockWithHash(final UInt256 hash) {
-		try (PerformanceMonitor m = new PerformanceMonitor("containsBlockWithHash")) {
+		try (PerformanceMonitor m = new PerformanceMonitor("BlockDbImpl.containsBlockWithHash")) {
 			return delegate.containsBlockWithHash(hash);
 		}
 	}
 
 	@Override
 	public Map<UInt160, Map<UInt256, Fixed8>> getAccountAssetValueMap() {
-		try (PerformanceMonitor m = new PerformanceMonitor("getAccountAssetValueMap")) {
+		try (PerformanceMonitor m = new PerformanceMonitor("BlockDbImpl.getAccountAssetValueMap")) {
 			return delegate.getAccountAssetValueMap();
 		}
 	}
 
 	@Override
 	public Block getBlock(final long blockHeight, final boolean withTransactions) {
-		try (PerformanceMonitor m = new PerformanceMonitor("getBlockWithHeight")) {
+		try (PerformanceMonitor m = new PerformanceMonitor("BlockDbImpl.getBlockWithHeight")) {
 			return delegate.getBlock(blockHeight, withTransactions);
 		}
 	}
 
 	@Override
 	public Block getBlock(final UInt256 hash, final boolean withTransactions) {
-		try (PerformanceMonitor m = new PerformanceMonitor("getBlockWithHash")) {
+		try (PerformanceMonitor m = new PerformanceMonitor("BlockDbImpl.getBlockWithHash")) {
 			return delegate.getBlock(hash, withTransactions);
 		}
 	}
 
 	@Override
 	public long getBlockCount() {
-		try (PerformanceMonitor m = new PerformanceMonitor("getBlockCount")) {
+		try (PerformanceMonitor m = new PerformanceMonitor("BlockDbImpl.getBlockCount")) {
 			return delegate.getBlockCount();
 		}
 	}
 
 	@Override
 	public Block getBlockWithMaxIndex(final boolean withTransactions) {
-		try (PerformanceMonitor m = new PerformanceMonitor("getBlockWithMaxIndex")) {
+		try (PerformanceMonitor m = new PerformanceMonitor("BlockDbImpl.getBlockWithMaxIndex")) {
 			return delegate.getBlockWithMaxIndex(withTransactions);
 		}
 	}
 
 	@Override
 	public long getFileSize() {
-		try (PerformanceMonitor m = new PerformanceMonitor("getFileSize")) {
+		try (PerformanceMonitor m = new PerformanceMonitor("BlockDbImpl.getFileSize")) {
 			return delegate.getFileSize();
 		}
 	}
 
 	@Override
 	public Transaction getTransactionWithHash(final UInt256 hash) {
-		try (PerformanceMonitor m = new PerformanceMonitor("getTransactionWithHash")) {
+		try (PerformanceMonitor m = new PerformanceMonitor("BlockDbImpl.getTransactionWithHash")) {
 			return delegate.getTransactionWithHash(hash);
 		}
 	}
 
 	@Override
 	public void put(final Block block) {
-		try (PerformanceMonitor m = new PerformanceMonitor("put")) {
+		try (PerformanceMonitor m = new PerformanceMonitor("BlockDbImpl.put")) {
 			delegate.put(block);
 		}
 	}
