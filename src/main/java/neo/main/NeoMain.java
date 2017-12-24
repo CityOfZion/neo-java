@@ -155,7 +155,7 @@ public final class NeoMain {
 		controller.startThreadPool();
 		controller.startRefreshThread();
 
-		frame.setSize(480, 960);
+		frame.setSize(640, 960);
 		frame.setVisible(true);
 
 		LOG.info("SUCCESS main");
