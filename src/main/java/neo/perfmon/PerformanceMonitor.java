@@ -32,9 +32,14 @@ public final class PerformanceMonitor implements AutoCloseable {
 	private final String name;
 
 	/**
-	 * the api logging name.
+	 * the name for logging total milliseconds used.
 	 */
-	private final String millisName;
+	private final String totalMillisName;
+
+	/**
+	 * the name for logging average milliseconds used.
+	 */
+	private final String averageMillisName;
 
 	/**
 	 * the constructor.
@@ -45,15 +50,19 @@ public final class PerformanceMonitor implements AutoCloseable {
 	public PerformanceMonitor(final String name) {
 		startTime = System.currentTimeMillis();
 		this.name = name;
-		millisName = name + "Millis";
+		totalMillisName = name + "TotalMillis";
+		averageMillisName = name + "AverageMillis";
 		LOG.debug("STARTED {}", name);
 	}
 
 	@Override
 	public void close() {
 		final long measurement = System.currentTimeMillis() - startTime;
-		MapUtil.increment(LocalNodeData.API_CALL_MAP, millisName, measurement);
+		MapUtil.increment(LocalNodeData.API_CALL_MAP, totalMillisName, measurement);
 		MapUtil.increment(LocalNodeData.API_CALL_MAP, name);
+		final long averageMillis = LocalNodeData.API_CALL_MAP.get(totalMillisName)
+				/ LocalNodeData.API_CALL_MAP.get(name);
+		LocalNodeData.API_CALL_MAP.put(averageMillisName, averageMillis);
 		LOG.debug("SUCCESS {}, {} ms", name, NumberFormat.getIntegerInstance().format(measurement));
 	}
 
