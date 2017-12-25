@@ -11,7 +11,8 @@
 			"seconds": 5
 		},
 		"block-db-impl": "neo.perfmon.PerformanceMonitoringBlockDb",
-		"block-db-impl2": "neo.model.db.BlockDbImpl",
+		"block-db-impl-old": "neo.model.db.BlockDbImpl",
+		"socket-factory-impl": "neo.network.model.socket.SocketFactoryImpl",
 		"thread-pool-count": 8,
 		"active-thread-count": 4,
 		"timers": {

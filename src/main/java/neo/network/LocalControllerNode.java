@@ -140,7 +140,7 @@ public class LocalControllerNode {
 		final String blockDbImplStr = localJson.getString(ConfigurationUtil.BLOCK_DB_IMPL);
 		final Class<BlockDb> blockDbImplClass = getBlockDbImplClass(blockDbImplStr);
 
-		final String socketFactoryImplStr = localJson.getString(ConfigurationUtil.BLOCK_DB_IMPL);
+		final String socketFactoryImplStr = localJson.getString(ConfigurationUtil.SOCKET_FACTORY_IMPL);
 		final Class<SocketFactory> socketFactoryClass = getSocketFactoryClass(socketFactoryImplStr);
 
 		final int nonce = config.getInt(ConfigurationUtil.NONCE);
