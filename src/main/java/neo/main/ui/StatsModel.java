@@ -67,7 +67,7 @@ public final class StatsModel extends AbstractRefreshingModel {
 	/**
 	 * estimated time for a single block.
 	 */
-	private static final String EST_TIME_FOR_BLOCK = "Est Time For Block (Seconds)";
+	private static final String EST_TIME_FOR_BLOCK_MS = "Est Time For Block (Millis)";
 
 	/**
 	 * estimated time for full blockchain.
@@ -180,14 +180,17 @@ public final class StatsModel extends AbstractRefreshingModel {
 			addNameAndValue(ELAPSED_SINCE_START_SECONDS, durationInSeconds);
 
 			if (numBlocks > 0) {
-				final long secondsPerBlock = durationInSeconds / numBlocks;
-				final long remainingChainBlockCount = allChainBlockCount - blockCount;
-				final long secondsForChain = (remainingChainBlockCount / numBlocks) * durationInSeconds;
+				final long millisecondsPerBlock = (durationInSeconds * 1000) / numBlocks;
+				addNameAndValue(EST_TIME_FOR_BLOCK_MS, millisecondsPerBlock);
 
-				addNameAndValue(EST_TIME_FOR_BLOCK, secondsPerBlock);
+				final long remainingChainBlockCount = allChainBlockCount - blockCount;
 				addNameAndValue(REMAINING_BLOCKCHAIN_BLOCK_COUNT, remainingChainBlockCount);
+
+				final long secondsForChain = remainingChainBlockCount * millisecondsPerBlock;
 				addNameAndValue(REMAINING_TIME_FOR_BLOCKCHAIN, secondsForChain);
-				addNameAndValue(EST_END_TIME, new Date(localNodeData.getStartTime() + (secondsForChain * 1000)));
+
+				final Date estEndTime = new Date(System.currentTimeMillis() + (secondsForChain * 1000));
+				addNameAndValue(EST_END_TIME, estEndTime);
 			}
 		}
 	}
