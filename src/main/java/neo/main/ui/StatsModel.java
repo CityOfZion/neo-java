@@ -37,7 +37,7 @@ public final class StatsModel extends AbstractRefreshingModel {
 	/**
 	 * duration of this session, in seconds.
 	 */
-	private static final String DURATION_SECONDS = "Duration (Seconds)";
+	private static final String ELAPSED_SINCE_START_SECONDS = "Elapsed Since Start - Seconds";
 
 	/**
 	 * start time.
@@ -52,7 +52,7 @@ public final class StatsModel extends AbstractRefreshingModel {
 	/**
 	 * number of blocks since this session started.
 	 */
-	private static final String NUM_BLOCKS_SINCE_START = "Num Blocks Since Start";
+	private static final String ELAPSED_SINCE_START_BLOCK_COUNT = "Elapsed Since Start - Blocks";
 
 	/**
 	 * block height at session start.
@@ -72,7 +72,7 @@ public final class StatsModel extends AbstractRefreshingModel {
 	/**
 	 * estimated time for full blockchain.
 	 */
-	private static final String EST_TIME_FOR_BLOCKCHAIN = "Est Time For Blockchain (Seconds)";
+	private static final String REMAINING_TIME_FOR_BLOCKCHAIN = "Remaining Blockchain Seconds";
 
 	/**
 	 * average file size per block.
@@ -173,17 +173,17 @@ public final class StatsModel extends AbstractRefreshingModel {
 			final long startBlockCount = localNodeData.getStartBlockCount();
 			addNameAndValue(STARTING_BLOCK_HEIGHT, startBlockCount);
 			final long numBlocks = blockCount - startBlockCount;
-			addNameAndValue(NUM_BLOCKS_SINCE_START, numBlocks);
+			addNameAndValue(ELAPSED_SINCE_START_BLOCK_COUNT, numBlocks);
 			if (numBlocks > 0) {
 				final long durationInSeconds = getDurationInSeconds(localNodeData);
 
 				final long secondsPerBlock = durationInSeconds / numBlocks;
 				final long remainingChainBlockCount = allChainBlockCount - blockCount;
-				final long secondsForChain = remainingChainBlockCount * secondsPerBlock;
+				final long secondsForChain = (remainingChainBlockCount / numBlocks) * durationInSeconds;
 
 				addNameAndValue(EST_TIME_FOR_BLOCK, secondsPerBlock);
 				addNameAndValue(REMAINING_BLOCKCHAIN_BLOCK_COUNT, remainingChainBlockCount);
-				addNameAndValue(EST_TIME_FOR_BLOCKCHAIN, secondsForChain);
+				addNameAndValue(REMAINING_TIME_FOR_BLOCKCHAIN, secondsForChain);
 				addNameAndValue(EST_END_TIME, new Date(localNodeData.getStartTime() + (secondsForChain * 1000)));
 			}
 		}
@@ -332,7 +332,7 @@ public final class StatsModel extends AbstractRefreshingModel {
 				statsValueList.clear();
 
 				addNameAndValue(START_TIME, new Date(localNodeData.getStartTime()));
-				addNameAndValue(DURATION_SECONDS, getDurationInSeconds(localNodeData));
+				addNameAndValue(ELAPSED_SINCE_START_SECONDS, getDurationInSeconds(localNodeData));
 
 				addNodeConnectionPhaseStats(peerDataSet);
 
