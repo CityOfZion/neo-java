@@ -177,7 +177,7 @@ public final class StatsModel extends AbstractRefreshingModel {
 			if (numBlocks > 0) {
 				final long durationInSeconds = getDurationInSeconds(localNodeData);
 
-				final long secondsPerBlock = numBlocks / durationInSeconds;
+				final long secondsPerBlock = durationInSeconds / numBlocks;
 				final long remainingChainBlockCount = allChainBlockCount - blockCount;
 				final long secondsForChain = remainingChainBlockCount * secondsPerBlock;
 
