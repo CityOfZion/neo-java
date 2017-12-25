@@ -47,6 +47,9 @@ public final class PoolThread extends Thread {
 	 * calls stop() in the runnable, and stops adding new runnables.
 	 */
 	public synchronized void doStop() {
+		if (isStopped) {
+			return;
+		}
 		isStopped = true;
 		if (runnable != null) {
 			runnable.stop();
@@ -82,7 +85,7 @@ public final class PoolThread extends Thread {
 	 * @throws InterruptedException
 	 *             if an error occurs.
 	 */
-	private synchronized void takeFirstRunnable() throws InterruptedException {
+	private void takeFirstRunnable() throws InterruptedException {
 		runnable = taskQueue.takeFirst();
 	}
 }

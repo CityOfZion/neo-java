@@ -683,7 +683,7 @@ public class LocalControllerNode {
 	 * @throws Exception
 	 *             if an error occurs.
 	 */
-	public void startThreadPool() throws Exception {
+	public void startThreadPool() {
 		final List<RemoteNodeData> bootstrapPeerList = new ArrayList<>();
 		synchronized (LocalControllerNode.this) {
 			for (final RemoteNodeData data : getPeerDataSet()) {
@@ -705,14 +705,18 @@ public class LocalControllerNode {
 	 * @throws InterruptedException
 	 *             if an error occurs.
 	 */
-	public void stop() throws InterruptedException {
+	public void stop() {
 		if (LOG.isDebugEnabled()) {
 			LOG.debug("STARTED stop");
 		}
 		removePeerChangeListeners();
 		stopCoreRpcServer();
 		refreshRunnable.setStop(true);
-		refreshThread.join();
+		try {
+			refreshThread.join();
+		} catch (final InterruptedException e) {
+			throw new RuntimeException(e);
+		}
 		threadPool.stop();
 		if (LOG.isDebugEnabled()) {
 			LOG.debug("SUCCESS stop");

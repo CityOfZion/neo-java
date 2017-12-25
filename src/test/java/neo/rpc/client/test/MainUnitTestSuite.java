@@ -27,6 +27,8 @@ import org.junit.runners.Suite;
 		/** */
 		TestRpcServerInit.class,
 		/** */
+		TestNetwork.class,
+		/** */
 })
 
 public class MainUnitTestSuite {
