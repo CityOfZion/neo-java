@@ -186,7 +186,7 @@ public final class StatsModel extends AbstractRefreshingModel {
 				final long remainingChainBlockCount = allChainBlockCount - blockCount;
 				addNameAndValue(REMAINING_BLOCKCHAIN_BLOCK_COUNT, remainingChainBlockCount);
 
-				final long secondsForChain = remainingChainBlockCount * millisecondsPerBlock;
+				final long secondsForChain = (remainingChainBlockCount * millisecondsPerBlock) / 1000;
 				addNameAndValue(REMAINING_TIME_FOR_BLOCKCHAIN, secondsForChain);
 
 				final Date estEndTime = new Date(System.currentTimeMillis() + (secondsForChain * 1000));
