@@ -13,6 +13,7 @@ import neo.model.core.AbstractBlockBase;
 import neo.model.core.Block;
 import neo.model.core.Header;
 import neo.model.db.BlockDb;
+import neo.network.model.socket.SocketFactory;
 
 /**
  * the lass containing all the data usd for the local node.
@@ -108,6 +109,11 @@ public class LocalNodeData {
 	private final File goodNodeFile;
 
 	/**
+	 * the socket factory.
+	 */
+	private final SocketFactory socketFactory;
+
+	/**
 	 * the map of verified headers, by blockchain height.
 	 */
 	private final SortedMap<Long, Header> verifiedHeaderPoolMap = new TreeMap<>();
@@ -149,11 +155,13 @@ public class LocalNodeData {
 	 *            the nonce.
 	 * @param blockDbClass
 	 *            the block DB class.
+	 * @param socketFactoryClass
+	 *            the socket factory class.
 	 */
 	public LocalNodeData(final long magic, final int activeThreadCount, final long rpcClientTimeoutMillis,
 			final long rpcServerTimeoutMillis, final Class<BlockDb> blockDbClass,
 			final Map<String, TimerData> timersMap, final int nonce, final int port, final File seedNodeFile,
-			final File goodNodeFile) {
+			final File goodNodeFile, final Class<SocketFactory> socketFactoryClass) {
 		startTime = System.currentTimeMillis();
 		this.magic = magic;
 		this.activeThreadCount = activeThreadCount;
@@ -166,6 +174,11 @@ public class LocalNodeData {
 		this.goodNodeFile = goodNodeFile;
 		try {
 			blockDb = blockDbClass.newInstance();
+		} catch (InstantiationException | IllegalAccessException e) {
+			throw new RuntimeException(e);
+		}
+		try {
+			socketFactory = socketFactoryClass.newInstance();
 		} catch (InstantiationException | IllegalAccessException e) {
 			throw new RuntimeException(e);
 		}
@@ -287,6 +300,15 @@ public class LocalNodeData {
 	 */
 	public File getSeedNodeFile() {
 		return seedNodeFile;
+	}
+
+	/**
+	 * return the socket factory.
+	 *
+	 * @return the socket factory.
+	 */
+	public SocketFactory getSocketFactory() {
+		return socketFactory;
 	}
 
 	/**

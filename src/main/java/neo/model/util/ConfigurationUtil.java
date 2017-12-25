@@ -27,6 +27,11 @@ public final class ConfigurationUtil {
 	public static final String BLOCK_DB_IMPL = "block-db-impl";
 
 	/**
+	 * the JSON key, "socket-factory-impl".
+	 */
+	public static final String SOCKET_FACTORY_IMPL = "socket-factory-impl";
+
+	/**
 	 * the JSON key, "rpc-client-timout".
 	 */
 	public static final String RPC_CLIENT_TIMOUT = "rpc-client-timout";
@@ -92,6 +97,8 @@ public final class ConfigurationUtil {
 	private static final File CONFIG_FILE = new File("config.json");
 
 	/**
+	 * return the configuration JSON object.
+	 *
 	 * @return the configuration JSON object.
 	 * @throws IOException
 	 *             if an error occurs.

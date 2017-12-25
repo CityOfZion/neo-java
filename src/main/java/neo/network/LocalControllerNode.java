@@ -35,6 +35,7 @@ import neo.network.model.LocalNodeData;
 import neo.network.model.NodeConnectionPhaseEnum;
 import neo.network.model.RemoteNodeData;
 import neo.network.model.TimerData;
+import neo.network.model.socket.SocketFactory;
 
 /**
  * the local controller node.
@@ -138,13 +139,17 @@ public class LocalControllerNode {
 		final long rpcServerTimeoutMillis = JsonUtil.getTime(localJson, ConfigurationUtil.RPC_SERVER_TIMOUT);
 		final String blockDbImplStr = localJson.getString(ConfigurationUtil.BLOCK_DB_IMPL);
 		final Class<BlockDb> blockDbImplClass = getBlockDbImplClass(blockDbImplStr);
+
+		final String socketFactoryImplStr = localJson.getString(ConfigurationUtil.BLOCK_DB_IMPL);
+		final Class<SocketFactory> socketFactoryClass = getSocketFactoryClass(socketFactoryImplStr);
+
 		final int nonce = config.getInt(ConfigurationUtil.NONCE);
 		final int port = localJson.getInt(ConfigurationUtil.PORT);
 		final File seedNodeFile = new File(localJson.getString(ConfigurationUtil.SEED_NODE_FILE));
 		final File goodNodeFile = new File(localJson.getString(ConfigurationUtil.GOOD_NODE_FILE));
 
 		localNodeData = new LocalNodeData(magic, activeThreadCount, rpcClientTimeoutMillis, rpcServerTimeoutMillis,
-				blockDbImplClass, timersMap, nonce, port, seedNodeFile, goodNodeFile);
+				blockDbImplClass, timersMap, nonce, port, seedNodeFile, goodNodeFile, socketFactoryClass);
 		LocalNodeDataSynchronizedUtil.refreshCityOfZionBlockHeight(localNodeData);
 
 		threadPool = new ThreadPool(localJson.getInt(ConfigurationUtil.THREAD_POOL_COUNT));
@@ -225,6 +230,25 @@ public class LocalControllerNode {
 	 */
 	public IndexedSet<RemoteNodeData> getPeerDataSet() {
 		return peerDataSet;
+	}
+
+	/**
+	 * returns the class named in socketFactoryImplClassName, cast to a
+	 * SocketFactory.
+	 *
+	 * @param socketFactoryImplClassName
+	 *            the name of the SocketFactory implementation class to use.
+	 * @return the BlockDb implementation class.
+	 */
+	@SuppressWarnings("unchecked")
+	public Class<SocketFactory> getSocketFactoryClass(final String socketFactoryImplClassName) {
+		final Class<SocketFactory> socketFactoryClass;
+		try {
+			socketFactoryClass = (Class<SocketFactory>) Class.forName(socketFactoryImplClassName);
+		} catch (final ClassNotFoundException e) {
+			throw new RuntimeException(e);
+		}
+		return socketFactoryClass;
 	}
 
 	/**

@@ -4,7 +4,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.ConnectException;
-import java.net.Socket;
 import java.net.SocketException;
 import java.net.SocketTimeoutException;
 
@@ -20,6 +19,7 @@ import neo.model.util.PayloadUtil;
 import neo.model.util.threadpool.StopRunnable;
 import neo.network.model.LocalNodeData;
 import neo.network.model.RemoteNodeData;
+import neo.network.model.socket.SocketWrapper;
 
 /**
  * the controller class for remote nodes.
@@ -155,7 +155,7 @@ public final class RemoteNodeControllerRunnable implements StopRunnable {
 				PayloadUtil.getVersionPayload(localPort, nonce, startHeight).toByteArray()));
 		data.getSendQueue().add(new Message(magic, "verack"));
 		try {
-			try (Socket s = new Socket();) {
+			try (SocketWrapper s = localNodeData.getSocketFactory().newSocketWrapper()) {
 				s.setSoTimeout(2000);
 				s.connect(data.getTcpAddressAndPort(), 2000);
 
