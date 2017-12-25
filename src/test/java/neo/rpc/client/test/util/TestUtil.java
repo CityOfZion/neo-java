@@ -29,6 +29,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import neo.model.ByteArraySerializable;
+import neo.model.CommandEnum;
 import neo.model.network.Message;
 import neo.model.util.PayloadUtil;
 
@@ -189,7 +190,7 @@ public final class TestUtil {
 		}
 	}
 
-	public static void sendAsynchCommand(final OutputStream out, final String command,
+	public static void sendAsynchCommand(final OutputStream out, final CommandEnum command,
 			final Optional<ByteArraySerializable> payload, final JSONObject error) throws IOException {
 		final byte[] payloadBa;
 		if (payload.isPresent()) {
@@ -203,12 +204,12 @@ public final class TestUtil {
 		out.write(requestBa);
 	}
 
-	public static Message sendAsynchCommand(final String host, final int port, final String command,
+	public static Message sendAsynchCommand(final String host, final int port, final CommandEnum command,
 			final JSONObject error) throws IOException {
 		return sendAsynchCommand(host, port, command, Optional.empty(), error);
 	}
 
-	public static Message sendAsynchCommand(final String host, final int port, final String command,
+	public static Message sendAsynchCommand(final String host, final int port, final CommandEnum command,
 			final Optional<ByteArraySerializable> payload, final JSONObject error) throws IOException {
 		final byte[] payloadBa;
 		if (payload.isPresent()) {

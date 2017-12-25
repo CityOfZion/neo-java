@@ -13,6 +13,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import neo.model.network.Message;
+import neo.model.util.ConfigurationUtil;
 import neo.model.util.JsonUtil;
 import neo.network.TimerUtil;
 
@@ -80,10 +81,10 @@ public final class RemoteNodeData {
 	private boolean isAcknowledgedPeer = false;
 
 	public RemoteNodeData(final JSONObject config) {
-		final JSONObject timersJson = config.getJSONObject("timers");
+		final JSONObject timersJson = config.getJSONObject(ConfigurationUtil.TIMERS);
 		timersMap = TimerUtil.getTimerMap(timersJson);
-		sleepIntervalMs = JsonUtil.getTime(config, "sleep-interval");
-		recycleIntervalMs = JsonUtil.getTime(config, "recycle-interval");
+		sleepIntervalMs = JsonUtil.getTime(config, ConfigurationUtil.SLEEP_INTERVAL);
+		recycleIntervalMs = JsonUtil.getTime(config, ConfigurationUtil.RECYCLE_INTERVAL);
 	}
 
 	public NodeConnectionPhaseEnum getConnectionPhase() {

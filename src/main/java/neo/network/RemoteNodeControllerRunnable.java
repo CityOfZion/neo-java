@@ -151,9 +151,9 @@ public final class RemoteNodeControllerRunnable implements StopRunnable {
 			startHeight = maxStartHeightBlock.getIndexAsLong();
 		}
 
-		data.getSendQueue().add(new Message(magic, "version",
+		data.getSendQueue().add(new Message(magic, CommandEnum.VERSION,
 				PayloadUtil.getVersionPayload(localPort, nonce, startHeight).toByteArray()));
-		data.getSendQueue().add(new Message(magic, "verack"));
+		data.getSendQueue().add(new Message(magic, CommandEnum.VERACK));
 		try {
 			try (SocketWrapper s = localNodeData.getSocketFactory().newSocketWrapper()) {
 				s.setSoTimeout(2000);

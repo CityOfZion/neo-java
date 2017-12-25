@@ -73,6 +73,8 @@ public final class PoolThread extends Thread {
 			try {
 				takeFirstRunnable();
 				runnable.run();
+			} catch (final InterruptedException e) {
+				LOG.debug("interrupted", e);
 			} catch (final Exception e) {
 				LOG.error("error", e);
 			}

@@ -13,8 +13,17 @@ import neo.model.util.MapUtil;
 import neo.network.model.LocalNodeData;
 import neo.network.model.RemoteNodeData;
 
+/**
+ * the utility for creating messages.
+ *
+ * @author coranos
+ *
+ */
 public final class MessageUtil {
 
+	/**
+	 * message for duplciate out blocks.
+	 */
 	private static final String DUPLICATE_OUT_BLOCK = "duplicate-out-block";
 
 	/**
@@ -22,11 +31,30 @@ public final class MessageUtil {
 	 */
 	private static final Logger LOG = LoggerFactory.getLogger(MessageUtil.class);
 
-	public static void sendGetAddresses(final RemoteNodeData r, final LocalNodeData localNodeData) {
-		r.send(new Message(LocalNodeDataSynchronizedUtil.getMagic(localNodeData), CommandEnum.GETADDR.getName()));
+	/**
+	 * send a message to get addresses.
+	 *
+	 * @param remoteNodeData
+	 *            the remote node data to use.
+	 * @param localNodeData
+	 *            the local node data to use.
+	 */
+	public static void sendGetAddresses(final RemoteNodeData remoteNodeData, final LocalNodeData localNodeData) {
+		remoteNodeData.send(new Message(LocalNodeDataSynchronizedUtil.getMagic(localNodeData), CommandEnum.GETADDR));
 	}
 
-	public static void sendGetData(final RemoteNodeData r, final LocalNodeData localNodeData, final UInt256... hashs) {
+	/**
+	 * send a message to get block data.
+	 *
+	 * @param remoteNodeData
+	 *            the remote node data to use.
+	 * @param localNodeData
+	 *            the local node data to use.
+	 * @param hashs
+	 *            the hashes to use.
+	 */
+	public static void sendGetData(final RemoteNodeData remoteNodeData, final LocalNodeData localNodeData,
+			final UInt256... hashs) {
 		boolean hasDuplicates = false;
 		for (final UInt256 hash : hashs) {
 			if (localNodeData.getBlockDb().containsBlockWithHash(hash)) {
@@ -38,13 +66,31 @@ public final class MessageUtil {
 			MapUtil.increment(LocalNodeData.API_CALL_MAP, DUPLICATE_OUT_BLOCK);
 		}
 
-		r.send(new Message(localNodeData.getMagic(), CommandEnum.GETDATA.getName(),
+		remoteNodeData.send(new Message(localNodeData.getMagic(), CommandEnum.GETDATA,
 				new InvPayload(InventoryType.BLOCK, hashs).toByteArray()));
 	}
 
-	public static void sendGetHeaders(final RemoteNodeData r, final LocalNodeData localNodeData, final UInt256 hash) {
-		r.send(new Message(localNodeData.getMagic(), CommandEnum.GETHEADERS.getName(),
+	/**
+	 * send a message to get header data.
+	 *
+	 * @param remoteNodeData
+	 *            the remote node data to use.
+	 * @param localNodeData
+	 *            the local node data to use.
+	 * @param hash
+	 *            the hash to use.
+	 */
+	public static void sendGetHeaders(final RemoteNodeData remoteNodeData, final LocalNodeData localNodeData,
+			final UInt256 hash) {
+		remoteNodeData.send(new Message(localNodeData.getMagic(), CommandEnum.GETHEADERS,
 				new GetBlocksPayload(hash, null).toByteArray()));
+	}
+
+	/**
+	 * the constructor.
+	 */
+	private MessageUtil() {
+
 	}
 
 }

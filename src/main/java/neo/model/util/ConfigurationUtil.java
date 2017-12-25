@@ -17,6 +17,16 @@ import org.json.JSONObject;
 public final class ConfigurationUtil {
 
 	/**
+	 * the sleep interval.
+	 */
+	public static final String SLEEP_INTERVAL = "sleep-interval";
+
+	/**
+	 * the recycle interval.
+	 */
+	public static final String RECYCLE_INTERVAL = "recycle-interval";
+
+	/**
 	 * the JSON key, "port".
 	 */
 	public static final String PORT = "port";

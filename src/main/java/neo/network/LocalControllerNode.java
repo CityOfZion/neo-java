@@ -224,6 +224,16 @@ public class LocalControllerNode {
 	}
 
 	/**
+	 * return a new, initalized, RemoteNodeData object.
+	 *
+	 * @return a new RemoteNodeData object, initalized with the remoteNodeConfig.
+	 */
+	public RemoteNodeData getNewRemoteNodeData() {
+		final RemoteNodeData data = new RemoteNodeData(remoteNodeConfig);
+		return data;
+	}
+
+	/**
 	 * return the peer data set.
 	 *
 	 * @return the peer data set.
@@ -271,7 +281,7 @@ public class LocalControllerNode {
 				final int port = goodPeer.getInt(PORT);
 				final InetAddress address = InetAddress.getByName(addressName);
 				final InetSocketAddress addressAndPort = new InetSocketAddress(address, port);
-				final RemoteNodeData data = new RemoteNodeData(remoteNodeConfig);
+				final RemoteNodeData data = getNewRemoteNodeData();
 				data.setConnectionPhase(NodeConnectionPhaseEnum.UNKNOWN);
 				data.setTcpAddressAndPort(addressAndPort);
 				addRemoteNodeDataToPool(data);

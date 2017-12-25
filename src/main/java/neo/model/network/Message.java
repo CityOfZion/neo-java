@@ -21,6 +21,12 @@ import neo.model.util.ModelUtil;
 import neo.model.util.NetworkUtil;
 import neo.model.util.SHA256HashUtil;
 
+/**
+ * the message object.
+ *
+ * @author coranos
+ *
+ */
 public final class Message {
 
 	/**
@@ -28,42 +34,91 @@ public final class Message {
 	 */
 	private static final Logger LOG = LoggerFactory.getLogger(Message.class);
 
+	/**
+	 * the magic.
+	 */
 	public final long magic;
 
+	/**
+	 * the command.
+	 */
 	public final String command;
 
+	/**
+	 * the payload, as a byte array.
+	 */
 	private final byte[] payloadBa;
 
+	/**
+	 * the payload.
+	 */
 	public final Payload payload;
 
+	/**
+	 * the command, as an enum.
+	 */
 	public final CommandEnum commandEnum;
 
+	/**
+	 * the constructor.
+	 *
+	 * @param bb
+	 *            the byte buffer to read.
+	 */
 	public Message(final ByteBuffer bb) {
 		final UInt32 magicObj = ModelUtil.getUInt32(bb);
 		magic = magicObj.toPositiveBigInteger().intValue();
-		LOG.trace("interim inSocket magicObj:{} magic:{}", magicObj, magic);
+		LOG.trace("interim[1] inSocket magicObj:{} magic:{}", magicObj, magic);
 		command = ModelUtil.getString(bb, 12).trim();
-		LOG.trace("interim inSocket command:{}", command);
+		LOG.trace("interim[1] inSocket command:{}", command);
 		final UInt32 lengthObj = ModelUtil.getUInt32(bb);
 		final int length = lengthObj.toPositiveBigInteger().intValue();
 		LOG.trace("interim inSocket lengthObj:{} length:{}", lengthObj, length);
 		final UInt32 checksum = ModelUtil.getUInt32(bb);
-		LOG.trace("interim inSocket checksum:{}", checksum);
+		LOG.trace("interim[1] inSocket checksum:{}", checksum);
 		payloadBa = ModelUtil.getByteArray(bb, length, false);
 		payload = createPayload();
 		commandEnum = CommandEnum.fromName(command);
 	}
 
+	/**
+	 * the constructor.
+	 *
+	 * @param magic
+	 *            the magic to use.
+	 * @param command
+	 *            the command to use.
+	 * @param payloadBa
+	 *            the payload byte array.
+	 */
+	public Message(final long magic, final CommandEnum command, final byte... payloadBa) {
+		this.magic = magic;
+		this.command = command.getName();
+		this.payloadBa = payloadBa;
+		payload = createPayload();
+		commandEnum = CommandEnum.fromName(this.command);
+	}
+
+	/**
+	 * the constructor.
+	 *
+	 * @param readTimeOut
+	 *            the amount of time to wait for a read timeout, in milliseconds.
+	 * @param in
+	 *            the input stream to read.
+	 * @throws IOException
+	 *             if an error occurs.
+	 */
 	public Message(final long readTimeOut, final InputStream in) throws IOException {
 		final byte[] headerBa = new byte[24];
 		InputStreamUtil.readUntilFull(readTimeOut, in, headerBa);
 		final ByteBuffer headerBb = ByteBuffer.wrap(headerBa);
 		final UInt32 magicObj = ModelUtil.getUInt32(headerBb);
 		magic = magicObj.toPositiveBigInteger().intValue();
-		LOG.trace("interim inSocket magicObj:{} magic:{}", magicObj, magic);
+		LOG.trace("interim[2] inSocket magicObj:{} magic:{}", magicObj, magic);
 		command = ModelUtil.getString(headerBb, 12).trim();
 		commandEnum = CommandEnum.fromName(command);
-		LOG.trace("interim inSocket command:{}", command);
+		LOG.trace("interim[2] inSocket command:{}", command);
 		final UInt32 lengthObj = ModelUtil.getUInt32(headerBb);
 		final int lengthRaw = lengthObj.toPositiveBigInteger().intValue();
 		final int length;
@@ -74,7 +129,7 @@ public final class Message {
 			length = lengthRaw;
 		}
 		final UInt32 checksum = ModelUtil.getUInt32(headerBb);
-		LOG.trace("interim inSocket checksum:{}", checksum);
+		LOG.trace("interim[2] inSocket checksum:{}", checksum);
 		final byte[] payloadBa;
 		if (commandEnum == null) {
 			throw new SocketTimeoutException();
@@ -92,24 +147,34 @@ public final class Message {
 		payload = createPayload();
 	}
 
-	public Message(final long magic, final String command, final byte... payloadBa) {
-		this.magic = magic;
-		this.command = command;
-		this.payloadBa = payloadBa;
-		payload = createPayload();
-		commandEnum = CommandEnum.fromName(command);
-	}
-
+	/**
+	 * return the payload.
+	 *
+	 *
+	 * @param <T>
+	 *            the payload type.
+	 * @return the payload.
+	 */
 	private <T extends Payload> Payload createPayload() {
 		return createPayload(Payload.class);
 	}
 
+	/**
+	 * creates a payload.
+	 *
+	 * @param cl
+	 *            the payload class.
+	 * @param <T>
+	 *            the payload type.
+	 * @return the payload.
+	 */
 	@SuppressWarnings("unchecked")
 	private <T extends Payload> T createPayload(final Class<T> cl) {
 		if (LOG.isTraceEnabled()) {
 			LOG.trace("initPayload payloadBa {}", Hex.encodeHexString(payloadBa));
 		}
 		final Payload payload;
+		// TODO: make a case statement.
 		if ("version".equals(command)) {
 			payload = new VersionPayload(ByteBuffer.wrap(payloadBa));
 		} else if ("inv".equals(command)) {
@@ -144,15 +209,38 @@ public final class Message {
 		return (T) payload;
 	}
 
+	/**
+	 * return the payload.
+	 *
+	 * @param cl
+	 *            the payload class.
+	 * @param <T>
+	 *            the payload type.
+	 * @return the payload.
+	 */
 	@SuppressWarnings("unchecked")
 	public <T extends Payload> T getPayload(final Class<T> cl) {
 		return (T) payload;
 	}
 
+	/**
+	 * return the payload byte array.
+	 *
+	 * @return the payload byte array.
+	 */
 	public byte[] getPayloadByteArray() {
 		return payloadBa;
 	}
 
+	/**
+	 * return the message as a byte array.
+	 *
+	 * @return the message as a byte array.
+	 * @throws IOException
+	 *             if an error occurs.
+	 * @throws UnsupportedEncodingException
+	 *             if an error occurs.
+	 */
 	public byte[] toByteArray() throws IOException, UnsupportedEncodingException {
 		final byte[] magicBa = NetworkUtil.getIntByteArray(magic);
 		ArrayUtils.reverse(magicBa);
