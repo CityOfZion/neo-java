@@ -172,11 +172,14 @@ public final class StatsModel extends AbstractRefreshingModel {
 
 			final long startBlockCount = localNodeData.getStartBlockCount();
 			addNameAndValue(STARTING_BLOCK_HEIGHT, startBlockCount);
+
 			final long numBlocks = blockCount - startBlockCount;
 			addNameAndValue(ELAPSED_SINCE_START_BLOCK_COUNT, numBlocks);
-			if (numBlocks > 0) {
-				final long durationInSeconds = getDurationInSeconds(localNodeData);
 
+			final long durationInSeconds = getDurationInSeconds(localNodeData);
+			addNameAndValue(ELAPSED_SINCE_START_SECONDS, durationInSeconds);
+
+			if (numBlocks > 0) {
 				final long secondsPerBlock = durationInSeconds / numBlocks;
 				final long remainingChainBlockCount = allChainBlockCount - blockCount;
 				final long secondsForChain = (remainingChainBlockCount / numBlocks) * durationInSeconds;
@@ -332,7 +335,6 @@ public final class StatsModel extends AbstractRefreshingModel {
 				statsValueList.clear();
 
 				addNameAndValue(START_TIME, new Date(localNodeData.getStartTime()));
-				addNameAndValue(ELAPSED_SINCE_START_SECONDS, getDurationInSeconds(localNodeData));
 
 				addNodeConnectionPhaseStats(peerDataSet);
 
