@@ -1,5 +1,6 @@
 package neo.main.ui;
 
+import java.text.NumberFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -19,6 +20,11 @@ import neo.network.model.RemoteNodeData;
  *
  */
 public final class RemotePeerDataModel extends AbstractRefreshingModel {
+
+	/**
+	 * a double dash "--" meaning null.
+	 */
+	private static final String DOUBLE_DASH_MEANING_NULL = "--";
 
 	/**
 	 * the logger.
@@ -81,7 +87,7 @@ public final class RemotePeerDataModel extends AbstractRefreshingModel {
 			case 1:
 				final Long timestamp = tableDataList.get(rowIndex).getLastMessageTimestamp();
 				if (timestamp == null) {
-					return "--";
+					return DOUBLE_DASH_MEANING_NULL;
 				}
 				return new Date(timestamp);
 			case 2:
@@ -89,9 +95,13 @@ public final class RemotePeerDataModel extends AbstractRefreshingModel {
 			case 3:
 				return tableDataList.get(rowIndex).getVersion();
 			case 4:
-				return tableDataList.get(rowIndex).getBlockHeight();
+				final Long blockHeight = tableDataList.get(rowIndex).getBlockHeight();
+				if (blockHeight == null) {
+					return DOUBLE_DASH_MEANING_NULL;
+				}
+				return NumberFormat.getIntegerInstance().format(blockHeight);
 			case 5:
-				return rowIndex + 1;
+				return NumberFormat.getIntegerInstance().format(rowIndex + 1);
 			}
 		}
 		throw new RuntimeException("unknown column value index:" + columnIndex);

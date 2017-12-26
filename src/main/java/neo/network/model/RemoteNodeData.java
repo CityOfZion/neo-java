@@ -83,7 +83,7 @@ public final class RemoteNodeData {
 	/**
 	 * tthe block height.
 	 */
-	private long blockHeight;
+	private Long blockHeight;
 
 	/**
 	 * the sleep interval.
@@ -153,7 +153,7 @@ public final class RemoteNodeData {
 	 *
 	 * @return the block height.
 	 */
-	public long getBlockHeight() {
+	public Long getBlockHeight() {
 		return blockHeight;
 	}
 

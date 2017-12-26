@@ -174,6 +174,13 @@ public final class RemoteNodeControllerRunnable implements StopRunnable {
 						if (data.isGoodPeer()) {
 							recieveMessages(readTimeOut, magic, in);
 						}
+
+						if (data.isAcknowledgedPeer()) {
+							if ((data.getBlockHeight() + 1000) < localNodeData.getBlockDb().getBlockCount()) {
+								data.setGoodPeer(false);
+							}
+						}
+
 						final long currTimeMs = System.currentTimeMillis();
 						final long recycleTimeMs = startTimeMs + data.getRecycleIntervalMs();
 						if (recycleTimeMs < currTimeMs) {
