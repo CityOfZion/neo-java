@@ -52,9 +52,9 @@ public final class RemotePeerDataModel extends AbstractRefreshingModel {
 			case 3:
 				return "Version";
 			case 4:
-				return "Index";
-			case 5:
 				return "Block Height";
+			case 5:
+				return "Index";
 			}
 		}
 		throw new RuntimeException("unknown column name index:" + columnIndex);
@@ -89,9 +89,9 @@ public final class RemotePeerDataModel extends AbstractRefreshingModel {
 			case 3:
 				return tableDataList.get(rowIndex).getVersion();
 			case 4:
-				return rowIndex + 1;
-			case 5:
 				return tableDataList.get(rowIndex).getBlockHeight();
+			case 5:
+				return rowIndex + 1;
 			}
 		}
 		throw new RuntimeException("unknown column value index:" + columnIndex);
