@@ -688,7 +688,7 @@ public class LocalControllerNode {
 					if ((data.getBlockHeight() + 1000) < blockCount) {
 						final String errorMessage = "recycling node {} with version {}"
 								+ " and stalled blockheight {} where our blockheight is {}";
-						LOG.error(errorMessage, data.getHostAddress(), data.getVersion(), data.getBlockHeight(),
+						LOG.debug(errorMessage, data.getHostAddress(), data.getVersion(), data.getBlockHeight(),
 								blockCount);
 						data.setGoodPeer(false);
 					}
