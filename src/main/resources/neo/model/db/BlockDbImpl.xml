@@ -1,6 +1,6 @@
 <?xml version="1.0" ?>
 <BlockDbImpl>
-  <url>jdbc:h2:retry:./java-chain/db/db</url>
+  <url>jdbc:h2:retry:split:30:./java-chain/db/db</url>
   <getFileSizeDir>java-chain/db</getFileSizeDir>
   <close>
     <sql>
