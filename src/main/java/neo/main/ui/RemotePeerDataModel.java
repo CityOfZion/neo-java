@@ -1,6 +1,5 @@
 package neo.main.ui;
 
-import java.text.NumberFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -99,9 +98,11 @@ public final class RemotePeerDataModel extends AbstractRefreshingModel {
 				if (blockHeight == null) {
 					return DOUBLE_DASH_MEANING_NULL;
 				}
-				return NumberFormat.getIntegerInstance().format(blockHeight);
+				return blockHeight;
+			// return NumberFormat.getIntegerInstance().format(blockHeight);
 			case 5:
-				return NumberFormat.getIntegerInstance().format(rowIndex + 1);
+				return rowIndex + 1;
+			// return NumberFormat.getIntegerInstance().format(rowIndex + 1);
 			}
 		}
 		throw new RuntimeException("unknown column value index:" + columnIndex);
