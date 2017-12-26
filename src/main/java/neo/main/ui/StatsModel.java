@@ -332,8 +332,8 @@ public final class StatsModel extends AbstractRefreshingModel {
 	@Override
 	public void nodeDataChanged(final LocalNodeData localNodeData, final Set<RemoteNodeData> peerDataSet) {
 		LOG.trace("STARTED peersChanged count:{}", peerDataSet.size());
-		synchronized (localNodeData) {
-			synchronized (StatsModel.this) {
+		synchronized (StatsModel.this) {
+			synchronized (localNodeData) {
 				statsNameList.clear();
 				statsValueList.clear();
 
@@ -345,25 +345,25 @@ public final class StatsModel extends AbstractRefreshingModel {
 
 				addBlockchainStats(localNodeData);
 
-				try (FileOutputStream fout = new FileOutputStream("StatsModel.txt");
-						PrintWriter pw = new PrintWriter(fout, true)) {
+				setRefresh(true);
+			}
+
+			try (FileOutputStream fout = new FileOutputStream("StatsModel.txt");
+					PrintWriter pw = new PrintWriter(fout, true)) {
+				for (int columnIndex = 0; columnIndex < getColumnCount(); columnIndex++) {
+					pw.print(getColumnName(columnIndex));
+					pw.print("\t");
+				}
+				pw.println();
+				for (int rowIndex = 0; rowIndex < getRowCount(); rowIndex++) {
 					for (int columnIndex = 0; columnIndex < getColumnCount(); columnIndex++) {
-						pw.print(getColumnName(columnIndex));
+						pw.print(getValueAt(rowIndex, columnIndex));
 						pw.print("\t");
 					}
 					pw.println();
-					for (int rowIndex = 0; rowIndex < getRowCount(); rowIndex++) {
-						for (int columnIndex = 0; columnIndex < getColumnCount(); columnIndex++) {
-							pw.print(getValueAt(rowIndex, columnIndex));
-							pw.print("\t");
-						}
-						pw.println();
-					}
-				} catch (final IOException e) {
-					throw new RuntimeException(e);
 				}
-
-				setRefresh(true);
+			} catch (final IOException e) {
+				throw new RuntimeException(e);
 			}
 		}
 		LOG.trace("SUCCESS peersChanged");

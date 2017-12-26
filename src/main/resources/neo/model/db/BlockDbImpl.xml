@@ -10,7 +10,7 @@
   <create>
     <sql>SET DB_CLOSE_DELAY=10</sql>
     <sql>SET DB_CLOSE_ON_EXIT=FALSE</sql>
-    <sql>SET MULTI_THREADED=TRUE</sql>
+    <sql>SET MULTI_THREADED=FALSE</sql>
     <sql>
       CREATE CACHED TABLE IF NOT EXISTS block (
       hash BINARY(32) not null,
