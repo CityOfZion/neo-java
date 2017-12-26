@@ -273,6 +273,29 @@ public class LocalControllerNode {
 	}
 
 	/**
+	 * return true if the blockchain appears to be stalled on the node. this is if
+	 * the remote node block height is 1000 under our current block height, about 6
+	 * hours behind.
+	 *
+	 * @param data
+	 *            the remote node data to use.
+	 * @return true if the blockchain appears to be stalled on the node.
+	 */
+	private boolean isStalledBlockchain(final RemoteNodeData data) {
+		if (data.isGoodPeer()) {
+			if (data.isAcknowledgedPeer()) {
+				if (data.getBlockHeight() != null) {
+					final long blockCount = localNodeData.getBlockDb().getBlockCount();
+					if ((data.getBlockHeight() + 1000) < blockCount) {
+						return true;
+					}
+				}
+			}
+		}
+		return false;
+	}
+
+	/**
 	 * loads the node file.
 	 *
 	 * @param nodeFile
@@ -681,19 +704,15 @@ public class LocalControllerNode {
 			data.setConnectionPhase(NodeConnectionPhaseEnum.ACKNOWLEDGED);
 		}
 
-		if (data.isGoodPeer()) {
-			if (data.isAcknowledgedPeer()) {
-				if (data.getBlockHeight() != null) {
-					final long blockCount = localNodeData.getBlockDb().getBlockCount();
-					if ((data.getBlockHeight() + 1000) < blockCount) {
-						final String errorMessage = "recycling node {} with version {}"
-								+ " and stalled blockheight {} where our blockheight is {}";
-						LOG.debug(errorMessage, data.getHostAddress(), data.getVersion(), data.getBlockHeight(),
-								blockCount);
-						data.setGoodPeer(false);
-					}
-				}
+		final boolean stalledBlockchain = isStalledBlockchain(data);
+		if (stalledBlockchain) {
+			if (LOG.isDebugEnabled()) {
+				final String errorMessage = "recycling node {} with version {}"
+						+ " and stalled blockheight {} where our blockheight is {}";
+				final long blockCount = localNodeData.getBlockDb().getBlockCount();
+				LOG.debug(errorMessage, data.getHostAddress(), data.getVersion(), data.getBlockHeight(), blockCount);
 			}
+			data.setGoodPeer(false);
 		}
 
 		notifyNodeDataChangeListeners();
