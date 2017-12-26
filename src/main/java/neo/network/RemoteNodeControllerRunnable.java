@@ -175,9 +175,18 @@ public final class RemoteNodeControllerRunnable implements StopRunnable {
 							recieveMessages(readTimeOut, magic, in);
 						}
 
-						if (data.isAcknowledgedPeer()) {
-							if ((data.getBlockHeight() + 1000) < localNodeData.getBlockDb().getBlockCount()) {
-								data.setGoodPeer(false);
+						if (data.isGoodPeer()) {
+							if (data.isAcknowledgedPeer()) {
+								if (data.getBlockHeight() != null) {
+									final long blockCount = localNodeData.getBlockDb().getBlockCount();
+									if ((data.getBlockHeight() + 1000) < blockCount) {
+										final String message = "recycling node {} with version {}"
+												+ " and stalled blockheight {} where our blockheight is {}";
+										LOG.error(message, data.getHostAddress(), data.getVersion(),
+												data.getBlockHeight(), blockCount);
+										data.setGoodPeer(false);
+									}
+								}
 							}
 						}
 
