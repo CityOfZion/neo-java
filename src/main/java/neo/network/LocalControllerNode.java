@@ -672,13 +672,30 @@ public class LocalControllerNode {
 		if (stopped) {
 			return;
 		}
+		final RemoteNodeData data = peer.getData();
 		synchronized (this) {
 			final VersionPayload payload = message.getPayload(VersionPayload.class);
-			peer.getData().setVersion(payload.userAgent);
-			peer.getData().setBlockHeight(payload.startHeight.asLong());
-			peer.getData().setLastMessageTimestamp(System.currentTimeMillis());
-			peer.getData().setConnectionPhase(NodeConnectionPhaseEnum.ACKNOWLEDGED);
+			data.setVersion(payload.userAgent);
+			data.setBlockHeight(payload.startHeight.asLong());
+			data.setLastMessageTimestamp(System.currentTimeMillis());
+			data.setConnectionPhase(NodeConnectionPhaseEnum.ACKNOWLEDGED);
 		}
+
+		if (data.isGoodPeer()) {
+			if (data.isAcknowledgedPeer()) {
+				if (data.getBlockHeight() != null) {
+					final long blockCount = localNodeData.getBlockDb().getBlockCount();
+					if ((data.getBlockHeight() + 1000) < blockCount) {
+						final String errorMessage = "recycling node {} with version {}"
+								+ " and stalled blockheight {} where our blockheight is {}";
+						LOG.error(errorMessage, data.getHostAddress(), data.getVersion(), data.getBlockHeight(),
+								blockCount);
+						data.setGoodPeer(false);
+					}
+				}
+			}
+		}
+
 		notifyNodeDataChangeListeners();
 	}
 
