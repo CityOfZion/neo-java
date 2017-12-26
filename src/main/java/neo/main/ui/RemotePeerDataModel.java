@@ -35,7 +35,7 @@ public final class RemotePeerDataModel extends AbstractRefreshingModel {
 	@Override
 	public int getColumnCount() {
 		synchronized (RemotePeerDataModel.this) {
-			return 4;
+			return 5;
 		}
 	}
 
