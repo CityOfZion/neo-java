@@ -38,28 +38,6 @@ public interface BlockDb {
 	Map<UInt160, Map<UInt256, Fixed8>> getAccountAssetValueMap();
 
 	/**
-	 * return the block at the given height.
-	 *
-	 * @param blockHeight
-	 *            the block height to use.
-	 * @param withTransactions
-	 *            if true, add transactions. If false, only return the block header.
-	 * @return the block at the given height.
-	 */
-	Block getBlock(long blockHeight, boolean withTransactions);
-
-	/**
-	 * return the block with the given hash.
-	 *
-	 * @param hash
-	 *            the hash to use.
-	 * @param withTransactions
-	 *            if true, add transactions. If false, only return the block header.
-	 * @return the block with the given hash.
-	 */
-	Block getBlock(UInt256 hash, boolean withTransactions);
-
-	/**
 	 * return the block count.
 	 *
 	 * @return the block count.
@@ -67,20 +45,54 @@ public interface BlockDb {
 	long getBlockCount();
 
 	/**
-	 * return the block with the highest index.
-	 *
-	 * @param withTransactions
-	 *            if true, add transactions. If false, only return the block header.
-	 * @return the block with the highest index.
-	 */
-	Block getBlockWithMaxIndex(boolean withTransactions);
-
-	/**
 	 * return the filze size of the database.
 	 *
 	 * @return the filze size of the database.
 	 */
 	long getFileSize();
+
+	/**
+	 * return the block with the given hash, with transactions attached.
+	 *
+	 * @param hash
+	 *            the hash to use.
+	 * @return the block with the given hash.
+	 */
+	Block getFullBlockFromHash(UInt256 hash);
+
+	/**
+	 * return the block at the given height, with transactions attached.
+	 *
+	 * @param blockHeight
+	 *            the block height to use.
+	 * @return the block at the given height.
+	 */
+	Block getFullBlockFromHeight(long blockHeight);
+
+	/**
+	 * return the block with the given hash, withount transactions attached.
+	 *
+	 * @param hash
+	 *            the hash to use.
+	 * @return the block with the given hash.
+	 */
+	Block getHeaderOfBlockFromHash(UInt256 hash);
+
+	/**
+	 * return the block at the given height, withount transactions attached.
+	 *
+	 * @param blockHeight
+	 *            the block height to use.
+	 * @return the block at the given height.
+	 */
+	Block getHeaderOfBlockFromHeight(long blockHeight);
+
+	/**
+	 * return the block with the highest index.
+	 *
+	 * @return the block with the highest index.
+	 */
+	Block getHeaderOfBlockWithMaxIndex();
 
 	/**
 	 * return the transaction with the given hash.

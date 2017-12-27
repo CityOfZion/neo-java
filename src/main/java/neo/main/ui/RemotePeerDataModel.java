@@ -3,7 +3,6 @@ package neo.main.ui;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
-import java.util.Set;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -80,41 +79,42 @@ public final class RemotePeerDataModel extends AbstractRefreshingModel {
 	@Override
 	public Object getValueAt(final int rowIndex, final int columnIndex) {
 		synchronized (RemotePeerDataModel.this) {
-			switch (columnIndex) {
-			case 0:
-				return tableDataList.get(rowIndex).getTcpAddressAndPortString();
-			case 1:
-				final Long timestamp = tableDataList.get(rowIndex).getLastMessageTimestamp();
-				if (timestamp == null) {
-					return DOUBLE_DASH_MEANING_NULL;
+			final RemoteNodeData remoteNodeData = tableDataList.get(rowIndex);
+			synchronized (remoteNodeData) {
+				switch (columnIndex) {
+				case 0:
+					return remoteNodeData.getTcpAddressAndPortString();
+				case 1:
+					final Long timestamp = remoteNodeData.getLastMessageTimestamp();
+					if (timestamp == null) {
+						return DOUBLE_DASH_MEANING_NULL;
+					}
+					return new Date(timestamp);
+				case 2:
+					return remoteNodeData.getConnectionPhase();
+				case 3:
+					return remoteNodeData.getVersion();
+				case 4:
+					final Long blockHeight = remoteNodeData.getBlockHeight();
+					if (blockHeight == null) {
+						return DOUBLE_DASH_MEANING_NULL;
+					}
+					return blockHeight;
+				case 5:
+					return rowIndex + 1;
 				}
-				return new Date(timestamp);
-			case 2:
-				return tableDataList.get(rowIndex).getConnectionPhase();
-			case 3:
-				return tableDataList.get(rowIndex).getVersion();
-			case 4:
-				final Long blockHeight = tableDataList.get(rowIndex).getBlockHeight();
-				if (blockHeight == null) {
-					return DOUBLE_DASH_MEANING_NULL;
-				}
-				return blockHeight;
-			// return NumberFormat.getIntegerInstance().format(blockHeight);
-			case 5:
-				return rowIndex + 1;
-			// return NumberFormat.getIntegerInstance().format(rowIndex + 1);
 			}
 		}
 		throw new RuntimeException("unknown column value index:" + columnIndex);
 	}
 
 	@Override
-	public void nodeDataChanged(final LocalNodeData localNodeData, final Set<RemoteNodeData> peerDataSet) {
+	public void nodeDataChanged(final LocalNodeData localNodeData, final List<RemoteNodeData> peerDataList) {
 		LOG.trace("STARTED peersChanged");
 		synchronized (RemotePeerDataModel.this) {
-			synchronized (localNodeData) {
-				tableDataList.clear();
-				tableDataList.addAll(peerDataSet);
+			tableDataList.clear();
+			tableDataList.addAll(peerDataList);
+			synchronized (RemoteNodeData.class) {
 				tableDataList.sort(RemoteNodeData.getComparator());
 			}
 			setRefresh(true);

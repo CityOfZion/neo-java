@@ -15,8 +15,17 @@ import neo.network.model.NodeConnectionPhaseEnum;
 import neo.network.model.RemoteNodeData;
 import neo.network.model.TimerTypeEnum;
 
+/**
+ * the controller that controls node refreshing.
+ *
+ * @author coranos
+ *
+ */
 public final class LocalControllerNodeRefreshRunnable implements Runnable {
 
+	/**
+	 * max time to wait between refreshing.
+	 */
 	private static final int REFRESH_THREAD_MAX_MS = 1000;
 
 	/**
@@ -24,14 +33,37 @@ public final class LocalControllerNodeRefreshRunnable implements Runnable {
 	 */
 	private static final Logger LOG = LoggerFactory.getLogger(LocalControllerNodeRefreshRunnable.class);
 
+	/**
+	 * if true, stop.
+	 */
 	private boolean stop = false;
 
+	/**
+	 * the local controller node.
+	 */
 	private final LocalControllerNode localControllerNode;
 
+	/**
+	 * the constructor.
+	 *
+	 * @param localControllerNode
+	 *            the node data to use.
+	 */
 	public LocalControllerNodeRefreshRunnable(final LocalControllerNode localControllerNode) {
 		this.localControllerNode = localControllerNode;
 	}
 
+	/**
+	 * returns true if the command is ready to be sent to the remote node, based on
+	 * the timer.
+	 *
+	 * @param data
+	 *            the data to look at.
+	 * @param command
+	 *            the command to look at.
+	 * @return true if the command is ready to be sent to the remote node, based on
+	 *         the timer.
+	 */
 	public boolean isReadyForSend(final RemoteNodeData data, final CommandEnum command) {
 		LOG.debug("STARTED isReadyForSend \"{}\"", command);
 		final boolean ready = TimerUtil.getTimerData(data.getTimersMap(), command, null).isReadyForSend();
@@ -39,8 +71,14 @@ public final class LocalControllerNodeRefreshRunnable implements Runnable {
 		return ready;
 	}
 
-	public void retainOnlyActiveAndAcknowledgedPeers(final List<RemoteNodeData> allPeerDataList) {
-		final Iterator<RemoteNodeData> dataIt = allPeerDataList.iterator();
+	/**
+	 * retain only active and acknowledged peers.
+	 *
+	 * @param list
+	 *            the list of peers to use.
+	 */
+	private void retainOnlyActiveAndAcknowledgedPeers(final List<RemoteNodeData> list) {
+		final Iterator<RemoteNodeData> dataIt = list.iterator();
 		while (dataIt.hasNext()) {
 			final RemoteNodeData data = dataIt.next();
 			switch (data.getConnectionPhase()) {
@@ -68,9 +106,7 @@ public final class LocalControllerNodeRefreshRunnable implements Runnable {
 				}
 				final List<RemoteNodeData> allPeerDataList = new ArrayList<>();
 				final List<RemoteNodeData> activePeerDataList = new ArrayList<>();
-				synchronized (localControllerNode) {
-					allPeerDataList.addAll(localControllerNode.getPeerDataSet());
-				}
+				localControllerNode.addPeerDataSetToList(allPeerDataList);
 
 				Collections.shuffle(allPeerDataList);
 				activePeerDataList.addAll(allPeerDataList);
@@ -114,13 +150,10 @@ public final class LocalControllerNodeRefreshRunnable implements Runnable {
 						retry = true;
 					}
 
-					final int peerDataSetSize;
-					synchronized (localControllerNode) {
-						final List<RemoteNodeData> checkActivePeerDataList = new ArrayList<>();
-						checkActivePeerDataList.addAll(localControllerNode.getPeerDataSet());
-						retainOnlyActiveAndAcknowledgedPeers(checkActivePeerDataList);
-						peerDataSetSize = checkActivePeerDataList.size();
-					}
+					final List<RemoteNodeData> checkActivePeerDataList = new ArrayList<>();
+					localControllerNode.addPeerDataSetToList(checkActivePeerDataList);
+					retainOnlyActiveAndAcknowledgedPeers(checkActivePeerDataList);
+					final int peerDataSetSize = checkActivePeerDataList.size();
 
 					if (data.getConnectionPhase().equals(NodeConnectionPhaseEnum.INACTIVE)) {
 						if (peerDataSetSize < (localNodeData.getActiveThreadCount() - 1)) {
@@ -181,12 +214,26 @@ public final class LocalControllerNodeRefreshRunnable implements Runnable {
 		}
 	}
 
+	/**
+	 * update timers saying message was sent.
+	 *
+	 * @param data
+	 *            the remote node data to update.
+	 * @param command
+	 *            the command that was sent.
+	 */
 	private void sent(final RemoteNodeData data, final CommandEnum command) {
 		LOG.debug("STARTED sent \"{}\"", command);
 		TimerUtil.getTimerData(data.getTimersMap(), command, null).requestSent();
 		LOG.debug("SUCCESS sent \"{}\"", command);
 	}
 
+	/**
+	 * sets the stop flag.
+	 *
+	 * @param stop
+	 *            the flag to set.
+	 */
 	public void setStop(final boolean stop) {
 		this.stop = stop;
 	}

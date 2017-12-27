@@ -110,8 +110,16 @@ public abstract class AbstractJsonMockBlockDb implements BlockDb {
 		return accountAssetValueMap;
 	}
 
-	@Override
-	public final Block getBlock(final long blockHeight, final boolean withTransactions) {
+	/**
+	 * return the block at the given height, with transactions attached.
+	 *
+	 * @param blockHeight
+	 *            the block height to use.
+	 * @param withTransactions
+	 *            if true, add transactions. If false, only return the block header.
+	 * @return the block at the given height.
+	 */
+	private Block getBlock(final long blockHeight, final boolean withTransactions) {
 		final JSONArray mockBlockDb = getMockBlockDb();
 		for (int ix = 0; ix < mockBlockDb.length(); ix++) {
 			final JSONObject mockBlock = mockBlockDb.getJSONObject(ix);
@@ -123,8 +131,16 @@ public abstract class AbstractJsonMockBlockDb implements BlockDb {
 		throw new RuntimeException("no block at height:" + blockHeight);
 	}
 
-	@Override
-	public final Block getBlock(final UInt256 hash, final boolean withTransactions) {
+	/**
+	 * returns the block with the given hash.
+	 *
+	 * @param hash
+	 *            the hash to use.
+	 * @param withTransactions
+	 *            if true, add transactions. If false, only return the block header.
+	 * @return the block with the given hash.
+	 */
+	private Block getBlock(final UInt256 hash, final boolean withTransactions) {
 		final String hashHex = hash.toHexString();
 		final JSONArray mockBlockDb = getMockBlockDb();
 		for (int ix = 0; ix < mockBlockDb.length(); ix++) {
@@ -142,8 +158,14 @@ public abstract class AbstractJsonMockBlockDb implements BlockDb {
 		return getMockBlockDb().length();
 	}
 
-	@Override
-	public final Block getBlockWithMaxIndex(final boolean withTransactions) {
+	/**
+	 * return the block with the maximum value in the index column.
+	 *
+	 * @param withTransactions
+	 *            if true, add transactions. If false, only return the block header.
+	 * @return the block with the maximum value in the index column.
+	 */
+	private Block getBlockWithMaxIndex(final boolean withTransactions) {
 		Block maxBlock = null;
 		final JSONArray mockBlockDb = getMockBlockDb();
 		for (int ix = 0; ix < mockBlockDb.length(); ix++) {
@@ -162,6 +184,31 @@ public abstract class AbstractJsonMockBlockDb implements BlockDb {
 	@Override
 	public final long getFileSize() {
 		return 0;
+	}
+
+	@Override
+	public final Block getFullBlockFromHash(final UInt256 hash) {
+		return getBlock(hash, true);
+	}
+
+	@Override
+	public final Block getFullBlockFromHeight(final long blockHeight) {
+		return getBlock(blockHeight, true);
+	}
+
+	@Override
+	public final Block getHeaderOfBlockFromHash(final UInt256 hash) {
+		return getBlock(hash, false);
+	}
+
+	@Override
+	public final Block getHeaderOfBlockFromHeight(final long blockHeight) {
+		return getBlock(blockHeight, false);
+	}
+
+	@Override
+	public final Block getHeaderOfBlockWithMaxIndex() {
+		return getBlockWithMaxIndex(false);
 	}
 
 	/**

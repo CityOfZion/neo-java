@@ -1,6 +1,8 @@
 package neo.rpc.server;
 
 import java.nio.ByteBuffer;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 
@@ -174,7 +176,7 @@ public final class RpcServerUtil {
 		if ((midHeight == minHeight) || (midHeight == maxHeight)) {
 			return minHeight;
 		}
-		final Block midBlock = controller.getLocalNodeData().getBlockDb().getBlock(midHeight, false);
+		final Block midBlock = controller.getLocalNodeData().getBlockDb().getHeaderOfBlockFromHeight(midHeight);
 		final long midBlockTs = midBlock.timestamp.asLong();
 		if (ts == midBlockTs) {
 			return midHeight;
@@ -231,7 +233,7 @@ public final class RpcServerUtil {
 		for (long index = fromHeight; index < toHeight; index++) {
 			// Console.WriteLine($"getaccountlist 2 fromHeight:{fromHeight};
 			// toHeight:{toHeight}; index:{index};");
-			final Block block = controller.getLocalNodeData().getBlockDb().getBlock(index, true);
+			final Block block = controller.getLocalNodeData().getBlockDb().getFullBlockFromHeight(index);
 
 			// Console.WriteLine("getaccountlist 2.1");
 			for (final Transaction t : block.getTransactionList()) {
@@ -385,7 +387,7 @@ public final class RpcServerUtil {
 	 * @return the response.
 	 */
 	private static JSONObject onGetBestBlockHash(final LocalControllerNode controller, final int id) {
-		final Block block = controller.getLocalNodeData().getBlockDb().getBlockWithMaxIndex(true);
+		final Block block = controller.getLocalNodeData().getBlockDb().getHeaderOfBlockWithMaxIndex();
 		if (block == null) {
 			final JSONObject response = new JSONObject();
 			response.put(ERROR, ERROR_NO_BLOCKS_IN_BLOCKCHAIN);
@@ -439,7 +441,7 @@ public final class RpcServerUtil {
 				final byte[] ba = ModelUtil.decodeHex(hashStr);
 				final UInt256 hash = new UInt256(ByteBuffer.wrap(ba));
 				try {
-					block = controller.getLocalNodeData().getBlockDb().getBlock(hash, true);
+					block = controller.getLocalNodeData().getBlockDb().getFullBlockFromHash(hash);
 				} catch (final RuntimeException e) {
 					final JSONObject response = new JSONObject();
 					response.put(ERROR, e.getMessage());
@@ -450,7 +452,7 @@ public final class RpcServerUtil {
 			} else if (params.get(0) instanceof Number) {
 				final long index = params.getLong(0);
 				try {
-					block = controller.getLocalNodeData().getBlockDb().getBlock(index, true);
+					block = controller.getLocalNodeData().getBlockDb().getFullBlockFromHeight(index);
 				} catch (final RuntimeException e) {
 					final JSONObject response = new JSONObject();
 					response.put(ERROR, e.getMessage());
@@ -488,7 +490,7 @@ public final class RpcServerUtil {
 	 * @return the response.
 	 */
 	private static JSONObject onGetBlockCount(final LocalControllerNode controller, final int id) {
-		final Block block = controller.getLocalNodeData().getBlockDb().getBlockWithMaxIndex(false);
+		final Block block = controller.getLocalNodeData().getBlockDb().getHeaderOfBlockWithMaxIndex();
 		if (block == null) {
 			final JSONObject response = new JSONObject();
 			response.put(RESULT, 0);
@@ -527,7 +529,7 @@ public final class RpcServerUtil {
 		} else {
 			final long index = params.getLong(0);
 			try {
-				final Block block = controller.getLocalNodeData().getBlockDb().getBlock(index, false);
+				final Block block = controller.getLocalNodeData().getBlockDb().getHeaderOfBlockFromHeight(index);
 				final JSONObject response = new JSONObject();
 				response.put(ID, id);
 				response.put(JSONRPC, VERSION_2_0);
@@ -589,7 +591,9 @@ public final class RpcServerUtil {
 		synchronized (controller) {
 			final LocalNodeData localNodeData = controller.getLocalNodeData();
 			synchronized (localNodeData) {
-				for (final RemoteNodeData data : controller.getPeerDataSet()) {
+				final List<RemoteNodeData> peerDataList = new ArrayList<>();
+				controller.addPeerDataSetToList(peerDataList);
+				for (final RemoteNodeData data : peerDataList) {
 					if (data.getConnectionPhase() == NodeConnectionPhaseEnum.ACKNOWLEDGED) {
 						connectionCount++;
 					}

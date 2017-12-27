@@ -175,9 +175,23 @@ public class LocalControllerNode {
 		if (stopped) {
 			return;
 		}
-		synchronized (LocalControllerNode.this) {
+		synchronized (peerChangeListeners) {
 			peerChangeListeners.add(listener);
-			listener.nodeDataChanged(localNodeData, getPeerDataSet());
+		}
+		final List<RemoteNodeData> peerDataList = new ArrayList<>();
+		addPeerDataSetToList(peerDataList);
+		listener.nodeDataChanged(localNodeData, peerDataList);
+	}
+
+	/**
+	 * adds the peer data set to the list.
+	 *
+	 * @param list
+	 *            the list to use.
+	 */
+	public void addPeerDataSetToList(final List<RemoteNodeData> list) {
+		synchronized (peerDataSet) {
+			list.addAll(peerDataSet);
 		}
 	}
 
@@ -192,11 +206,11 @@ public class LocalControllerNode {
 		if (stopped) {
 			return;
 		}
-		synchronized (LocalControllerNode.this) {
-			if (getPeerDataSet().containsIndex(RemoteNodeData.TCP_ADDRESS_AND_PORT, data)) {
+		synchronized (peerDataSet) {
+			if (peerDataSet.containsIndex(RemoteNodeData.TCP_ADDRESS_AND_PORT, data)) {
 				LOG.trace("FAILURE addPeerWrapperToPool, peer \"{}\" is a existing peer. ", data);
 			} else {
-				getPeerDataSet().add(data);
+				peerDataSet.add(data);
 			}
 		}
 
@@ -204,6 +218,18 @@ public class LocalControllerNode {
 
 		if (anyChanged) {
 			notifyNodeDataChangeListeners();
+		}
+	}
+
+	/**
+	 * adds the node to the peer data set.
+	 *
+	 * @param node
+	 *            the node to add tot he set.
+	 */
+	public void addToPeerDataSet(final RemoteNodeData node) {
+		synchronized (peerDataSet) {
+			peerDataSet.add(node);
 		}
 	}
 
@@ -242,15 +268,6 @@ public class LocalControllerNode {
 	public RemoteNodeData getNewRemoteNodeData() {
 		final RemoteNodeData data = new RemoteNodeData(remoteNodeConfig);
 		return data;
-	}
-
-	/**
-	 * return the peer data set.
-	 *
-	 * @return the peer data set.
-	 */
-	public IndexedSet<RemoteNodeData> getPeerDataSet() {
-		return peerDataSet;
 	}
 
 	/**
@@ -319,7 +336,9 @@ public class LocalControllerNode {
 				final InetAddress address = InetAddress.getByName(addressName);
 				final InetSocketAddress addressAndPort = new InetSocketAddress(address, port);
 				final RemoteNodeData data = getNewRemoteNodeData();
-				data.setConnectionPhase(NodeConnectionPhaseEnum.UNKNOWN);
+				synchronized (RemoteNodeData.class) {
+					data.setConnectionPhase(NodeConnectionPhaseEnum.UNKNOWN);
+				}
 				data.setTcpAddressAndPort(addressAndPort);
 				addRemoteNodeDataToPool(data);
 			}
@@ -350,9 +369,11 @@ public class LocalControllerNode {
 		if (stopped) {
 			return;
 		}
-		synchronized (LocalControllerNode.this) {
+		synchronized (peerChangeListeners) {
+			final List<RemoteNodeData> peerDataList = new ArrayList<>();
+			addPeerDataSetToList(peerDataList);
 			for (final NodeDataChangeListener l : peerChangeListeners) {
-				l.nodeDataChanged(localNodeData, getPeerDataSet());
+				l.nodeDataChanged(localNodeData, peerDataList);
 			}
 		}
 		LOG.debug("SUCCESS notifyNodeDataChangeListeners");
@@ -385,16 +406,18 @@ public class LocalControllerNode {
 				}
 				final InetSocketAddress addressAndPort = new InetSocketAddress(address, port);
 				final RemoteNodeData data = new RemoteNodeData(remoteNodeConfig);
-				data.setConnectionPhase(NodeConnectionPhaseEnum.UNKNOWN);
+				synchronized (RemoteNodeData.class) {
+					data.setConnectionPhase(NodeConnectionPhaseEnum.UNKNOWN);
+				}
 				data.setTcpAddressAndPort(addressAndPort);
 				addRemoteNodeDataToPool(data);
 			}
 
-			synchronized (LocalControllerNode.this) {
+			synchronized (peerDataSet) {
 				if (LOG.isDebugEnabled()) {
 					LOG.debug("{} onAddr response:{}, count {}, peerDataSet {}",
 							peer.getData().getTcpAddressAndPortString(), message.command,
-							addrPayload.getAddressList().size(), getPeerDataSet().size());
+							addrPayload.getAddressList().size(), peerDataSet.size());
 				}
 			}
 		} catch (final Exception e) {
@@ -651,18 +674,24 @@ public class LocalControllerNode {
 		if (stopped) {
 			return;
 		}
-		synchronized (this) {
-			if (peer.getData().getVersion() != null) {
-				LOG.debug("OnSocketClose {} {}", peer.getData().getTcpAddressAndPortString(),
-						peer.getData().getVersion());
-			}
+		final RemoteNodeData data = peer.getData();
+		final String version;
+		synchronized (data) {
+			version = data.getVersion();
+		}
+		if (version != null) {
+			LOG.debug("OnSocketClose {} {}", data.getTcpAddressAndPortString(), version);
+		}
 
-			if (peer.getData().getVersion() != null) {
-				peer.getData().setConnectionPhase(NodeConnectionPhaseEnum.INACTIVE);
+		synchronized (RemoteNodeData.class) {
+			if (version != null) {
+				data.setConnectionPhase(NodeConnectionPhaseEnum.INACTIVE);
 			} else {
-				peer.getData().setConnectionPhase(NodeConnectionPhaseEnum.REFUSED);
+				data.setConnectionPhase(NodeConnectionPhaseEnum.REFUSED);
 			}
-			peer.getData().setLastMessageTimestamp(System.currentTimeMillis());
+		}
+		synchronized (data) {
+			data.setLastMessageTimestamp(System.currentTimeMillis());
 		}
 		notifyNodeDataChangeListeners();
 	}
@@ -696,11 +725,13 @@ public class LocalControllerNode {
 			return;
 		}
 		final RemoteNodeData data = peer.getData();
-		synchronized (this) {
+		synchronized (data) {
 			final VersionPayload payload = message.getPayload(VersionPayload.class);
 			data.setVersion(payload.userAgent);
 			data.setBlockHeight(payload.startHeight.asLong());
 			data.setLastMessageTimestamp(System.currentTimeMillis());
+		}
+		synchronized (RemoteNodeData.class) {
 			data.setConnectionPhase(NodeConnectionPhaseEnum.ACKNOWLEDGED);
 		}
 
@@ -722,7 +753,7 @@ public class LocalControllerNode {
 	 * removes all listeners.
 	 */
 	public void removePeerChangeListeners() {
-		synchronized (this) {
+		synchronized (peerChangeListeners) {
 			peerChangeListeners.clear();
 		}
 	}
@@ -741,8 +772,8 @@ public class LocalControllerNode {
 		}
 		boolean anyChanged = false;
 		final List<RemoteNodeData> peerDataList = new ArrayList<>();
-		synchronized (LocalControllerNode.this) {
-			peerDataList.addAll(getPeerDataSet());
+		synchronized (peerDataSet) {
+			peerDataList.addAll(peerDataSet);
 		}
 
 		for (final RemoteNodeData data : peerDataList) {
@@ -753,7 +784,9 @@ public class LocalControllerNode {
 				synchronized (this) {
 					LOG.trace("refreshThread[2] {} runPeers node with phase {}", data.getTcpAddressAndPortString(),
 							data.getConnectionPhase());
-					data.setConnectionPhase(NodeConnectionPhaseEnum.TRY_START);
+					synchronized (RemoteNodeData.class) {
+						data.setConnectionPhase(NodeConnectionPhaseEnum.TRY_START);
+					}
 
 					final RemoteNodeControllerRunnable r = new RemoteNodeControllerRunnable(this, data);
 
@@ -804,8 +837,8 @@ public class LocalControllerNode {
 		}
 
 		final List<RemoteNodeData> bootstrapPeerList = new ArrayList<>();
-		synchronized (LocalControllerNode.this) {
-			for (final RemoteNodeData data : getPeerDataSet()) {
+		synchronized (peerDataSet) {
+			for (final RemoteNodeData data : peerDataSet) {
 				if (data.getConnectionPhase().equals(NodeConnectionPhaseEnum.UNKNOWN)) {
 					bootstrapPeerList.add(data);
 				}

@@ -60,7 +60,7 @@ public final class LocalNodeDataSynchronizedUtil {
 				|| block.hash.equals(GenesisBlockUtil.GENESIS_HASH)) {
 			if (!localNodeData.getBlockDb().containsBlockWithHash(block.hash)) {
 				localNodeData.getBlockDb().put(block);
-				final Block checkBlock = localNodeData.getBlockDb().getBlock(block.hash, true);
+				final Block checkBlock = localNodeData.getBlockDb().getFullBlockFromHash(block.hash);
 
 				final String blockBaHash = ModelUtil.toHexString(block.toByteArray());
 				final String checkBlockBaHash = ModelUtil.toHexString(checkBlock.toByteArray());
@@ -127,7 +127,7 @@ public final class LocalNodeDataSynchronizedUtil {
 	private static boolean addHeaderIfNewUnsynchronized(final LocalNodeData localNodeData, final Header header) {
 		final long headerIndex = header.getIndexAsLong();
 		LOG.trace("STARTED addHeaderIfNewUnsynchronized adding header : index:{}; hash:{};", headerIndex, header.hash);
-		final Block highestBlock = localNodeData.getBlockDb().getBlockWithMaxIndex(false);
+		final Block highestBlock = localNodeData.getBlockDb().getHeaderOfBlockWithMaxIndex();
 		if (highestBlock != null) {
 			final long maxBlockIndex = highestBlock.getIndexAsLong();
 			if (headerIndex <= maxBlockIndex) {
@@ -311,7 +311,7 @@ public final class LocalNodeDataSynchronizedUtil {
 			}
 			MessageUtil.sendGetData(remoteNodeData, localNodeData, hashs.toArray(new UInt256[0]));
 		} else {
-			if (localNodeData.getBlockDb().getBlockWithMaxIndex(false) == null) {
+			if (localNodeData.getBlockDb().getHeaderOfBlockWithMaxIndex() == null) {
 				if (LOG.isDebugEnabled()) {
 					LOG.debug("requestBlocks send {} hash is genesis.", remoteNodeData.getHostAddress());
 				}
@@ -341,7 +341,7 @@ public final class LocalNodeDataSynchronizedUtil {
 						highestHeader.hash);
 				hashRaw = highestHeader.hash;
 			} else {
-				final Block highestBlock = localNodeData.getBlockDb().getBlockWithMaxIndex(false);
+				final Block highestBlock = localNodeData.getBlockDb().getHeaderOfBlockWithMaxIndex();
 				if (highestBlock != null) {
 					LOG.debug("requestHeaders getHighestBlock height:{};hash:{};", highestBlock.getIndexAsLong(),
 							highestBlock.hash);
@@ -378,7 +378,7 @@ public final class LocalNodeDataSynchronizedUtil {
 				}
 			}
 
-			final Block highestBlock = localNodeData.getBlockDb().getBlockWithMaxIndex(false);
+			final Block highestBlock = localNodeData.getBlockDb().getHeaderOfBlockWithMaxIndex();
 			if (highestBlock != null) {
 				final long highestIndex = highestBlock.getIndexAsLong();
 				final Iterator<Block> blockIt = localNodeData.getUnverifiedBlockPoolSet().iterator();
@@ -407,7 +407,7 @@ public final class LocalNodeDataSynchronizedUtil {
 		synchronized (localNodeData) {
 			LOG.debug("STARTED verifyUnverifiedHeaders");
 			boolean anyHeaderChanged = false;
-			final Block highestBlock = localNodeData.getBlockDb().getBlockWithMaxIndex(false);
+			final Block highestBlock = localNodeData.getBlockDb().getHeaderOfBlockWithMaxIndex();
 			final UInt256 highestBlockHash;
 			final long highestBlockIndex;
 			if (highestBlock == null) {

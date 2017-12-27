@@ -9,7 +9,6 @@ import java.util.Date;
 import java.util.EnumMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.TreeMap;
 
 import org.apache.commons.text.WordUtils;
@@ -145,7 +144,7 @@ public final class StatsModel extends AbstractRefreshingModel {
 		addNameAndValue(BLOCKCHAIN_BLOCK_COUNT, allChainBlockCount);
 		addNameAndValue(KNOWN_BLOCK_COUNT, blockCount);
 
-		final Block highestBlock = localNodeData.getBlockDb().getBlockWithMaxIndex(false);
+		final Block highestBlock = localNodeData.getBlockDb().getHeaderOfBlockWithMaxIndex();
 		if (highestBlock != null) {
 			addNameAndValue(MAX_BLOCK_HEIGHT, highestBlock.getIndexAsLong());
 		}
@@ -226,18 +225,20 @@ public final class StatsModel extends AbstractRefreshingModel {
 	/**
 	 * adds stats for how many peers are in each onnection [hase.
 	 *
-	 * @param peerDataSet
+	 * @param peerDataList
 	 *            the set of connected remote peers.
 	 */
-	private void addNodeConnectionPhaseStats(final Set<RemoteNodeData> peerDataSet) {
+	private void addNodeConnectionPhaseStats(final List<RemoteNodeData> peerDataList) {
 		final Map<NodeConnectionPhaseEnum, Integer> connectionPhaseMap = new EnumMap<>(NodeConnectionPhaseEnum.class);
 		for (final NodeConnectionPhaseEnum connectionPhase : NodeConnectionPhaseEnum.values()) {
 			connectionPhaseMap.put(connectionPhase, 0);
 		}
 
-		for (final RemoteNodeData data : peerDataSet) {
-			final int oldCount = connectionPhaseMap.get(data.getConnectionPhase());
-			connectionPhaseMap.put(data.getConnectionPhase(), oldCount + 1);
+		for (final RemoteNodeData data : peerDataList) {
+			synchronized (data) {
+				final int oldCount = connectionPhaseMap.get(data.getConnectionPhase());
+				connectionPhaseMap.put(data.getConnectionPhase(), oldCount + 1);
+			}
 		}
 
 		for (final NodeConnectionPhaseEnum connectionPhase : connectionPhaseMap.keySet()) {
@@ -249,12 +250,12 @@ public final class StatsModel extends AbstractRefreshingModel {
 	/**
 	 * add stats on how many peers are at a given version.
 	 *
-	 * @param peerDataSet
+	 * @param peerDataList
 	 *            the set of connected remote peers.
 	 */
-	private void addVersionStats(final Set<RemoteNodeData> peerDataSet) {
+	private void addVersionStats(final List<RemoteNodeData> peerDataList) {
 		final Map<String, Integer> versionCountMap = new TreeMap<>();
-		for (final RemoteNodeData data : peerDataSet) {
+		for (final RemoteNodeData data : peerDataList) {
 			final String version = data.getVersion();
 			if (version != null) {
 				if (versionCountMap.containsKey(version)) {
@@ -330,8 +331,8 @@ public final class StatsModel extends AbstractRefreshingModel {
 	}
 
 	@Override
-	public void nodeDataChanged(final LocalNodeData localNodeData, final Set<RemoteNodeData> peerDataSet) {
-		LOG.trace("STARTED peersChanged count:{}", peerDataSet.size());
+	public void nodeDataChanged(final LocalNodeData localNodeData, final List<RemoteNodeData> peerDataList) {
+		LOG.trace("STARTED peersChanged count:{}", peerDataList.size());
 		synchronized (StatsModel.this) {
 			synchronized (localNodeData) {
 				statsNameList.clear();
@@ -339,9 +340,9 @@ public final class StatsModel extends AbstractRefreshingModel {
 
 				addNameAndValue(START_TIME, new Date(localNodeData.getStartTime()));
 
-				addNodeConnectionPhaseStats(peerDataSet);
+				addNodeConnectionPhaseStats(peerDataList);
 
-				addVersionStats(peerDataSet);
+				addVersionStats(peerDataList);
 
 				addBlockchainStats(localNodeData);
 

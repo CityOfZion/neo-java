@@ -7,7 +7,6 @@ import java.text.NumberFormat;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.TreeMap;
 
 import org.slf4j.Logger;
@@ -127,8 +126,8 @@ public final class ApiCallModel extends AbstractRefreshingModel {
 	}
 
 	@Override
-	public void nodeDataChanged(final LocalNodeData localNodeData, final Set<RemoteNodeData> peerDataSet) {
-		LOG.trace("STARTED peersChanged count:{}", peerDataSet.size());
+	public void nodeDataChanged(final LocalNodeData localNodeData, final List<RemoteNodeData> peerDataList) {
+		LOG.trace("STARTED peersChanged count:{}", peerDataList.size());
 		synchronized (localNodeData) {
 			synchronized (ApiCallModel.this) {
 				statsNameList.clear();

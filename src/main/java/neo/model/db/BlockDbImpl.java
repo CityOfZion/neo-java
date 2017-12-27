@@ -197,15 +197,23 @@ public final class BlockDbImpl implements BlockDb {
 		return accountAssetValueMap;
 	}
 
-	@Override
-	public Block getBlock(final long index, final boolean withTransactions) {
+	/**
+	 * return the block at the given height, with transactions attached.
+	 *
+	 * @param blockHeight
+	 *            the block height to use.
+	 * @param withTransactions
+	 *            if true, add transactions. If false, only return the block header.
+	 * @return the block at the given height.
+	 */
+	private Block getBlock(final long blockHeight, final boolean withTransactions) {
 		synchronized (this) {
 			if (closed) {
 				return null;
 			}
 		}
 		final JdbcTemplate t = new JdbcTemplate(ds);
-		final UInt32 indexObj = new UInt32(index);
+		final UInt32 indexObj = new UInt32(blockHeight);
 		final byte[] indexBa = indexObj.toByteArray();
 		final String sql = getSql("getBlockWithIndex");
 		final List<byte[]> data = t.queryForList(sql, byte[].class, indexBa);
@@ -229,8 +237,7 @@ public final class BlockDbImpl implements BlockDb {
 	 *            if true, add transactions. If false, only return the block header.
 	 * @return the block with the given hash.
 	 */
-	@Override
-	public Block getBlock(final UInt256 hash, final boolean withTransactions) {
+	private Block getBlock(final UInt256 hash, final boolean withTransactions) {
 		synchronized (this) {
 			if (closed) {
 				return null;
@@ -270,10 +277,11 @@ public final class BlockDbImpl implements BlockDb {
 	/**
 	 * return the block with the maximum value in the index column.
 	 *
+	 * @param withTransactions
+	 *            if true, add transactions. If false, only return the block header.
 	 * @return the block with the maximum value in the index column.
 	 */
-	@Override
-	public Block getBlockWithMaxIndex(final boolean withTransactions) {
+	private Block getBlockWithMaxIndex(final boolean withTransactions) {
 		synchronized (this) {
 			if (closed) {
 				return null;
@@ -302,6 +310,36 @@ public final class BlockDbImpl implements BlockDb {
 	public long getFileSize() {
 		final File dir = new File(sqlCache.getString("getFileSizeDir"));
 		return FileUtils.sizeOfDirectory(dir);
+	}
+
+	@Override
+	public Block getFullBlockFromHash(final UInt256 hash) {
+		return getBlock(hash, true);
+	}
+
+	@Override
+	public Block getFullBlockFromHeight(final long blockHeight) {
+		return getBlock(blockHeight, true);
+	}
+
+	@Override
+	public Block getHeaderOfBlockFromHash(final UInt256 hash) {
+		return getBlock(hash, false);
+	}
+
+	@Override
+	public Block getHeaderOfBlockFromHeight(final long blockHeight) {
+		return getBlock(blockHeight, false);
+	}
+
+	/**
+	 * return the block with the maximum value in the index column.
+	 *
+	 * @return the block with the maximum value in the index column.
+	 */
+	@Override
+	public Block getHeaderOfBlockWithMaxIndex() {
+		return getBlockWithMaxIndex(false);
 	}
 
 	/**
