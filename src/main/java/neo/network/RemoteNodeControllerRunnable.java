@@ -6,6 +6,7 @@ import java.io.OutputStream;
 import java.net.ConnectException;
 import java.net.SocketException;
 import java.net.SocketTimeoutException;
+import java.nio.channels.ClosedChannelException;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -84,6 +85,14 @@ public final class RemoteNodeControllerRunnable implements StopRunnable {
 			messageRecieved = new Message(readTimeOut, in);
 		} catch (final SocketTimeoutException e) {
 			messageRecieved = null;
+		} catch (final IOException e) {
+			if (e.getMessage().equals("Connection reset by peer")) {
+				messageRecieved = null;
+			} else if (e.getMessage().equals("Operation timed out")) {
+				messageRecieved = null;
+			} else {
+				throw new RuntimeException(e);
+			}
 		}
 		return messageRecieved;
 	}
@@ -216,10 +225,11 @@ public final class RemoteNodeControllerRunnable implements StopRunnable {
 					LOG.error("SocketException", e);
 				}
 				data.setGoodPeer(false);
+			} catch (final ClosedChannelException e) {
+				LOG.trace("ClosedChannelException from {}, closing peer", data.getHostAddress());
+				data.setGoodPeer(false);
 			}
-		} catch (
-
-		final Exception e) {
+		} catch (final Exception e) {
 			LOG.error("error", e);
 			LOG.debug("FAILURE RemoteNodeControllerRunnable run");
 			localControllerNode.onSocketClose(RemoteNodeControllerRunnable.this);
@@ -244,7 +254,21 @@ public final class RemoteNodeControllerRunnable implements StopRunnable {
 				return;
 			}
 			final byte[] outBa = messageToSend.toByteArray();
-			out.write(outBa);
+			try {
+				out.write(outBa);
+			} catch (final SocketTimeoutException e) {
+				LOG.trace("SocketTimeoutException from {}, closing peer", data.getHostAddress());
+				data.setGoodPeer(false);
+				return;
+			} catch (final IOException e) {
+				if (e.getMessage().equals("Broken pipe")) {
+					LOG.trace("IOException from {}, Broken pipe, closing peer", data.getHostAddress());
+					data.setGoodPeer(false);
+					return;
+				} else {
+					throw new RuntimeException(e);
+				}
+			}
 			if (messageToSend.commandEnum != null) {
 				final long apiCallCount;
 				apiCallCount = MapUtil.increment(LocalNodeData.API_CALL_MAP,
