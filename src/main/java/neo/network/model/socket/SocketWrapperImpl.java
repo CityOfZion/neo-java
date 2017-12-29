@@ -7,12 +7,20 @@ import java.net.Socket;
 import java.net.SocketAddress;
 import java.net.SocketException;
 
+import org.apache.hadoop.net.SocketInputStream;
+import org.apache.hadoop.net.SocketOutputStream;
+
 /**
  * the socket wrapper implementation.
  *
  * @author coranos
  */
 public final class SocketWrapperImpl implements SocketWrapper {
+
+	/**
+	 * the socket write timeout.
+	 */
+	private static final int SOCKET_WRITE_TIMEOUT_MS = 2000;
 
 	/**
 	 * the underlying socket.
@@ -38,12 +46,12 @@ public final class SocketWrapperImpl implements SocketWrapper {
 
 	@Override
 	public InputStream getInputStream() throws IOException {
-		return socket.getInputStream();
+		return new SocketInputStream(socket);
 	}
 
 	@Override
 	public OutputStream getOutputStream() throws IOException {
-		return socket.getOutputStream();
+		return new SocketOutputStream(socket, SOCKET_WRITE_TIMEOUT_MS);
 	}
 
 	@Override
