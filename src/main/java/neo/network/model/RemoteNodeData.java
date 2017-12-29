@@ -289,7 +289,7 @@ public final class RemoteNodeData {
 			LOG.trace("send to {}:{}", getHostAddress(), message.command);
 		}
 		if (!isGoodPeer()) {
-			LOG.error("sending message to closed peer : {}", message.command);
+			LOG.trace("sending message to closed peer : {}", message.command);
 			return;
 		}
 		sendQueue.add(message);

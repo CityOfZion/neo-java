@@ -2,6 +2,7 @@ package neo.network;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InterruptedIOException;
 import java.io.OutputStream;
 import java.net.ConnectException;
 import java.net.SocketException;
@@ -84,9 +85,19 @@ public final class RemoteNodeControllerRunnable implements StopRunnable {
 		try {
 			messageRecieved = new Message(readTimeOut, in);
 		} catch (final SocketTimeoutException e) {
+			LOG.trace("SocketTimeoutException[1] from {}, closing peer", data.getHostAddress());
+			LOG.trace("SocketTimeoutException[1]", e);
+			messageRecieved = null;
+		} catch (final InterruptedIOException e) {
+			LOG.trace("InterruptedIOException from {}, closing peer", data.getHostAddress());
+			LOG.trace("InterruptedIOException", e);
+			data.setGoodPeer(false);
 			messageRecieved = null;
 		} catch (final IOException e) {
 			if (e.getMessage().equals("Connection reset by peer")) {
+				LOG.trace("IOException[1] from {}, \"{}\" closing peer", e.getMessage(), data.getHostAddress());
+				LOG.trace("IOException[1]", e);
+				data.setGoodPeer(false);
 				messageRecieved = null;
 			} else if (e.getMessage().equals("Operation timed out")) {
 				messageRecieved = null;
@@ -202,8 +213,8 @@ public final class RemoteNodeControllerRunnable implements StopRunnable {
 					}
 				}
 			} catch (final SocketTimeoutException e) {
-				LOG.trace("SocketTimeoutException from {}, closing peer", data.getHostAddress());
-				LOG.trace("SocketTimeoutException", e);
+				LOG.trace("SocketTimeoutException[2] from {}, closing peer", data.getHostAddress());
+				LOG.trace("SocketTimeoutException[2]", e);
 				data.setGoodPeer(false);
 			} catch (final ConnectException e) {
 				LOG.trace("ConnectException from {}, closing peer", data.getHostAddress());
@@ -257,12 +268,14 @@ public final class RemoteNodeControllerRunnable implements StopRunnable {
 			try {
 				out.write(outBa);
 			} catch (final SocketTimeoutException e) {
-				LOG.trace("SocketTimeoutException from {}, closing peer", data.getHostAddress());
+				LOG.trace("SocketTimeoutException[3] from {}, closing peer", data.getHostAddress());
+				LOG.trace("SocketTimeoutException[3]", e);
 				data.setGoodPeer(false);
 				return;
 			} catch (final IOException e) {
 				if (e.getMessage().equals("Broken pipe")) {
-					LOG.trace("IOException from {}, Broken pipe, closing peer", data.getHostAddress());
+					LOG.trace("IOException[2] from {}, \"{}\" closing peer", e.getMessage(), data.getHostAddress());
+					LOG.trace("IOException[2]", e);
 					data.setGoodPeer(false);
 					return;
 				} else {
