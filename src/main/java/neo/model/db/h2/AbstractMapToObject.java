@@ -1,4 +1,4 @@
-package neo.model.db;
+package neo.model.db.h2;
 
 import java.util.Map;
 

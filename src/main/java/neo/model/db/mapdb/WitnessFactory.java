@@ -1,0 +1,24 @@
+package neo.model.db.mapdb;
+
+import java.nio.ByteBuffer;
+
+import neo.model.core.Witness;
+import neo.model.util.ModelUtil;
+
+/**
+ * an object mapper for transaction scripts.
+ *
+ * @author coranos
+ *
+ */
+public final class WitnessFactory extends AbstractByteBufferFactory<Witness> {
+
+	@Override
+	public Witness toObject(final ByteBuffer bb) {
+		final byte[] invocationBa = ModelUtil.getByteArray(bb);
+		final byte[] verificationBa = ModelUtil.getByteArray(bb);
+		final Witness witness = new Witness(invocationBa, verificationBa);
+		return witness;
+	}
+
+}

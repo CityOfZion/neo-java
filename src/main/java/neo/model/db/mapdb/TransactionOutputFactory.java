@@ -1,7 +1,6 @@
-package neo.model.db;
+package neo.model.db.mapdb;
 
 import java.nio.ByteBuffer;
-import java.util.Map;
 
 import org.apache.commons.lang3.ArrayUtils;
 
@@ -9,6 +8,7 @@ import neo.model.bytes.Fixed8;
 import neo.model.bytes.UInt160;
 import neo.model.bytes.UInt256;
 import neo.model.core.TransactionOutput;
+import neo.model.util.ModelUtil;
 
 /**
  * an object mapper for transaction outputs.
@@ -16,14 +16,14 @@ import neo.model.core.TransactionOutput;
  * @author coranos
  *
  */
-public final class TransactionOutputMapToObject extends AbstractMapToObject<TransactionOutput> {
+public final class TransactionOutputFactory extends AbstractByteBufferFactory<TransactionOutput> {
 
 	@Override
-	public TransactionOutput toObject(final Map<String, Object> map) {
-		final byte[] assetIdBa = getBytes(map, "asset_id");
-		final byte[] valueBa = getBytes(map, "value");
+	public TransactionOutput toObject(final ByteBuffer bb) {
+		final byte[] assetIdBa = ModelUtil.getByteArray(bb);
+		final byte[] valueBa = ModelUtil.getByteArray(bb);
 		ArrayUtils.reverse(valueBa);
-		final byte[] scriptHashBa = getBytes(map, "script_hash");
+		final byte[] scriptHashBa = ModelUtil.getByteArray(bb);
 
 		final UInt256 assetId = new UInt256(ByteBuffer.wrap(assetIdBa));
 		final Fixed8 value = new Fixed8(ByteBuffer.wrap(valueBa));

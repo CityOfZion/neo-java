@@ -10,6 +10,7 @@ import neo.model.bytes.UInt160;
 import neo.model.bytes.UInt256;
 import neo.model.core.Block;
 import neo.model.core.Transaction;
+import neo.model.db.h2.BlockDbH2Impl;
 
 /**
  * a blockdb implementation that caches read-only requests between writes.
@@ -22,7 +23,7 @@ public final class ReadCacheBlockDBImpl implements BlockDb {
 	/**
 	 * the delegate.
 	 */
-	private final BlockDb delegate = new BlockDbImpl();
+	private final BlockDb delegate = new BlockDbH2Impl();
 
 	/**
 	 * the set of known hashes.

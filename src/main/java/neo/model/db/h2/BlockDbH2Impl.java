@@ -1,4 +1,4 @@
-package neo.model.db;
+package neo.model.db.h2;
 
 import java.io.File;
 import java.io.IOException;
@@ -32,6 +32,7 @@ import neo.model.core.CoinReference;
 import neo.model.core.Transaction;
 import neo.model.core.TransactionOutput;
 import neo.model.core.Witness;
+import neo.model.db.BlockDb;
 
 /**
  * the block database.
@@ -39,7 +40,7 @@ import neo.model.core.Witness;
  * @author coranos
  *
  */
-public final class BlockDbImpl implements BlockDb {
+public final class BlockDbH2Impl implements BlockDb {
 
 	/**
 	 * the JSON key "sql".
@@ -49,12 +50,12 @@ public final class BlockDbImpl implements BlockDb {
 	/**
 	 * the logger.
 	 */
-	private static final Logger LOG = LoggerFactory.getLogger(BlockDbImpl.class);
+	private static final Logger LOG = LoggerFactory.getLogger(BlockDbH2Impl.class);
 
 	/**
 	 * the SQL cache XML file name.
 	 */
-	private static final String SQL_CACHE_XML = "BlockDbImpl.xml";
+	private static final String SQL_CACHE_XML = "BlockDbH2Impl.xml";
 
 	/**
 	 * the data source.
@@ -74,8 +75,8 @@ public final class BlockDbImpl implements BlockDb {
 	/**
 	 * the constructor.
 	 */
-	public BlockDbImpl() {
-		try (InputStream resourceAsStream = BlockDbImpl.class.getResourceAsStream(SQL_CACHE_XML);) {
+	public BlockDbH2Impl() {
+		try (InputStream resourceAsStream = BlockDbH2Impl.class.getResourceAsStream(SQL_CACHE_XML);) {
 			final String jsonStr = IOUtils.toString(resourceAsStream, "UTF-8");
 			sqlCache = XML.toJSONObject(jsonStr, true).getJSONObject("BlockDbImpl");
 		} catch (final IOException | NullPointerException e) {
