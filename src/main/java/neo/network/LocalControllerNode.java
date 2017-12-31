@@ -660,7 +660,7 @@ public class LocalControllerNode {
 			LOG.debug("SUCCESS responseReceived");
 
 		} catch (final Exception e) {
-			LOG.error("onMessage error", e);
+			LOG.error("onMessage error {}", e);
 		}
 	}
 

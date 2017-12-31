@@ -574,28 +574,29 @@ public final class BlockDbMapDbImpl implements BlockDb {
 		int transactionIndex = 0;
 
 		final Map<Long, List<byte[]>> txKeyByBlockIxMap = new TreeMap<>();
-		final Map<byte[], byte[]> txByKeyMap = new TreeMap<>();
-		final Map<byte[], byte[]> txKeyByTxHashMap = new TreeMap<>();
+		final Map<ByteBuffer, byte[]> txByKeyMap = new TreeMap<>();
+		final Map<ByteBuffer, byte[]> txKeyByTxHashMap = new TreeMap<>();
 
-		final Map<byte[], byte[]> txInputByTxKeyAndIndexMap = new TreeMap<>();
-		final Map<byte[], byte[]> txOutputByTxKeyAndIndexMap = new TreeMap<>();
-		final Map<byte[], byte[]> txScriptByTxKeyAndIndexMap = new TreeMap<>();
+		final Map<ByteBuffer, byte[]> txInputByTxKeyAndIndexMap = new TreeMap<>();
+		final Map<ByteBuffer, byte[]> txOutputByTxKeyAndIndexMap = new TreeMap<>();
+		final Map<ByteBuffer, byte[]> txScriptByTxKeyAndIndexMap = new TreeMap<>();
 
 		for (final Transaction transaction : block.getTransactionList()) {
 			final byte[] transactionBaseBa = transaction.toBaseByteArray();
-			final byte[] transactionKey = getTransactionKey(blockIndex, transactionIndex);
+			final byte[] transactionKeyBa = getTransactionKey(blockIndex, transactionIndex);
 
-			putList(txKeyByBlockIxMap, blockIndex, transactionKey);
+			putList(txKeyByBlockIxMap, blockIndex, transactionKeyBa);
 
-			txByKeyMap.put(transactionKey, transactionBaseBa);
+			final ByteBuffer transactionKeyBb = ByteBuffer.wrap(transactionKeyBa);
+			txByKeyMap.put(transactionKeyBb, transactionBaseBa);
 
-			txKeyByTxHashMap.put(transaction.hash.toByteArray(), transactionKey);
+			txKeyByTxHashMap.put(ByteBuffer.wrap(transaction.hash.toByteArray()), transactionKeyBa);
 
 			for (int inputIx = 0; inputIx < transaction.inputs.size(); inputIx++) {
 				final byte[] txInputIxByte = new UInt32(inputIx).toByteArray();
 				final CoinReference input = transaction.inputs.get(inputIx);
 
-				txInputByTxKeyAndIndexMap.put(transactionKey,
+				txInputByTxKeyAndIndexMap.put(transactionKeyBb,
 						toByteArray(txInputIxByte, input.prevHash.toByteArray(), input.prevIndex.toByteArray()));
 
 			}
@@ -604,23 +605,23 @@ public final class BlockDbMapDbImpl implements BlockDb {
 				final byte[] txOutputIxByte = new UInt16(outputIx).toByteArray();
 				final TransactionOutput output = transaction.outputs.get(outputIx);
 
-				txInputByTxKeyAndIndexMap.put(transactionKey, toByteArray(txOutputIxByte, output.assetId.toByteArray(),
-						output.value.toByteArray(), output.scriptHash.toByteArray()));
+				txInputByTxKeyAndIndexMap.put(transactionKeyBb, toByteArray(txOutputIxByte,
+						output.assetId.toByteArray(), output.value.toByteArray(), output.scriptHash.toByteArray()));
 			}
 
 			for (int scriptIx = 0; scriptIx < transaction.scripts.size(); scriptIx++) {
 				final byte[] txScriptIxByte = new UInt32(scriptIx).toByteArray();
 				final Witness script = transaction.scripts.get(scriptIx);
 
-				txInputByTxKeyAndIndexMap.put(transactionKey, toByteArray(txScriptIxByte,
+				txInputByTxKeyAndIndexMap.put(transactionKeyBb, toByteArray(txScriptIxByte,
 						script.getCopyOfInvocationScript(), script.getCopyOfVerificationScript()));
 			}
 
 			transactionIndex++;
 		}
 
-		putWithByteArrayKey(TRANSACTION_KEY_BY_HASH, txKeyByTxHashMap);
-		putWithByteArrayKey(TRANSACTION_BY_KEY, txByKeyMap);
+		putWithByteBufferKey(TRANSACTION_KEY_BY_HASH, txKeyByTxHashMap);
+		putWithByteBufferKey(TRANSACTION_BY_KEY, txByKeyMap);
 
 		final Map<Long, byte[]> txKeyBaByBlockIxMap = new TreeMap<>();
 
@@ -630,9 +631,9 @@ public final class BlockDbMapDbImpl implements BlockDb {
 		}
 
 		putWithLongKey(TRANSACTION_KEYS_BY_BLOCK_INDEX, txKeyBaByBlockIxMap);
-		putWithByteArrayKey(TRANSACTION_INPUTS_BY_INDEX, txInputByTxKeyAndIndexMap);
-		putWithByteArrayKey(TRANSACTION_OUTPUTS_BY_INDEX, txOutputByTxKeyAndIndexMap);
-		putWithByteArrayKey(TRANSACTION_SCRIPTS_BY_INDEX, txScriptByTxKeyAndIndexMap);
+		putWithByteBufferKey(TRANSACTION_INPUTS_BY_INDEX, txInputByTxKeyAndIndexMap);
+		putWithByteBufferKey(TRANSACTION_OUTPUTS_BY_INDEX, txOutputByTxKeyAndIndexMap);
+		putWithByteBufferKey(TRANSACTION_SCRIPTS_BY_INDEX, txScriptByTxKeyAndIndexMap);
 
 	}
 
@@ -663,12 +664,12 @@ public final class BlockDbMapDbImpl implements BlockDb {
 	 * @param sourceMap
 	 *            the source map to use.
 	 */
-	private void putWithByteArrayKey(final String destMapName, final Map<byte[], byte[]> sourceMap) {
+	private void putWithByteBufferKey(final String destMapName, final Map<ByteBuffer, byte[]> sourceMap) {
 		final HTreeMap<byte[], byte[]> map = DB.hashMap(destMapName, Serializer.BYTE_ARRAY, Serializer.BYTE_ARRAY)
 				.counterEnable().createOrOpen();
-		for (final byte[] key : sourceMap.keySet()) {
+		for (final ByteBuffer key : sourceMap.keySet()) {
 			final byte[] ba = sourceMap.get(key);
-			map.put(key, ba);
+			map.put(key.array(), ba);
 		}
 	}
 
