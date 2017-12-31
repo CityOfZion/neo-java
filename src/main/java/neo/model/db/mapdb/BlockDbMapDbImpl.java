@@ -95,7 +95,23 @@ public final class BlockDbMapDbImpl implements BlockDb {
 	/**
 	 * the database.
 	 */
-	private final DB db;
+	private static final DB DB;
+
+	/**
+	 * the directory.
+	 */
+	private static final File DIR = new File("java-chain/db");
+
+	/**
+	 * the file.
+	 */
+	private static final File FILE = new File(DIR, "db.mapdb");
+
+	static {
+		DIR.mkdirs();
+		DB = DBMaker.fileDB(FILE).transactionEnable().make();
+
+	}
 
 	/**
 	 * the closed flag.
@@ -103,21 +119,9 @@ public final class BlockDbMapDbImpl implements BlockDb {
 	private boolean closed = false;
 
 	/**
-	 * the directory.
-	 */
-	private final File dir = new File("java-chain/db");
-
-	/**
-	 * the file.
-	 */
-	private final File file = new File(dir, "db.mapdb");
-
-	/**
 	 * the constructor.
 	 */
 	public BlockDbMapDbImpl() {
-		dir.mkdirs();
-		db = DBMaker.fileDB(file).transactionEnable().make();
 	}
 
 	/**
@@ -155,7 +159,7 @@ public final class BlockDbMapDbImpl implements BlockDb {
 			closed = true;
 		}
 		LOG.debug("STARTED shutdown");
-		db.close();
+		DB.close();
 		LOG.debug("SUCCESS shutdown");
 	}
 
@@ -174,10 +178,8 @@ public final class BlockDbMapDbImpl implements BlockDb {
 				return false;
 			}
 		}
-
-		try (HTreeMap<byte[], Long> map = getBlockIndexByHashMap();) {
-			return map.containsKey(hash.toByteArray());
-		}
+		final HTreeMap<byte[], Long> map = getBlockIndexByHashMap();
+		return map.containsKey(hash.toByteArray());
 	}
 
 	@Override
@@ -186,19 +188,18 @@ public final class BlockDbMapDbImpl implements BlockDb {
 
 		final TransactionOutputFactory objectFactory = new TransactionOutputFactory();
 
-		try (HTreeMap<Long, byte[]> map = getByteArrayByBlockIndexMap(TRANSACTION_OUTPUTS_BY_INDEX);) {
-			for (final long key : map.getKeys()) {
-				final byte[] listBa = map.get(key);
-				final List<byte[]> baList = toByteArrayList(listBa);
-				for (final byte[] ba : baList) {
-					final TransactionOutput output = objectFactory.toObject(ByteBuffer.wrap(ba));
+		final HTreeMap<Long, byte[]> map = getByteArrayByBlockIndexMap(TRANSACTION_OUTPUTS_BY_INDEX);
+		for (final long key : map.getKeys()) {
+			final byte[] listBa = map.get(key);
+			final List<byte[]> baList = toByteArrayList(listBa);
+			for (final byte[] ba : baList) {
+				final TransactionOutput output = objectFactory.toObject(ByteBuffer.wrap(ba));
 
-					if (!accountAssetValueMap.containsKey(output.scriptHash)) {
-						accountAssetValueMap.put(output.scriptHash, new TreeMap<>());
-					}
-					final Map<UInt256, Fixed8> assetValueMap = accountAssetValueMap.get(output.scriptHash);
-					assetValueMap.put(output.assetId, output.value);
+				if (!accountAssetValueMap.containsKey(output.scriptHash)) {
+					accountAssetValueMap.put(output.scriptHash, new TreeMap<>());
 				}
+				final Map<UInt256, Fixed8> assetValueMap = accountAssetValueMap.get(output.scriptHash);
+				assetValueMap.put(output.assetId, output.value);
 			}
 		}
 
@@ -221,17 +222,16 @@ public final class BlockDbMapDbImpl implements BlockDb {
 			}
 		}
 
-		try (HTreeMap<Long, byte[]> map = getBlockHeaderByIndexMap();) {
-			if (!map.containsKey(blockHeight)) {
-				return null;
-			}
-
-			final Block block = new Block(ByteBuffer.wrap(map.get(blockHeight)));
-			if (withTransactions) {
-				getTransactionsForBlock(block);
-			}
-			return block;
+		final HTreeMap<Long, byte[]> map = getBlockHeaderByIndexMap();
+		if (!map.containsKey(blockHeight)) {
+			return null;
 		}
+
+		final Block block = new Block(ByteBuffer.wrap(map.get(blockHeight)));
+		if (withTransactions) {
+			getTransactionsForBlock(block);
+		}
+		return block;
 	}
 
 	/**
@@ -250,14 +250,14 @@ public final class BlockDbMapDbImpl implements BlockDb {
 			}
 		}
 
-		try (HTreeMap<byte[], Long> map = getBlockIndexByHashMap();) {
-			final byte[] hashBa = hash.toByteArray();
-			if (!map.containsKey(hashBa)) {
-				return null;
-			}
-			final long index = map.get(hashBa);
-			return getBlock(index, withTransactions);
+		final HTreeMap<byte[], Long> map = getBlockIndexByHashMap();
+		final byte[] hashBa = hash.toByteArray();
+		if (!map.containsKey(hashBa)) {
+			return null;
 		}
+		final long index = map.get(hashBa);
+		return getBlock(index, withTransactions);
+
 	}
 
 	/**
@@ -272,9 +272,8 @@ public final class BlockDbMapDbImpl implements BlockDb {
 				return 0;
 			}
 		}
-		try (HTreeMap<Long, byte[]> map = getBlockHeaderByIndexMap();) {
-			return map.sizeLong();
-		}
+		final HTreeMap<Long, byte[]> map = getBlockHeaderByIndexMap();
+		return map.sizeLong();
 	}
 
 	/**
@@ -283,7 +282,7 @@ public final class BlockDbMapDbImpl implements BlockDb {
 	 * @return the map of block headers by block indexes.
 	 */
 	public HTreeMap<Long, byte[]> getBlockHeaderByIndexMap() {
-		final HTreeMap<Long, byte[]> map = db.hashMap(BLOCK_HEADER_BY_INDEX, Serializer.LONG, Serializer.BYTE_ARRAY)
+		final HTreeMap<Long, byte[]> map = DB.hashMap(BLOCK_HEADER_BY_INDEX, Serializer.LONG, Serializer.BYTE_ARRAY)
 				.counterEnable().createOrOpen();
 		return map;
 	}
@@ -294,7 +293,7 @@ public final class BlockDbMapDbImpl implements BlockDb {
 	 * @return the map of block indexes by block hash.
 	 */
 	private HTreeMap<byte[], Long> getBlockIndexByHashMap() {
-		return db.hashMap(BLOCK_INDEX_BY_HASH, Serializer.BYTE_ARRAY, Serializer.LONG).createOrOpen();
+		return DB.hashMap(BLOCK_INDEX_BY_HASH, Serializer.BYTE_ARRAY, Serializer.LONG).createOrOpen();
 	}
 
 	/**
@@ -324,7 +323,7 @@ public final class BlockDbMapDbImpl implements BlockDb {
 	 * @return the map of byte arrays keys by block index.
 	 */
 	private HTreeMap<Long, byte[]> getByteArrayByBlockIndexMap(final String mapName) {
-		final HTreeMap<Long, byte[]> map = db.hashMap(mapName, Serializer.LONG, Serializer.BYTE_ARRAY).counterEnable()
+		final HTreeMap<Long, byte[]> map = DB.hashMap(mapName, Serializer.LONG, Serializer.BYTE_ARRAY).counterEnable()
 				.createOrOpen();
 		return map;
 	}
@@ -356,7 +355,7 @@ public final class BlockDbMapDbImpl implements BlockDb {
 	 */
 	@Override
 	public long getFileSize() {
-		return FileUtils.sizeOfDirectory(dir);
+		return FileUtils.sizeOfDirectory(DIR);
 	}
 
 	@Override
@@ -404,11 +403,8 @@ public final class BlockDbMapDbImpl implements BlockDb {
 	 */
 	private <T> Map<Integer, List<T>> getMapList(final String mapName, final long blockIndex,
 			final AbstractByteBufferFactory<T> mapToObject) {
-		final List<byte[]> baList;
-		try (HTreeMap<Long, byte[]> map = getByteArrayByBlockIndexMap(mapName);) {
-			baList = getByteArrayList(map, blockIndex);
-		}
-
+		final HTreeMap<Long, byte[]> map = getByteArrayByBlockIndexMap(mapName);
+		final List<byte[]> baList = getByteArrayList(map, blockIndex);
 		final Map<Integer, List<T>> tMapList = new TreeMap<>();
 		for (final byte[] ba : baList) {
 			final ByteBuffer bb = ByteBuffer.wrap(ba);
@@ -429,7 +425,8 @@ public final class BlockDbMapDbImpl implements BlockDb {
 	 * @return the max blockindex as an atomic long.
 	 */
 	private long getMaxBlockIndex() {
-		return db.atomicLong(MAX_BLOCK_INDEX, 0).createOrOpen().get();
+		final long retval = DB.atomicLong(MAX_BLOCK_INDEX, 0).createOrOpen().get();
+		return retval;
 	}
 
 	/**
@@ -461,7 +458,7 @@ public final class BlockDbMapDbImpl implements BlockDb {
 	 * @return the map of transaction keys by transaction hash.
 	 */
 	private HTreeMap<byte[], byte[]> getTransactionKeyByTransactionHashMap() {
-		final HTreeMap<byte[], byte[]> map = db
+		final HTreeMap<byte[], byte[]> map = DB
 				.hashMap(TRANSACTION_KEY_BY_HASH, Serializer.BYTE_ARRAY, Serializer.BYTE_ARRAY).counterEnable()
 				.createOrOpen();
 		return map;
@@ -489,7 +486,7 @@ public final class BlockDbMapDbImpl implements BlockDb {
 	 * @return the map of transactions by key.
 	 */
 	private HTreeMap<byte[], byte[]> getTransactionsByKeyMap() {
-		final HTreeMap<byte[], byte[]> map = db
+		final HTreeMap<byte[], byte[]> map = DB
 				.hashMap(TRANSACTION_BY_KEY, Serializer.BYTE_ARRAY, Serializer.BYTE_ARRAY).counterEnable()
 				.createOrOpen();
 		return map;
@@ -519,17 +516,15 @@ public final class BlockDbMapDbImpl implements BlockDb {
 	 */
 	private void getTransactionsForBlock(final Block block) {
 		final long blockIndex = block.getIndexAsLong();
-		final List<byte[]> txKeyBaList;
-		try (HTreeMap<Long, byte[]> map = getByteArrayByBlockIndexMap(TRANSACTION_KEYS_BY_BLOCK_INDEX);) {
-			txKeyBaList = getByteArrayList(map, blockIndex);
-		}
 
-		try (HTreeMap<byte[], byte[]> map = getTransactionsByKeyMap();) {
-			for (final byte[] txKey : txKeyBaList) {
-				final byte[] data = map.get(txKey);
-				final Transaction transaction = new Transaction(ByteBuffer.wrap(data));
-				block.getTransactionList().add(transaction);
-			}
+		final HTreeMap<Long, byte[]> txKeyListMap = getByteArrayByBlockIndexMap(TRANSACTION_KEYS_BY_BLOCK_INDEX);
+		final List<byte[]> txKeyBaList = getByteArrayList(txKeyListMap, blockIndex);
+
+		final HTreeMap<byte[], byte[]> txMap = getTransactionsByKeyMap();
+		for (final byte[] txKey : txKeyBaList) {
+			final byte[] data = txMap.get(txKey);
+			final Transaction transaction = new Transaction(ByteBuffer.wrap(data));
+			block.getTransactionList().add(transaction);
 		}
 
 		getTransactionOutputsWithIndex(block);
@@ -541,13 +536,12 @@ public final class BlockDbMapDbImpl implements BlockDb {
 
 	@Override
 	public Transaction getTransactionWithHash(final UInt256 hash) {
-		try (HTreeMap<byte[], byte[]> map = getTransactionKeyByTransactionHashMap()) {
-			final byte[] hashBa = hash.toByteArray();
-			if (!map.containsKey(hashBa)) {
-				return null;
-			}
-			return new Transaction(ByteBuffer.wrap(map.get(hashBa)));
+		final HTreeMap<byte[], byte[]> map = getTransactionKeyByTransactionHashMap();
+		final byte[] hashBa = hash.toByteArray();
+		if (!map.containsKey(hashBa)) {
+			return null;
 		}
+		return new Transaction(ByteBuffer.wrap(map.get(hashBa)));
 	}
 
 	/**
@@ -565,17 +559,15 @@ public final class BlockDbMapDbImpl implements BlockDb {
 		}
 
 		final long blockIndex = block.getIndexAsLong();
-		db.atomicLong(MAX_BLOCK_INDEX, blockIndex).createOrOpen().set(blockIndex);
+		DB.atomicLong(MAX_BLOCK_INDEX, blockIndex).createOrOpen().set(blockIndex);
 
 		final byte[] prevHashBa = block.prevHash.toByteArray();
 		ArrayUtils.reverse(prevHashBa);
 
-		try (HTreeMap<byte[], Long> map = getBlockIndexByHashMap()) {
-			map.put(block.hash.toByteArray(), blockIndex);
-		}
-		try (HTreeMap<Long, byte[]> map = getBlockHeaderByIndexMap()) {
-			map.put(blockIndex, block.toHeaderByteArray());
-		}
+		final HTreeMap<byte[], Long> blockIndexByHashMap = getBlockIndexByHashMap();
+		blockIndexByHashMap.put(block.hash.toByteArray(), blockIndex);
+		final HTreeMap<Long, byte[]> blockHeaderByIndexMap = getBlockHeaderByIndexMap();
+		blockHeaderByIndexMap.put(blockIndex, block.toHeaderByteArray());
 
 		int transactionIndex = 0;
 
@@ -629,7 +621,7 @@ public final class BlockDbMapDbImpl implements BlockDb {
 	 *            the source map to use.
 	 */
 	private void put(final String destMapName, final Map<Long, List<byte[]>> sourceMap) {
-		final HTreeMap<Long, byte[]> map = db.hashMap(destMapName, Serializer.LONG, Serializer.BYTE_ARRAY)
+		final HTreeMap<Long, byte[]> map = DB.hashMap(destMapName, Serializer.LONG, Serializer.BYTE_ARRAY)
 				.counterEnable().createOrOpen();
 		for (final Long key : sourceMap.keySet()) {
 			final List<byte[]> baList = sourceMap.get(key);
