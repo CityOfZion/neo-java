@@ -16,7 +16,15 @@ import neo.model.util.ModelUtil;
 public final class CoinReferenceFactory extends AbstractByteBufferFactory<CoinReference> {
 
 	@Override
+	public ByteBuffer fromObject(final CoinReference coinReference) {
+		final byte[] ba = ModelUtil.toByteArray(coinReference.prevHash.toByteArray(),
+				coinReference.prevIndex.toByteArray());
+		return ByteBuffer.wrap(ba);
+	}
+
+	@Override
 	public CoinReference toObject(final ByteBuffer bb) {
+		bb.getLong();
 		final byte[] prevHashBa = ModelUtil.getByteArray(bb);
 		final byte[] prevIndexBa = ModelUtil.getByteArray(bb);
 		final UInt256 prevHash = new UInt256(ByteBuffer.wrap(prevHashBa));

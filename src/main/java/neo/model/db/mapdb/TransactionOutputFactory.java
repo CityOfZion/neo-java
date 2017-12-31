@@ -19,7 +19,16 @@ import neo.model.util.ModelUtil;
 public final class TransactionOutputFactory extends AbstractByteBufferFactory<TransactionOutput> {
 
 	@Override
+	public ByteBuffer fromObject(final TransactionOutput transactionOutput) {
+		final byte[] ba = ModelUtil.toByteArray(transactionOutput.assetId.toByteArray(),
+				transactionOutput.value.toByteArray(), transactionOutput.scriptHash.toByteArray());
+		toObject(ByteBuffer.wrap(ba));
+		return ByteBuffer.wrap(ba);
+	}
+
+	@Override
 	public TransactionOutput toObject(final ByteBuffer bb) {
+		bb.getLong();
 		final byte[] assetIdBa = ModelUtil.getByteArray(bb);
 		final byte[] valueBa = ModelUtil.getByteArray(bb);
 		ArrayUtils.reverse(valueBa);

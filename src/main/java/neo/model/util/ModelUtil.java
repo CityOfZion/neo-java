@@ -1,11 +1,14 @@
 package neo.model.util;
 
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.math.BigInteger;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Base64;
 import java.util.List;
 
@@ -315,6 +318,56 @@ public final class ModelUtil {
 
 	public static String toBase64String(final byte[] bytes) {
 		return Base64.getEncoder().encodeToString(bytes);
+	}
+
+	/**
+	 * returns the list of byte arrays as a encoded byte array.
+	 *
+	 * @param baList
+	 *            the byte array list.
+	 * @return the encoded byte array.
+	 */
+	public static byte[] toByteArray(final byte[]... baList) {
+		return toByteArray(Arrays.asList(baList));
+	}
+
+	/**
+	 * converts a list of byte arrays into a byte array.
+	 *
+	 * @param baList
+	 *            the byte array list to use.
+	 * @return the byte array.
+	 */
+	public static byte[] toByteArray(final List<byte[]> baList) {
+		final ByteArrayOutputStream bout;
+		try (ByteArrayOutputStream out = new ByteArrayOutputStream()) {
+			NetworkUtil.writeLong(out, baList.size());
+			for (final byte[] ba : baList) {
+				NetworkUtil.writeByteArray(out, ba);
+			}
+			bout = out;
+		} catch (final IOException e) {
+			throw new RuntimeException(e);
+		}
+		return bout.toByteArray();
+	}
+
+	/**
+	 * converts a byte array into a list of byte arrays.
+	 *
+	 * @param ba
+	 *            the byte array to use.
+	 * @return the byte array.
+	 */
+	public static List<byte[]> toByteArrayList(final byte[] ba) {
+		final List<byte[]> baList = new ArrayList<>();
+		final ByteBuffer listBb = ByteBuffer.wrap(ba);
+		final long size = listBb.getLong();
+		for (long ix = 0; ix < size; ix++) {
+			final byte[] keyBa = ModelUtil.getByteArray(listBb);
+			baList.add(keyBa);
+		}
+		return baList;
 	}
 
 	public static String toHexString(final byte... ba) {

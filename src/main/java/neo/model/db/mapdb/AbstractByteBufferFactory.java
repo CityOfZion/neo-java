@@ -12,9 +12,17 @@ import java.nio.ByteBuffer;
  *            the type of object.
  */
 public abstract class AbstractByteBufferFactory<T> {
+	/**
+	 * creates a byte buffer from an object.
+	 *
+	 * @param t
+	 *            the object to use.
+	 * @return the byte buffer that was created.
+	 */
+	public abstract ByteBuffer fromObject(T t);
 
 	/**
-	 * creates an object from a map.
+	 * creates an object from a byte buffer.
 	 *
 	 * @param bb
 	 *            the byte buffer to use.

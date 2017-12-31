@@ -6,7 +6,6 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.sql.SQLException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -22,10 +21,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import neo.model.bytes.Fixed8;
-import neo.model.bytes.UInt16;
 import neo.model.bytes.UInt160;
 import neo.model.bytes.UInt256;
-import neo.model.bytes.UInt32;
 import neo.model.core.Block;
 import neo.model.core.CoinReference;
 import neo.model.core.Transaction;
@@ -44,19 +41,19 @@ import neo.model.util.NetworkUtil;
 public final class BlockDbMapDbImpl implements BlockDb {
 
 	/**
-	 * transaction scripts by index.
+	 * transaction scripts by transaction hash.
 	 */
-	private static final String TRANSACTION_SCRIPTS_BY_INDEX = "TransactionScriptsByIndex";
+	private static final String TRANSACTION_SCRIPTS_BY_HASH = "TransactionScriptsByHash";
 
 	/**
-	 * transaction outputs by index.
+	 * transaction outputs by transaction hash.
 	 */
-	private static final String TRANSACTION_OUTPUTS_BY_INDEX = "TransactionOutputsByIndex";
+	private static final String TRANSACTION_OUTPUTS_BY_HASH = "TransactionOutputsByHash";
 
 	/**
-	 * transaction inputs by index.
+	 * transaction inputs by transaction hash.
 	 */
-	private static final String TRANSACTION_INPUTS_BY_INDEX = "TransactionInputsByIndex";
+	private static final String TRANSACTION_INPUTS_BY_HASH = "TransactionInputsByHash";
 
 	/**
 	 * the logger.
@@ -126,6 +123,40 @@ public final class BlockDbMapDbImpl implements BlockDb {
 	}
 
 	/**
+	 * add data from a given map in the db to the list.
+	 *
+	 * @param mapName
+	 *            the map name to use.
+	 * @param keyBa
+	 *            the key ba to use.
+	 * @param list
+	 *            the list to add to.
+	 * @param factory
+	 *            the factory to use.
+	 * @param <T>
+	 *            the type of object the factory makes.
+	 */
+	private <T> void addMapDataToList(final String mapName, final byte[] keyBa, final List<T> list,
+			final AbstractByteBufferFactory<T> factory) {
+		if (LOG.isTraceEnabled()) {
+			LOG.trace("addMapDataToList {} keyBa:{}", mapName, ModelUtil.toHexString(keyBa));
+		}
+		final HTreeMap<byte[], byte[]> map = DB.hashMap(mapName, Serializer.BYTE_ARRAY, Serializer.BYTE_ARRAY)
+				.counterEnable().createOrOpen();
+		final byte[] listBa = map.get(keyBa);
+		if (LOG.isTraceEnabled()) {
+			LOG.trace("addMapDataToList {} listBa:{}", mapName, ModelUtil.toHexString(listBa));
+		}
+
+		final List<byte[]> baList = ModelUtil.toByteArrayList(listBa);
+		for (final byte[] ba : baList) {
+			final ByteBuffer bb = ByteBuffer.wrap(ba);
+			final T t = factory.toObject(bb);
+			list.add(t);
+		}
+	}
+
+	/**
 	 * close the database.
 	 *
 	 * @throws SQLException
@@ -169,10 +200,10 @@ public final class BlockDbMapDbImpl implements BlockDb {
 
 		final TransactionOutputFactory objectFactory = new TransactionOutputFactory();
 
-		final HTreeMap<Long, byte[]> map = getByteArrayByBlockIndexMap(TRANSACTION_OUTPUTS_BY_INDEX);
+		final HTreeMap<Long, byte[]> map = getByteArrayByBlockIndexMap(TRANSACTION_OUTPUTS_BY_HASH);
 		for (final long key : map.getKeys()) {
 			final byte[] listBa = map.get(key);
-			final List<byte[]> baList = toByteArrayList(listBa);
+			final List<byte[]> baList = ModelUtil.toByteArrayList(listBa);
 			for (final byte[] ba : baList) {
 				final TransactionOutput output = objectFactory.toObject(ByteBuffer.wrap(ba));
 
@@ -323,7 +354,7 @@ public final class BlockDbMapDbImpl implements BlockDb {
 	private <K> List<byte[]> getByteArrayList(final HTreeMap<K, byte[]> map, final K key) {
 		if (map.containsKey(key)) {
 			final byte[] keyListBa = map.get(key);
-			final List<byte[]> keyBaList = toByteArrayList(keyListBa);
+			final List<byte[]> keyBaList = ModelUtil.toByteArrayList(keyListBa);
 			return keyBaList;
 		}
 		return Collections.emptyList();
@@ -370,37 +401,6 @@ public final class BlockDbMapDbImpl implements BlockDb {
 	}
 
 	/**
-	 * return a map of the objects, divided into their transactions indexes.
-	 *
-	 * @param mapName
-	 *            the map name to use.
-	 * @param blockIndex
-	 *            the block index byte array to use.
-	 * @param mapToObject
-	 *            the mapToObject to use.
-	 * @param <T>
-	 *            the object type to use.
-	 * @return a map of the objects, divided into their transactions indexes.
-	 */
-	private <T> Map<Integer, List<T>> getMapList(final String mapName, final long blockIndex,
-			final AbstractByteBufferFactory<T> mapToObject) {
-		final HTreeMap<Long, byte[]> map = getByteArrayByBlockIndexMap(mapName);
-		final List<byte[]> baList = getByteArrayList(map, blockIndex);
-		final Map<Integer, List<T>> tMapList = new TreeMap<>();
-		for (final byte[] ba : baList) {
-			final ByteBuffer bb = ByteBuffer.wrap(ba);
-			final int transactionIndex = bb.getInt();
-			final T t = mapToObject.toObject(bb);
-			if (!tMapList.containsKey(transactionIndex)) {
-				tMapList.put(transactionIndex, new ArrayList<>());
-			}
-			tMapList.get(transactionIndex).add(t);
-		}
-
-		return tMapList;
-	}
-
-	/**
 	 * return the max blockindex as an atomic long.
 	 *
 	 * @return the max blockindex as an atomic long.
@@ -411,26 +411,15 @@ public final class BlockDbMapDbImpl implements BlockDb {
 	}
 
 	/**
-	 * gets the inputs for each transaction in the block, and adds them to the
-	 * transaction.
+	 * gets the inputs for a transaction, and adds them to the transaction.
 	 *
-	 * @param block
-	 *            the block to use.
+	 * @param transactionKey
+	 *            the transaction key to use
+	 * @param transaction
+	 *            the transaction to use
 	 */
-	private void getTransactionInputsWithIndex(final Block block) {
-		final Map<Integer, List<CoinReference>> inputsMap = getMapList(TRANSACTION_INPUTS_BY_INDEX,
-				block.getIndexAsLong(), new CoinReferenceFactory());
-		for (final int txIx : inputsMap.keySet()) {
-			final List<CoinReference> inputs = inputsMap.get(txIx);
-
-			if (txIx >= block.getTransactionList().size()) {
-				throw new RuntimeException(
-						"txIx \"" + txIx + "\" exceeds txList.size \"" + block.getTransactionList().size()
-								+ "\" for block index \"" + block.getIndexAsLong() + "\" hash \"" + block.hash + "\"");
-			} else {
-				block.getTransactionList().get(txIx).inputs.addAll(inputs);
-			}
-		}
+	private void getTransactionInputs(final byte[] transactionKey, final Transaction transaction) {
+		addMapDataToList(TRANSACTION_INPUTS_BY_HASH, transactionKey, transaction.inputs, new CoinReferenceFactory());
 	}
 
 	/**
@@ -467,19 +456,16 @@ public final class BlockDbMapDbImpl implements BlockDb {
 	}
 
 	/**
-	 * gets the outputs for each transaction in the block, and adds them to the
-	 * transaction.
+	 * gets the outputs for a transaction, and adds them to the transaction.
 	 *
-	 * @param block
-	 *            the block to use
+	 * @param transactionKey
+	 *            the transaction key to use
+	 * @param transaction
+	 *            the transaction to use
 	 */
-	private void getTransactionOutputsWithIndex(final Block block) {
-		final Map<Integer, List<TransactionOutput>> outputsMap = getMapList(TRANSACTION_OUTPUTS_BY_INDEX,
-				block.getIndexAsLong(), new TransactionOutputFactory());
-		for (final int txIx : outputsMap.keySet()) {
-			final List<TransactionOutput> outputs = outputsMap.get(txIx);
-			block.getTransactionList().get(txIx).outputs.addAll(outputs);
-		}
+	private void getTransactionOutputs(final byte[] transactionKey, final Transaction transaction) {
+		addMapDataToList(TRANSACTION_OUTPUTS_BY_HASH, transactionKey, transaction.outputs,
+				new TransactionOutputFactory());
 	}
 
 	/**
@@ -495,19 +481,15 @@ public final class BlockDbMapDbImpl implements BlockDb {
 	}
 
 	/**
-	 * gets the scripts for each transaction in the block, and adds them to the
-	 * transaction.
+	 * gets the inputs for a transaction, and adds them to the transaction.
 	 *
-	 * @param block
-	 *            the block to use
+	 * @param transactionKey
+	 *            the transaction key to use
+	 * @param transaction
+	 *            the transaction to use
 	 */
-	private void getTransactionScriptsWithIndex(final Block block) {
-		final Map<Integer, List<Witness>> scriptsMap = getMapList(TRANSACTION_SCRIPTS_BY_INDEX, block.getIndexAsLong(),
-				new WitnessFactory());
-		for (final int txIx : scriptsMap.keySet()) {
-			final List<Witness> scripts = scriptsMap.get(txIx);
-			block.getTransactionList().get(txIx).scripts.addAll(scripts);
-		}
+	private void getTransactionScripts(final byte[] transactionKey, final Transaction transaction) {
+		addMapDataToList(TRANSACTION_SCRIPTS_BY_HASH, transactionKey, transaction.scripts, new WitnessFactory());
 	}
 
 	/**
@@ -524,16 +506,16 @@ public final class BlockDbMapDbImpl implements BlockDb {
 
 		final HTreeMap<byte[], byte[]> txMap = getTransactionsByKeyMap();
 		for (final byte[] txKey : txKeyBaList) {
+			if (LOG.isTraceEnabled()) {
+				LOG.trace("getTransactionsForBlock {} txKey:{}", blockIndex, ModelUtil.toHexString(txKey));
+			}
 			final byte[] data = txMap.get(txKey);
 			final Transaction transaction = new Transaction(ByteBuffer.wrap(data));
+			getTransactionOutputs(txKey, transaction);
+			getTransactionInputs(txKey, transaction);
+			getTransactionScripts(txKey, transaction);
 			block.getTransactionList().add(transaction);
 		}
-
-		getTransactionOutputsWithIndex(block);
-
-		getTransactionInputsWithIndex(block);
-
-		getTransactionScriptsWithIndex(block);
 	}
 
 	@Override
@@ -577,9 +559,15 @@ public final class BlockDbMapDbImpl implements BlockDb {
 		final Map<ByteBuffer, byte[]> txByKeyMap = new TreeMap<>();
 		final Map<ByteBuffer, byte[]> txKeyByTxHashMap = new TreeMap<>();
 
-		final Map<ByteBuffer, byte[]> txInputByTxKeyAndIndexMap = new TreeMap<>();
-		final Map<ByteBuffer, byte[]> txOutputByTxKeyAndIndexMap = new TreeMap<>();
-		final Map<ByteBuffer, byte[]> txScriptByTxKeyAndIndexMap = new TreeMap<>();
+		final Map<ByteBuffer, List<byte[]>> txInputByTxKeyAndIndexMap = new TreeMap<>();
+		final Map<ByteBuffer, List<byte[]>> txOutputByTxKeyAndIndexMap = new TreeMap<>();
+		final Map<ByteBuffer, List<byte[]>> txScriptByTxKeyAndIndexMap = new TreeMap<>();
+
+		txKeyByBlockIxMap.put(blockIndex, new ArrayList<>());
+
+		final TransactionOutputFactory transactionOutputFactory = new TransactionOutputFactory();
+		final CoinReferenceFactory coinReferenceFactory = new CoinReferenceFactory();
+		final WitnessFactory witnessFactory = new WitnessFactory();
 
 		for (final Transaction transaction : block.getTransactionList()) {
 			final byte[] transactionBaseBa = transaction.toBaseByteArray();
@@ -592,29 +580,24 @@ public final class BlockDbMapDbImpl implements BlockDb {
 
 			txKeyByTxHashMap.put(ByteBuffer.wrap(transaction.hash.toByteArray()), transactionKeyBa);
 
+			txInputByTxKeyAndIndexMap.put(transactionKeyBb, new ArrayList<>());
+			txOutputByTxKeyAndIndexMap.put(transactionKeyBb, new ArrayList<>());
+			txScriptByTxKeyAndIndexMap.put(transactionKeyBb, new ArrayList<>());
+
 			for (int inputIx = 0; inputIx < transaction.inputs.size(); inputIx++) {
-				final byte[] txInputIxByte = new UInt32(inputIx).toByteArray();
 				final CoinReference input = transaction.inputs.get(inputIx);
-
-				txInputByTxKeyAndIndexMap.put(transactionKeyBb,
-						toByteArray(txInputIxByte, input.prevHash.toByteArray(), input.prevIndex.toByteArray()));
-
+				putList(txInputByTxKeyAndIndexMap, transactionKeyBb, coinReferenceFactory.fromObject(input).array());
 			}
 
 			for (int outputIx = 0; outputIx < transaction.outputs.size(); outputIx++) {
-				final byte[] txOutputIxByte = new UInt16(outputIx).toByteArray();
 				final TransactionOutput output = transaction.outputs.get(outputIx);
-
-				txInputByTxKeyAndIndexMap.put(transactionKeyBb, toByteArray(txOutputIxByte,
-						output.assetId.toByteArray(), output.value.toByteArray(), output.scriptHash.toByteArray()));
+				putList(txOutputByTxKeyAndIndexMap, transactionKeyBb,
+						transactionOutputFactory.fromObject(output).array());
 			}
 
 			for (int scriptIx = 0; scriptIx < transaction.scripts.size(); scriptIx++) {
-				final byte[] txScriptIxByte = new UInt32(scriptIx).toByteArray();
 				final Witness script = transaction.scripts.get(scriptIx);
-
-				txInputByTxKeyAndIndexMap.put(transactionKeyBb, toByteArray(txScriptIxByte,
-						script.getCopyOfInvocationScript(), script.getCopyOfVerificationScript()));
+				putList(txScriptByTxKeyAndIndexMap, transactionKeyBb, witnessFactory.fromObject(script).array());
 			}
 
 			transactionIndex++;
@@ -623,22 +606,14 @@ public final class BlockDbMapDbImpl implements BlockDb {
 		putWithByteBufferKey(TRANSACTION_KEY_BY_HASH, txKeyByTxHashMap);
 		putWithByteBufferKey(TRANSACTION_BY_KEY, txByKeyMap);
 
-		final Map<Long, byte[]> txKeyBaByBlockIxMap = new TreeMap<>();
-
-		for (final long blockIx : txKeyByBlockIxMap.keySet()) {
-			final List<byte[]> txKeyList = txKeyByBlockIxMap.get(blockIx);
-			txKeyBaByBlockIxMap.put(blockIx, toByteArray(txKeyList));
-		}
-
-		putWithLongKey(TRANSACTION_KEYS_BY_BLOCK_INDEX, txKeyBaByBlockIxMap);
-		putWithByteBufferKey(TRANSACTION_INPUTS_BY_INDEX, txInputByTxKeyAndIndexMap);
-		putWithByteBufferKey(TRANSACTION_OUTPUTS_BY_INDEX, txOutputByTxKeyAndIndexMap);
-		putWithByteBufferKey(TRANSACTION_SCRIPTS_BY_INDEX, txScriptByTxKeyAndIndexMap);
-
+		putWithLongKey(TRANSACTION_KEYS_BY_BLOCK_INDEX, toByteBufferValue(txKeyByBlockIxMap));
+		putWithByteBufferKey(TRANSACTION_INPUTS_BY_HASH, toByteBufferValue(txInputByTxKeyAndIndexMap));
+		putWithByteBufferKey(TRANSACTION_OUTPUTS_BY_HASH, toByteBufferValue(txOutputByTxKeyAndIndexMap));
+		putWithByteBufferKey(TRANSACTION_SCRIPTS_BY_HASH, toByteBufferValue(txScriptByTxKeyAndIndexMap));
 	}
 
 	/**
-	 * adds teh value to the map, using the key.
+	 * adds the value to the map, using the key.
 	 *
 	 * @param map
 	 *            the map to use.
@@ -650,9 +625,6 @@ public final class BlockDbMapDbImpl implements BlockDb {
 	 *            the type of key.
 	 */
 	private <K> void putList(final Map<K, List<byte[]>> map, final K key, final byte[] value) {
-		if (!map.containsKey(key)) {
-			map.put(key, new ArrayList<>());
-		}
 		map.get(key).add(value);
 	}
 
@@ -669,6 +641,12 @@ public final class BlockDbMapDbImpl implements BlockDb {
 				.counterEnable().createOrOpen();
 		for (final ByteBuffer key : sourceMap.keySet()) {
 			final byte[] ba = sourceMap.get(key);
+
+			if (LOG.isTraceEnabled()) {
+				LOG.trace("putWithByteBufferKey {} {} {}", destMapName, ModelUtil.toHexString(key.array()),
+						ModelUtil.toHexString(ba));
+			}
+
 			map.put(key.array(), ba);
 		}
 	}
@@ -691,53 +669,21 @@ public final class BlockDbMapDbImpl implements BlockDb {
 	}
 
 	/**
-	 * returns the list of byte arrays as a encoded byte array.
+	 * serializes a list of byte array values into a single byte array.
 	 *
-	 * @param baList
-	 *            the byte array list.
-	 * @return the encoded byte array.
+	 * @param sourceMap
+	 *            the map to use.
+	 * @param <K>
+	 *            the type of key.
+	 * @return the map with byte array values.
 	 */
-	private byte[] toByteArray(final byte[]... baList) {
-		return toByteArray(Arrays.asList(baList));
-	}
-
-	/**
-	 * converts a list of byte arrays into a byte array.
-	 *
-	 * @param baList
-	 *            the byte array list to use.
-	 * @return the byte array.
-	 */
-	private byte[] toByteArray(final List<byte[]> baList) {
-		final ByteArrayOutputStream bout;
-		try (ByteArrayOutputStream out = new ByteArrayOutputStream()) {
-			NetworkUtil.writeLong(out, baList.size());
-			for (final byte[] ba : baList) {
-				NetworkUtil.writeByteArray(out, ba);
-			}
-			bout = out;
-		} catch (final IOException e) {
-			throw new RuntimeException(e);
+	private <K> Map<K, byte[]> toByteBufferValue(final Map<K, List<byte[]>> sourceMap) {
+		final Map<K, byte[]> destMap = new TreeMap<>();
+		for (final K key : sourceMap.keySet()) {
+			final List<byte[]> baList = sourceMap.get(key);
+			destMap.put(key, ModelUtil.toByteArray(baList));
 		}
-		return bout.toByteArray();
-	}
-
-	/**
-	 * converts a byte array into a list of byte arrays.
-	 *
-	 * @param ba
-	 *            the byte array to use.
-	 * @return the byte array.
-	 */
-	private List<byte[]> toByteArrayList(final byte[] ba) {
-		final List<byte[]> baList = new ArrayList<>();
-		final ByteBuffer listBb = ByteBuffer.wrap(ba);
-		final long size = listBb.getLong();
-		for (long ix = 0; ix < size; ix++) {
-			final byte[] keyBa = ModelUtil.getByteArray(listBb);
-			baList.add(keyBa);
-		}
-		return baList;
+		return destMap;
 	}
 
 }
