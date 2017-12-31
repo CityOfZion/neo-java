@@ -13,7 +13,6 @@ import java.util.TreeMap;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang.ArrayUtils;
-import org.mapdb.Atomic;
 import org.mapdb.DB;
 import org.mapdb.DBMaker;
 import org.mapdb.HTreeMap;
@@ -109,10 +108,16 @@ public final class BlockDbMapDbImpl implements BlockDb {
 	private final File dir = new File("java-chain/db");
 
 	/**
+	 * the file.
+	 */
+	private final File file = new File(dir, "db.mapdb");
+
+	/**
 	 * the constructor.
 	 */
 	public BlockDbMapDbImpl() {
-		db = DBMaker.fileDB(dir).make();
+		dir.mkdirs();
+		db = DBMaker.fileDB(file).transactionEnable().make();
 	}
 
 	/**
@@ -306,8 +311,8 @@ public final class BlockDbMapDbImpl implements BlockDb {
 			}
 		}
 
-		final Atomic.Long blockHeight = getMaxBlockIndex();
-		return getBlock(blockHeight.get(), withTransactions);
+		final long blockHeight = getMaxBlockIndex();
+		return getBlock(blockHeight, withTransactions);
 	}
 
 	/**
@@ -423,8 +428,8 @@ public final class BlockDbMapDbImpl implements BlockDb {
 	 *
 	 * @return the max blockindex as an atomic long.
 	 */
-	private Atomic.Long getMaxBlockIndex() {
-		return db.atomicLong(MAX_BLOCK_INDEX).createOrOpen();
+	private long getMaxBlockIndex() {
+		return db.atomicLong(MAX_BLOCK_INDEX, 0).createOrOpen().get();
 	}
 
 	/**
@@ -558,10 +563,13 @@ public final class BlockDbMapDbImpl implements BlockDb {
 				return;
 			}
 		}
+
+		final long blockIndex = block.getIndexAsLong();
+		db.atomicLong(MAX_BLOCK_INDEX, blockIndex).createOrOpen().set(blockIndex);
+
 		final byte[] prevHashBa = block.prevHash.toByteArray();
 		ArrayUtils.reverse(prevHashBa);
 
-		final long blockIndex = block.getIndexAsLong();
 		try (HTreeMap<byte[], Long> map = getBlockIndexByHashMap()) {
 			map.put(block.hash.toByteArray(), blockIndex);
 		}
