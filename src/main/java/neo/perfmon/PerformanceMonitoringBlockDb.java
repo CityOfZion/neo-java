@@ -2,6 +2,8 @@ package neo.perfmon;
 
 import java.util.Map;
 
+import org.json.JSONObject;
+
 import neo.model.bytes.Fixed8;
 import neo.model.bytes.UInt160;
 import neo.model.bytes.UInt256;
@@ -21,12 +23,16 @@ public final class PerformanceMonitoringBlockDb implements BlockDb {
 	/**
 	 * the delegate.
 	 */
-	private final BlockDb delegate = new ReadCacheBlockDBImpl();
+	private final BlockDb delegate;
 
 	/**
 	 * the constructor.
+	 *
+	 * @param config
+	 *            the configuration to use.
 	 */
-	public PerformanceMonitoringBlockDb() {
+	public PerformanceMonitoringBlockDb(final JSONObject config) {
+		delegate = new ReadCacheBlockDBImpl(config);
 	}
 
 	@Override

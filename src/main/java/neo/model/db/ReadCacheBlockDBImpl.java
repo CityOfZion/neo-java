@@ -5,6 +5,8 @@ import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
 
+import org.json.JSONObject;
+
 import neo.model.bytes.Fixed8;
 import neo.model.bytes.UInt160;
 import neo.model.bytes.UInt256;
@@ -23,7 +25,7 @@ public final class ReadCacheBlockDBImpl implements BlockDb {
 	/**
 	 * the delegate.
 	 */
-	private final BlockDb delegate = new BlockDbH2Impl();
+	private final BlockDb delegate;
 
 	/**
 	 * the set of known hashes.
@@ -34,6 +36,16 @@ public final class ReadCacheBlockDBImpl implements BlockDb {
 	 * the block count.
 	 */
 	private Long cachedBlockCount;
+
+	/**
+	 * the constructor.
+	 *
+	 * @param config
+	 *            the configuration to use.
+	 */
+	public ReadCacheBlockDBImpl(final JSONObject config) {
+		delegate = new BlockDbH2Impl(config);
+	}
 
 	/**
 	 * clears all cached objects.

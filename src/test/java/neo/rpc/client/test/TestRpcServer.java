@@ -56,7 +56,8 @@ public class TestRpcServer {
 		final JSONObject controllerNodeConfig = ConfigurationUtil.getConfiguration();
 		final JSONObject localJson = controllerNodeConfig.getJSONObject(ConfigurationUtil.LOCAL);
 		final JSONObject remoteJson = controllerNodeConfig.getJSONObject(ConfigurationUtil.REMOTE);
-		localJson.put(ConfigurationUtil.BLOCK_DB_IMPL, "neo.rpc.client.test.TestRpcServer$JsonBlockDbImpl");
+		final JSONObject blockDbJson = localJson.getJSONObject(ConfigurationUtil.BLOCK_DB);
+		blockDbJson.put(ConfigurationUtil.IMPL, "neo.rpc.client.test.TestRpcServer$JsonBlockDbImpl");
 		localJson.put(ConfigurationUtil.PORT, 30333);
 		CONTROLLER = new LocalControllerNode(controllerNodeConfig);
 		final RemoteNodeData ackRemoteNode = new RemoteNodeData(remoteJson);
@@ -446,7 +447,7 @@ public class TestRpcServer {
 		/**
 		 * the constructor.
 		 */
-		public JsonBlockDbImpl() {
+		public JsonBlockDbImpl(final JSONObject config) {
 			final String dbStr = TestUtil.getJsonTestResourceAsString("TestRpcServer", "BlockDbImpl");
 			jsonArray = new JSONArray(dbStr);
 		}

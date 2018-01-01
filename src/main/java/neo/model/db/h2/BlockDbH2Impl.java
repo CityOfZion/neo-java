@@ -43,6 +43,11 @@ import neo.model.db.BlockDb;
 public final class BlockDbH2Impl implements BlockDb {
 
 	/**
+	 * the transaction index.
+	 */
+	private static final String TRANSACTION_INDEX = "transaction_index";
+
+	/**
 	 * the JSON key "sql".
 	 */
 	private static final String SQL = "sql";
@@ -74,8 +79,11 @@ public final class BlockDbH2Impl implements BlockDb {
 
 	/**
 	 * the constructor.
+	 *
+	 * @param config
+	 *            the configuration to use.
 	 */
-	public BlockDbH2Impl() {
+	public BlockDbH2Impl(final JSONObject config) {
 		try (InputStream resourceAsStream = BlockDbH2Impl.class.getResourceAsStream(SQL_CACHE_XML);) {
 			final String jsonStr = IOUtils.toString(resourceAsStream, "UTF-8");
 			sqlCache = XML.toJSONObject(jsonStr, true).getJSONObject("BlockDbImpl");
@@ -84,7 +92,7 @@ public final class BlockDbH2Impl implements BlockDb {
 		}
 
 		ds = new JdbcDataSource();
-		ds.setUrl(sqlCache.getString("url"));
+		ds.setUrl(config.getString("url"));
 
 		final JdbcTemplate t = new JdbcTemplate(ds);
 
@@ -276,33 +284,6 @@ public final class BlockDbH2Impl implements BlockDb {
 	}
 
 	/**
-	 * return the block with the maximum value in the index column.
-	 *
-	 * @param withTransactions
-	 *            if true, add transactions. If false, only return the block header.
-	 * @return the block with the maximum value in the index column.
-	 */
-	private Block getBlockWithMaxIndex(final boolean withTransactions) {
-		synchronized (this) {
-			if (closed) {
-				return null;
-			}
-		}
-		final JdbcTemplate t = new JdbcTemplate(ds);
-		final String sql = getSql("getBlockWithMaxIndex");
-		final List<byte[]> data = t.queryForList(sql, byte[].class);
-		if (data.isEmpty()) {
-			return null;
-		}
-
-		final Block block = new Block(ByteBuffer.wrap(data.get(0)));
-		if (withTransactions) {
-			getTransactionsForBlock(block);
-		}
-		return block;
-	}
-
-	/**
 	 * return the file size.
 	 *
 	 * @return the file size.
@@ -340,7 +321,20 @@ public final class BlockDbH2Impl implements BlockDb {
 	 */
 	@Override
 	public Block getHeaderOfBlockWithMaxIndex() {
-		return getBlockWithMaxIndex(false);
+		synchronized (this) {
+			if (closed) {
+				return null;
+			}
+		}
+		final JdbcTemplate t = new JdbcTemplate(ds);
+		final String sql = getSql("getBlockWithMaxIndex");
+		final List<byte[]> data = t.queryForList(sql, byte[].class);
+		if (data.isEmpty()) {
+			return null;
+		}
+
+		final Block block = new Block(ByteBuffer.wrap(data.get(0)));
+		return block;
 	}
 
 	/**
@@ -350,8 +344,8 @@ public final class BlockDbH2Impl implements BlockDb {
 	 *            the jdbc operations to use.
 	 * @param sqlKey
 	 *            the sql key to use.
-	 * @param blockIndexBa
-	 *            the block index byte array to use.
+	 * @param sqlArgsBaList
+	 *            the byte arrays to use for SQL arguments.
 	 * @param mapToObject
 	 *            the mapToObject to use.
 	 * @param <T>
@@ -359,17 +353,16 @@ public final class BlockDbH2Impl implements BlockDb {
 	 * @return a map of the objects, divided into their transactions indexes.
 	 */
 	private <T> Map<Integer, List<T>> getMapList(final JdbcOperations jdbcOperations, final String sqlKey,
-			final byte[] blockIndexBa, final AbstractMapToObject<T> mapToObject) {
+			final AbstractMapToObject<T> mapToObject, final byte[]... sqlArgsBaList) {
 		final String sql = getSql(sqlKey);
 
-		final List<Map<String, Object>> mapList = jdbcOperations.queryForList(sql, blockIndexBa);
+		final List<Map<String, Object>> mapList = jdbcOperations.queryForList(sql, (Object[]) sqlArgsBaList);
 
 		final Map<Integer, List<T>> tMapList = new TreeMap<>();
 		for (final Map<String, Object> map : mapList) {
-			final byte[] transactionIndexBa = (byte[]) map.get("transaction_index");
+			final byte[] transactionIndexBa = (byte[]) map.get(TRANSACTION_INDEX);
 			final T t = mapToObject.toObject(map);
-			final UInt16 transactionIndexObj = new UInt16(transactionIndexBa);
-			final int transactionIndex = transactionIndexObj.asInt();
+			final int transactionIndex = getTransactionIndex(transactionIndexBa);
 			if (!tMapList.containsKey(transactionIndex)) {
 				tMapList.put(transactionIndex, new ArrayList<>());
 			}
@@ -391,6 +384,19 @@ public final class BlockDbH2Impl implements BlockDb {
 	}
 
 	/**
+	 * converts a transaction index byte array into an integer.
+	 *
+	 * @param transactionIndexBa
+	 *            the byte array to use.
+	 * @return the integer index.
+	 */
+	private int getTransactionIndex(final byte[] transactionIndexBa) {
+		final UInt16 transactionIndexObj = new UInt16(transactionIndexBa);
+		final int transactionIndex = transactionIndexObj.asInt();
+		return transactionIndex;
+	}
+
+	/**
 	 * gets the inputs for each transaction in the block, and adds them to the
 	 * transaction.
 	 *
@@ -403,8 +409,8 @@ public final class BlockDbH2Impl implements BlockDb {
 	 */
 	private void getTransactionInputsWithIndex(final Block block, final JdbcOperations jdbcOperations,
 			final byte[] blockIndexBa) {
-		final Map<Integer, List<CoinReference>> inputsMap = getMapList(jdbcOperations, "getTransactionInputsWithIndex",
-				blockIndexBa, new CoinReferenceMapToObject());
+		final Map<Integer, List<CoinReference>> inputsMap = getMapList(jdbcOperations,
+				"getTransactionInputsWithBlockIndex", new CoinReferenceMapToObject(), blockIndexBa);
 		for (final int txIx : inputsMap.keySet()) {
 			final List<CoinReference> inputs = inputsMap.get(txIx);
 
@@ -432,7 +438,7 @@ public final class BlockDbH2Impl implements BlockDb {
 	private void getTransactionOutputsWithIndex(final Block block, final JdbcOperations jdbcOperations,
 			final byte[] blockIndexBa) {
 		final Map<Integer, List<TransactionOutput>> outputsMap = getMapList(jdbcOperations,
-				"getTransactionOutputsWithIndex", blockIndexBa, new TransactionOutputMapToObject());
+				"getTransactionOutputsWithBlockIndex", new TransactionOutputMapToObject(), blockIndexBa);
 		for (final int txIx : outputsMap.keySet()) {
 			final List<TransactionOutput> outputs = outputsMap.get(txIx);
 			block.getTransactionList().get(txIx).outputs.addAll(outputs);
@@ -452,8 +458,8 @@ public final class BlockDbH2Impl implements BlockDb {
 	 */
 	private void getTransactionScriptsWithIndex(final Block block, final JdbcOperations jdbcOperations,
 			final byte[] blockIndexBa) {
-		final Map<Integer, List<Witness>> scriptsMap = getMapList(jdbcOperations, "getTransactionScriptsWithIndex",
-				blockIndexBa, new WitnessMapToObject());
+		final Map<Integer, List<Witness>> scriptsMap = getMapList(jdbcOperations, "getTransactionScriptsWithBlockIndex",
+				new WitnessMapToObject(), blockIndexBa);
 		for (final int txIx : scriptsMap.keySet()) {
 			final List<Witness> scripts = scriptsMap.get(txIx);
 			block.getTransactionList().get(txIx).scripts.addAll(scripts);
@@ -488,13 +494,37 @@ public final class BlockDbH2Impl implements BlockDb {
 	public Transaction getTransactionWithHash(final UInt256 hash) {
 		final JdbcTemplate t = new JdbcTemplate(ds);
 		final String sql = getSql("getTransactionWithHash");
-		final List<byte[]> dataList = t.queryForList(sql, byte[].class, hash.toByteArray());
+		final List<Map<String, Object>> dataList = t.queryForList(sql, hash.toByteArray());
 
 		if (dataList.isEmpty()) {
 			return null;
 		}
 
-		return new Transaction(ByteBuffer.wrap(dataList.get(0)));
+		final Map<String, Object> data = dataList.get(0);
+
+		final byte[] blockIndexBa = (byte[]) data.get("block_index");
+		final byte[] transactionIndexBa = (byte[]) data.get(TRANSACTION_INDEX);
+		final byte[] transactionBa = (byte[]) data.get("transaction");
+		final int transactionIndex = getTransactionIndex(transactionIndexBa);
+
+		final Transaction transaction = new Transaction(ByteBuffer.wrap(transactionBa));
+
+		final Map<Integer, List<TransactionOutput>> outputsMap = getMapList(t,
+				"getTransactionOutputsWithBlockAndTransactionIndex", new TransactionOutputMapToObject(), blockIndexBa,
+				transactionIndexBa);
+		transaction.outputs.addAll(outputsMap.get(transactionIndex));
+
+		final Map<Integer, List<CoinReference>> inputsMap = getMapList(t,
+				"getTransactionInputsWithBlockAndTransactionIndex", new CoinReferenceMapToObject(), blockIndexBa,
+				transactionIndexBa);
+		transaction.inputs.addAll(inputsMap.get(transactionIndex));
+
+		final Map<Integer, List<Witness>> scriptsMap = getMapList(t,
+				"getTransactionScriptsWithBlockAndTransactionIndex", new WitnessMapToObject(), blockIndexBa,
+				transactionIndexBa);
+		transaction.scripts.addAll(scriptsMap.get(transactionIndex));
+
+		return transaction;
 	}
 
 	/**

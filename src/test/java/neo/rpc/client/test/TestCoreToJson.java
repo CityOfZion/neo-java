@@ -13,12 +13,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import neo.model.bytes.Fixed8;
-import neo.model.bytes.UInt16;
 import neo.model.bytes.UInt160;
 import neo.model.bytes.UInt256;
 import neo.model.bytes.UInt32;
 import neo.model.bytes.UInt64;
-import neo.model.core.Block;
 import neo.model.core.ClaimExclusiveData;
 import neo.model.core.CoinReference;
 import neo.model.core.EnrollmentExclusiveData;
@@ -32,6 +30,7 @@ import neo.model.core.Transaction;
 import neo.model.core.TransactionOutput;
 import neo.model.core.Witness;
 import neo.model.util.ModelUtil;
+import neo.rpc.client.test.util.MockUtil;
 import neo.rpc.client.test.util.TestUtil;
 
 /**
@@ -130,10 +129,9 @@ public class TestCoreToJson {
 	 */
 	@Test
 	public void test006Block() {
-		final int minSize = (UInt32.SIZE * 3) + (UInt256.SIZE * 2) + (UInt64.SIZE) + (UInt160.SIZE) + 4;
 		final String expectedStrRaw = TestUtil.getJsonTestResourceAsString(getClass().getSimpleName(), "test006Block");
 		final String expectedStr = new JSONObject(expectedStrRaw).toString();
-		final String actualStr = new Block(ByteBuffer.wrap(new byte[minSize])).toString();
+		final String actualStr = MockUtil.getMockBlock000().toString();
 		Assert.assertEquals(TestUtil.RESPONSES_MUST_MATCH, expectedStr, actualStr);
 	}
 
@@ -142,9 +140,9 @@ public class TestCoreToJson {
 	 */
 	@Test
 	public void test007Witness() {
-		final int minSize = 2;
+		final Witness witness = MockUtil.getWitness000();
 		final String expectedStr = "{\"invocation\":\"\",\"verification\":\"\"}";
-		final String actualStr = new Witness(ByteBuffer.wrap(new byte[minSize])).toString();
+		final String actualStr = witness.toString();
 		Assert.assertEquals(TestUtil.RESPONSES_MUST_MATCH, expectedStr, actualStr);
 	}
 
@@ -165,11 +163,11 @@ public class TestCoreToJson {
 	 */
 	@Test
 	public void test009CoinReference() {
-		final int minSize = UInt256.SIZE + UInt16.SIZE;
+		final CoinReference coinReference = MockUtil.getCoinReference000();
 		final String expectedStrRaw = TestUtil.getJsonTestResourceAsString(getClass().getSimpleName(),
 				"test009CoinReference");
 		final String expectedStr = new JSONObject(expectedStrRaw).toString();
-		final String actualStr = new CoinReference(ByteBuffer.wrap(new byte[minSize])).toString();
+		final String actualStr = coinReference.toString();
 		Assert.assertEquals(TestUtil.RESPONSES_MUST_MATCH, expectedStr, actualStr);
 	}
 
@@ -178,11 +176,11 @@ public class TestCoreToJson {
 	 */
 	@Test
 	public void test010TransactionOutput() {
-		final int minSize = UInt256.SIZE + UInt160.SIZE + Fixed8.SIZE;
+		final TransactionOutput transactionOutput = MockUtil.getTransactionOutput000();
 		final String expectedStrRaw = TestUtil.getJsonTestResourceAsString(getClass().getSimpleName(),
 				"test010TransactionOutput");
 		final String expectedStr = new JSONObject(expectedStrRaw).toString();
-		final String actualStr = new TransactionOutput(ByteBuffer.wrap(new byte[minSize])).toString();
+		final String actualStr = transactionOutput.toString();
 		Assert.assertEquals(TestUtil.RESPONSES_MUST_MATCH, expectedStr, actualStr);
 	}
 
@@ -191,18 +189,10 @@ public class TestCoreToJson {
 	 */
 	@Test
 	public void test011Transaction() {
-		// final int minSize = UInt32.SIZE + 39 + 33;
-		final int minSize = UInt32.SIZE + 39 + 33 + 2 + 2;
-		final byte[] ba = new byte[minSize];
-		ba[UInt32.SIZE + 2] = 4;
-		ba[UInt32.SIZE + 36] = 3;
-		ba[UInt32.SIZE + 36 + 33] = (byte) 0x81;
-		ba[UInt32.SIZE + 36 + 33 + 2] = (byte) 0xFF;
-
+		final Transaction transaction = MockUtil.getMockTransaction000();
 		final String expectedStrRaw = TestUtil.getJsonTestResourceAsString(getClass().getSimpleName(),
 				"test011Transaction");
 		final String expectedStr = new JSONObject(expectedStrRaw).toString();
-		final Transaction transaction = new Transaction(ByteBuffer.wrap(ba));
 		final String actualStr = transaction.toString();
 		Assert.assertEquals(TestUtil.RESPONSES_MUST_MATCH, expectedStr, actualStr);
 

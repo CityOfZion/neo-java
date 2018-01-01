@@ -142,7 +142,8 @@ public class LocalControllerNode {
 		final Map<String, TimerData> timersMap = TimerUtil.getTimerMap(timersJson);
 		final long rpcClientTimeoutMillis = JsonUtil.getTime(localJson, ConfigurationUtil.RPC_CLIENT_TIMOUT);
 		final long rpcServerTimeoutMillis = JsonUtil.getTime(localJson, ConfigurationUtil.RPC_SERVER_TIMOUT);
-		final String blockDbImplStr = localJson.getString(ConfigurationUtil.BLOCK_DB_IMPL);
+		final JSONObject blockDbJson = localJson.getJSONObject(ConfigurationUtil.BLOCK_DB);
+		final String blockDbImplStr = blockDbJson.getString(ConfigurationUtil.IMPL);
 		final Class<BlockDb> blockDbImplClass = getBlockDbImplClass(blockDbImplStr);
 
 		final String socketFactoryImplStr = localJson.getString(ConfigurationUtil.SOCKET_FACTORY_IMPL);
@@ -154,7 +155,7 @@ public class LocalControllerNode {
 		final File goodNodeFile = new File(localJson.getString(ConfigurationUtil.GOOD_NODE_FILE));
 
 		localNodeData = new LocalNodeData(magic, activeThreadCount, rpcClientTimeoutMillis, rpcServerTimeoutMillis,
-				blockDbImplClass, timersMap, nonce, port, seedNodeFile, goodNodeFile, socketFactoryClass);
+				blockDbImplClass, timersMap, nonce, port, seedNodeFile, goodNodeFile, socketFactoryClass, blockDbJson);
 		LocalNodeDataSynchronizedUtil.refreshCityOfZionBlockHeight(localNodeData);
 
 		threadPool = new ThreadPool(localJson.getInt(ConfigurationUtil.THREAD_POOL_COUNT));

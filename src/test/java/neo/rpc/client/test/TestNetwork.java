@@ -59,7 +59,8 @@ public class TestNetwork {
 	static {
 		final JSONObject controllerNodeConfig = ConfigurationUtil.getConfiguration();
 		final JSONObject localJson = controllerNodeConfig.getJSONObject(ConfigurationUtil.LOCAL);
-		localJson.put(ConfigurationUtil.BLOCK_DB_IMPL, "neo.rpc.client.test.TestNetwork$JsonBlockDbImpl");
+		final JSONObject blockDbJson = localJson.getJSONObject(ConfigurationUtil.BLOCK_DB);
+		blockDbJson.put(ConfigurationUtil.IMPL, "neo.rpc.client.test.TestNetwork$JsonBlockDbImpl");
 		localJson.put(ConfigurationUtil.SOCKET_FACTORY_IMPL, "neo.rpc.client.test.TestNetwork$SocketFactoryImpl");
 		localJson.put(ConfigurationUtil.PORT, 30333);
 		final JSONObject remoteJson = controllerNodeConfig.getJSONObject(ConfigurationUtil.REMOTE);
@@ -132,7 +133,7 @@ public class TestNetwork {
 		/**
 		 * the constructor.
 		 */
-		public JsonBlockDbImpl() {
+		public JsonBlockDbImpl(final JSONObject config) {
 			jsonArray = new JSONArray();
 		}
 
