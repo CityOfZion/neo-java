@@ -34,7 +34,7 @@ public final class ClaimExclusiveData implements ExclusiveData, ToJsonObject, By
 	 *            the ByteBuffer to read.
 	 */
 	public ClaimExclusiveData(final ByteBuffer bb) {
-		claims = ModelUtil.readArray(bb, CoinReference.class);
+		claims = ModelUtil.readVariableLengthList(bb, CoinReference.class);
 	}
 
 	@Override

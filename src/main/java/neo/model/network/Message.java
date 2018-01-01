@@ -69,14 +69,14 @@ public final class Message {
 		final UInt32 magicObj = ModelUtil.getUInt32(bb);
 		magic = magicObj.toPositiveBigInteger().intValue();
 		LOG.trace("interim[1] inSocket magicObj:{} magic:{}", magicObj, magic);
-		command = ModelUtil.getString(bb, 12).trim();
+		command = ModelUtil.getFixedLengthString(bb, 12).trim();
 		LOG.trace("interim[1] inSocket command:{}", command);
 		final UInt32 lengthObj = ModelUtil.getUInt32(bb);
 		final int length = lengthObj.toPositiveBigInteger().intValue();
 		LOG.trace("interim inSocket lengthObj:{} length:{}", lengthObj, length);
 		final UInt32 checksum = ModelUtil.getUInt32(bb);
 		LOG.trace("interim[1] inSocket checksum:{}", checksum);
-		payloadBa = ModelUtil.getByteArray(bb, length, false);
+		payloadBa = ModelUtil.getFixedLengthByteArray(bb, length, false);
 		payload = createPayload();
 		commandEnum = CommandEnum.fromName(command);
 	}
@@ -116,7 +116,7 @@ public final class Message {
 		final UInt32 magicObj = ModelUtil.getUInt32(headerBb);
 		magic = magicObj.toPositiveBigInteger().intValue();
 		LOG.trace("interim[2] inSocket magicObj:{} magic:{}", magicObj, magic);
-		command = ModelUtil.getString(headerBb, 12).trim();
+		command = ModelUtil.getFixedLengthString(headerBb, 12).trim();
 		commandEnum = CommandEnum.fromName(command);
 		LOG.trace("interim[2] inSocket command:{}", command);
 		final UInt32 lengthObj = ModelUtil.getUInt32(headerBb);
@@ -143,7 +143,7 @@ public final class Message {
 			InputStreamUtil.readUntilFull(readTimeOut, in, payloadBa);
 		}
 		final ByteBuffer payloadBb = ByteBuffer.wrap(payloadBa);
-		this.payloadBa = ModelUtil.getByteArray(payloadBb, length, false);
+		this.payloadBa = ModelUtil.getFixedLengthByteArray(payloadBb, length, false);
 		payload = createPayload();
 	}
 

@@ -8,24 +8,43 @@ import org.apache.commons.lang3.ArrayUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class Base58Util {
+/**
+ * utility for base58 encoding.
+ *
+ * @author coranos
+ *
+ */
+public final class Base58Util {
 
-	public static final String alphabet = "123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz";
+	/**
+	 * the alphabet.
+	 */
+	public static final String ALPHABET = "123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz";
 
 	/**
 	 * the logger.
 	 */
 	private static final Logger LOG = LoggerFactory.getLogger(Base58Util.class);
 
+	/**
+	 * a BigInteger representing the number 58.
+	 */
 	private static final BigInteger BIGINT_58 = BigInteger.valueOf(58);
 
+	/**
+	 * decodes a Base58 byte array.
+	 *
+	 * @param input
+	 *            the base58 string to use.
+	 * @return the decoded byte array.
+	 */
 	public static byte[] decode(final String input) {
 
 		BigInteger bi = BigInteger.ZERO;
 
 		for (int ix = 0; ix < input.length(); ix++) {
 			final char c = input.charAt(ix);
-			final int index = alphabet.indexOf(c);
+			final int index = ALPHABET.indexOf(c);
 			if (index == -1) {
 				throw new RuntimeException("invalid char:" + c);
 			}
@@ -46,7 +65,7 @@ public class Base58Util {
 			} else {
 				bout.write(bytes);
 			}
-			for (int ix = 0; (ix < input.length()) && (input.charAt(ix) == alphabet.charAt(0)); ix++) {
+			for (int ix = 0; (ix < input.length()) && (input.charAt(ix) == ALPHABET.charAt(0)); ix++) {
 				bout.write(new byte[1]);
 			}
 		} catch (final IOException e) {
@@ -57,6 +76,13 @@ public class Base58Util {
 		return ba;
 	}
 
+	/**
+	 * encodes a Base58 byte array.
+	 *
+	 * @param input
+	 *            the byte array to use.
+	 * @return the encoded Base58 string.
+	 */
 	public static String encode(final byte[] input) {
 		try {
 			final byte[] revInput = new byte[input.length];
@@ -75,7 +101,7 @@ public class Base58Util {
 				final BigInteger valueDiv = valueDivAndRemainder[0];
 				final BigInteger valueRemainder = valueDivAndRemainder[1];
 
-				sb.append(alphabet.charAt(valueRemainder.intValue()));
+				sb.append(ALPHABET.charAt(valueRemainder.intValue()));
 				value = valueDiv;
 				if (LOG.isDebugEnabled()) {
 					LOG.debug("[1]value: {}", ModelUtil.toHexString(value.toByteArray()));
@@ -88,7 +114,7 @@ public class Base58Util {
 			}
 
 			for (int ix = 0; (ix < revInput.length) && (revInput[ix] == 0); ix++) {
-				sb.append(alphabet.charAt(0));
+				sb.append(ALPHABET.charAt(0));
 			}
 
 			sb.reverse();
@@ -97,5 +123,12 @@ public class Base58Util {
 		} catch (final Exception e) {
 			throw new RuntimeException("error encoding \"" + ModelUtil.toHexString(input) + "\"", e);
 		}
+	}
+
+	/**
+	 * the constructor.
+	 */
+	private Base58Util() {
+
 	}
 }

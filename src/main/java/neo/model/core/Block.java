@@ -34,7 +34,7 @@ public final class Block extends AbstractBlockBase implements ToJsonObject, Payl
 	 */
 	public Block(final ByteBuffer bb) {
 		super(bb);
-		transactionList = ModelUtil.readArray(bb, Transaction.class);
+		transactionList = ModelUtil.readVariableLengthList(bb, Transaction.class);
 	}
 
 	/**

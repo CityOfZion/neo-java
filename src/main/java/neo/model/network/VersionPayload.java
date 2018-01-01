@@ -18,41 +18,77 @@ import neo.model.bytes.UInt64;
 import neo.model.util.ModelUtil;
 import neo.model.util.NetworkUtil;
 
-public class VersionPayload implements ByteArraySerializable, Payload {
+/**
+ * the version payload.
+ *
+ * @author coranos
+ *
+ */
+public final class VersionPayload implements ByteArraySerializable, Payload {
 
 	/**
 	 * the logger.
 	 */
 	private static final Logger LOG = LoggerFactory.getLogger(VersionPayload.class);
 
+	/**
+	 * the version.
+	 */
 	public final UInt32 version;
 
+	/**
+	 * services.
+	 */
 	public final UInt64 services;
 
+	/**
+	 * timestamp.
+	 */
 	public final UInt32 timestamp;
 
+	/**
+	 * port.
+	 */
 	public final UInt16 port;
 
+	/**
+	 * nonce.
+	 */
 	public final UInt32 nonce;
 
+	/**
+	 * useragent.
+	 */
 	public final String userAgent;
 
+	/**
+	 * start block height.
+	 */
 	public final UInt32 startHeight;
 
+	/**
+	 * relay, if true, relay.
+	 */
 	public final boolean relay;
 
+	/**
+	 * the constructor.
+	 *
+	 * @param bb
+	 *            the ByteBuffer to use.
+	 */
 	public VersionPayload(final ByteBuffer bb) {
-		version = new UInt32(ModelUtil.getByteArray(bb, 4, true));
-		services = new UInt64(ModelUtil.getByteArray(bb, 8, true));
-		timestamp = new UInt32(ModelUtil.getByteArray(bb, 4, true));
-		port = new UInt16(ModelUtil.getByteArray(bb, 2, true));
-		nonce = new UInt32(ModelUtil.getByteArray(bb, 4, true));
+		version = new UInt32(ModelUtil.getFixedLengthByteArray(bb, 4, true));
+		services = new UInt64(ModelUtil.getFixedLengthByteArray(bb, 8, true));
+		timestamp = new UInt32(ModelUtil.getFixedLengthByteArray(bb, 4, true));
+		port = new UInt16(ModelUtil.getFixedLengthByteArray(bb, 2, true));
+		nonce = new UInt32(ModelUtil.getFixedLengthByteArray(bb, 4, true));
 		try {
-			userAgent = new String(ModelUtil.getByteArray(bb), "UTF-8");
+			userAgent = new String(ModelUtil.getVariableLengthByteArray(bb), "UTF-8");
 		} catch (final UnsupportedEncodingException e) {
 			throw new RuntimeException(e);
 		}
-		startHeight = new UInt32(ModelUtil.getByteArray(bb, 4, true));
+		startHeight = new UInt32(ModelUtil.getFixedLengthByteArray(bb, 4, true));
 
 		if (bb.get() == 0) {
 			relay = false;
@@ -61,6 +97,20 @@ public class VersionPayload implements ByteArraySerializable, Payload {
 		}
 	}
 
+	/**
+	 * the constructor.
+	 *
+	 * @param timestamp
+	 *            the timestamp to use.
+	 * @param port
+	 *            the port to use.
+	 * @param nonce
+	 *            the nonce to use.
+	 * @param userAgent
+	 *            the user agent to use.
+	 * @param startHeight
+	 *            the starting block height.
+	 */
 	public VersionPayload(final long timestamp, final int port, final int nonce, final String userAgent,
 			final long startHeight) {
 		version = new UInt32(NetworkUtil.getIntByteArray(0));

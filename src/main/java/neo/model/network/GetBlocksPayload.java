@@ -39,7 +39,7 @@ public final class GetBlocksPayload implements Payload, ToJsonObject, ByteArrayS
 	 *            the byte buffer to read.
 	 */
 	public GetBlocksPayload(final ByteBuffer bb) {
-		hashStartList = ModelUtil.readArray(bb, UInt256.class);
+		hashStartList = ModelUtil.readVariableLengthList(bb, UInt256.class);
 		hashStop = ModelUtil.getUInt256(bb);
 	}
 

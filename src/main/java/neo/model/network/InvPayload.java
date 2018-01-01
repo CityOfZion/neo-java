@@ -54,7 +54,7 @@ public final class InvPayload implements Payload, ToJsonObject, ByteArraySeriali
 	public InvPayload(final ByteBuffer bb) {
 		type = bb.get();
 		typeEnum = InventoryType.valueOf(type);
-		hashes = ModelUtil.readArray(bb, UInt256.class);
+		hashes = ModelUtil.readVariableLengthList(bb, UInt256.class);
 	}
 
 	/**
