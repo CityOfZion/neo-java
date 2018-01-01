@@ -52,8 +52,8 @@ public final class Witness implements ToJsonObject, ByteArraySerializable, Seria
 	 *            the ByteBuffer to read.
 	 */
 	public Witness(final ByteBuffer bb) {
-		invocationScript = ModelUtil.getByteArray(bb);
-		verificationScript = ModelUtil.getByteArray(bb);
+		invocationScript = ModelUtil.getVariableLengthByteArray(bb);
+		verificationScript = ModelUtil.getVariableLengthByteArray(bb);
 	}
 
 	@Override

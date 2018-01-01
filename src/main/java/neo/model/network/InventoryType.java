@@ -2,7 +2,7 @@ package neo.model.network;
 
 /**
  * the types of inventory payloads.
- * 
+ *
  * @author coranos
  *
  */
@@ -18,7 +18,7 @@ public enum InventoryType {
 
 	/**
 	 * return the InventoryType with the given type byte.
-	 * 
+	 *
 	 * @param typeByte
 	 *            the type byte to use.
 	 * @return the InventoryType with the given type byte.
@@ -39,7 +39,7 @@ public enum InventoryType {
 
 	/**
 	 * the constructor.
-	 * 
+	 *
 	 * @param typeInt
 	 *            the type byte to use, as an int.
 	 */
@@ -49,7 +49,7 @@ public enum InventoryType {
 
 	/**
 	 * return the type byte.
-	 * 
+	 *
 	 * @return the type byte.
 	 */
 	public byte getTypeByte() {

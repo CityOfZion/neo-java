@@ -34,7 +34,7 @@ public final class HeadersPayload implements Payload, ToJsonObject, ByteArraySer
 	 *            the byte buffer to read.
 	 */
 	public HeadersPayload(final ByteBuffer bb) {
-		headerList = ModelUtil.readArray(bb, Header.class);
+		headerList = ModelUtil.readVariableLengthList(bb, Header.class);
 	}
 
 	/**

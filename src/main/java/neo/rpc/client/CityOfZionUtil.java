@@ -22,6 +22,11 @@ import org.slf4j.LoggerFactory;
 public final class CityOfZionUtil {
 
 	/**
+	 * the node.
+	 */
+	private static final String NODE = "node";
+
+	/**
 	 * the testnet API.
 	 */
 	private static final String TESTNET_API = "http://testnet-api.wallet.cityofzion.io";
@@ -49,10 +54,10 @@ public final class CityOfZionUtil {
 			final HttpGet get = new HttpGet(url);
 			final CloseableHttpClient client = HttpClients.createDefault();
 			final CloseableHttpResponse response = client.execute(get);
-			LOG.debug("status:{}", response.getStatusLine());
+			LOG.debug("main net status:{}", response.getStatusLine());
 			final HttpEntity entity = response.getEntity();
 			final String entityStr = EntityUtils.toString(entity);
-			LOG.debug("entityStr:{}", entityStr);
+			LOG.debug("main net entityStr:{}", entityStr);
 			try {
 				final JSONObject json = new JSONObject(entityStr);
 				return json;
@@ -72,8 +77,8 @@ public final class CityOfZionUtil {
 	 */
 	public static String getMainNetRpcNode() {
 		final JSONObject json = getMainNetApiJsonAtUrl("/v2/network/best_node");
-		final String rpcNode = json.getString("node");
-		LOG.debug("rpcNode {}", rpcNode);
+		final String rpcNode = json.getString(NODE);
+		LOG.debug("main net rpcNode {}", rpcNode);
 		return rpcNode;
 	}
 
@@ -89,10 +94,10 @@ public final class CityOfZionUtil {
 			final HttpGet get = new HttpGet(TESTNET_API + urlSuffix);
 			final CloseableHttpClient client = HttpClients.createDefault();
 			final CloseableHttpResponse response = client.execute(get);
-			LOG.debug("status:{}", response.getStatusLine());
+			LOG.debug("test net status:{}", response.getStatusLine());
 			final HttpEntity entity = response.getEntity();
 			final String entityStr = EntityUtils.toString(entity);
-			LOG.debug("entityStr:{}", entityStr);
+			LOG.debug("test net entityStr:{}", entityStr);
 			final JSONObject json = new JSONObject(entityStr);
 			return json;
 		} catch (final IOException e) {
@@ -107,8 +112,8 @@ public final class CityOfZionUtil {
 	 */
 	public static String getTestNetRpcNode() {
 		final JSONObject json = getTestNetApiJsonAtUrl("/v1/network/best_node");
-		final String rpcNode = json.getString("node");
-		LOG.info("rpcNode {}", rpcNode);
+		final String rpcNode = json.getString(NODE);
+		LOG.info("test net rpcNode {}", rpcNode);
 		return rpcNode;
 	}
 

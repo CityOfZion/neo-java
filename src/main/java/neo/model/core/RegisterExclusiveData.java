@@ -68,7 +68,7 @@ public final class RegisterExclusiveData implements ExclusiveData, ToJsonObject,
 	 */
 	public RegisterExclusiveData(final ByteBuffer bb) {
 		assetType = AssetType.valueOfByte(ModelUtil.getByte(bb));
-		nameBa = ModelUtil.getByteArray(bb);
+		nameBa = ModelUtil.getVariableLengthByteArray(bb);
 		name = new String(nameBa, StandardCharsets.UTF_8);
 		amount = ModelUtil.getFixed8(bb);
 		precision = ModelUtil.getByte(bb);

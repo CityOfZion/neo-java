@@ -48,7 +48,7 @@ public final class InvocationExclusiveData implements ExclusiveData, ToJsonObjec
 	 */
 	public InvocationExclusiveData(final byte version, final ByteBuffer bb) {
 		this.version = version;
-		script = ModelUtil.getByteArray(bb);
+		script = ModelUtil.getVariableLengthByteArray(bb);
 		if (version >= 1) {
 			gas = ModelUtil.getFixed8(bb);
 		} else {

@@ -38,6 +38,11 @@ import neo.model.bytes.UInt64;
 public final class ModelUtil {
 
 	/**
+	 * the UTF-8 charset.
+	 */
+	private static final String UTF_8 = "UTF-8";
+
+	/**
 	 * gas.
 	 */
 	public static final String GAS = "gas";
@@ -114,7 +119,7 @@ public final class ModelUtil {
 
 	/**
 	 * copies and reverses a byte array.
-	 * 
+	 *
 	 * @param input
 	 *            the byte array to copy and reverse.
 	 * @return a copy of the byte array, in reverse byte order.
@@ -128,7 +133,7 @@ public final class ModelUtil {
 
 	/**
 	 * decodes a hex string.
-	 * 
+	 *
 	 * @param string
 	 *            the string to decode.
 	 * @return the decoded hex string.
@@ -143,7 +148,7 @@ public final class ModelUtil {
 
 	/**
 	 * converts a byte array to a BigInteger.
-	 * 
+	 *
 	 * @param ba
 	 *            the byte array to use.
 	 * @return the BigInteger.
@@ -154,7 +159,7 @@ public final class ModelUtil {
 
 	/**
 	 * converts a ByteBuffer to a BigInteger.
-	 * 
+	 *
 	 * @param bb
 	 *            the ByteBuffer to use.
 	 * @return the BigInteger.
@@ -162,7 +167,7 @@ public final class ModelUtil {
 	public static BigInteger getBigInteger(final ByteBuffer bb) {
 		final byte lengthType = bb.get();
 
-		int length;
+		final int length;
 		if (lengthType == LENGTH_SHORT) {
 			length = 2;
 		} else if (lengthType == LENGTH_INT) {
@@ -189,7 +194,7 @@ public final class ModelUtil {
 
 	/**
 	 * gets a boolean from a ByteBuffer.
-	 * 
+	 *
 	 * @param bb
 	 *            the ByteBuffer to read.
 	 * @return true if the next byte was not zero, false otherwise.
@@ -200,7 +205,7 @@ public final class ModelUtil {
 
 	/**
 	 * gets a byte from a ByteBuffer.
-	 * 
+	 *
 	 * @param bb
 	 *            the ByteBuffer to read.
 	 * @return the byte.
@@ -210,22 +215,19 @@ public final class ModelUtil {
 	}
 
 	/**
-	 * gets a variable length byte array from the ByteBuffer.
-	 * 
+	 * returned a Fixed8.
+	 *
 	 * @param bb
 	 *            the ByteBuffer to read.
-	 * @return a variable length byte array.
+	 * @return the new Fixed8.
 	 */
-	public static byte[] getByteArray(final ByteBuffer bb) {
-		final BigInteger length = getBigInteger(bb);
-		final byte[] ba = new byte[length.intValue()];
-		bb.get(ba);
-		return ba;
+	public static Fixed8 getFixed8(final ByteBuffer bb) {
+		return new Fixed8(bb);
 	}
 
 	/**
 	 * gets a fixed length byte array from the ByteBuffer.
-	 * 
+	 *
 	 * @param bb
 	 *            the ByteBuffer to read.
 	 * @param size
@@ -234,7 +236,7 @@ public final class ModelUtil {
 	 *            if true, reverse the byte array.
 	 * @return the fixed length byte array.
 	 */
-	public static byte[] getByteArray(final ByteBuffer bb, final int size, final boolean reverse) {
+	public static byte[] getFixedLengthByteArray(final ByteBuffer bb, final int size, final boolean reverse) {
 		final byte[] ba = new byte[size];
 		bb.get(ba);
 		if (reverse) {
@@ -243,40 +245,61 @@ public final class ModelUtil {
 		return ba;
 	}
 
-	public static Fixed8 getFixed8(final ByteBuffer bb) {
-		return new Fixed8(bb);
-	}
-
-	public static String getString(final ByteBuffer bb) {
-		final byte[] ba = getByteArray(bb);
+	/**
+	 * returns a String, which was previously encoded as a fixed length UTF-8 byte
+	 * array.
+	 *
+	 * @param bb
+	 *            the ByteBuffer to read.
+	 * @param length
+	 *            the length to use.
+	 * @return the string.
+	 */
+	public static String getFixedLengthString(final ByteBuffer bb, final int length) {
+		final byte[] ba = getFixedLengthByteArray(bb, length, false);
 		try {
-			return new String(ba, "UTF-8");
+			return new String(ba, UTF_8);
 		} catch (final UnsupportedEncodingException e) {
 			throw new RuntimeException(e);
 		}
 	}
 
-	public static String getString(final ByteBuffer bb, final int length) {
-		final byte[] ba = getByteArray(bb, length, false);
-		try {
-			return new String(ba, "UTF-8");
-		} catch (final UnsupportedEncodingException e) {
-			throw new RuntimeException(e);
-		}
-	}
-
+	/**
+	 * returns a UInt128 read from the ByteBuffer.
+	 *
+	 * @param bb
+	 *            the ByteBuffer to read.
+	 * @return the new UInt128.
+	 */
 	public static UInt128 getUInt128(final ByteBuffer bb) {
-		final byte[] ba = getByteArray(bb, UInt128.SIZE, true);
+		final byte[] ba = getFixedLengthByteArray(bb, UInt128.SIZE, true);
 		return new UInt128(ba);
 	}
 
+	/**
+	 * returns a UInt16 read from the ByteBuffer.
+	 *
+	 * @param bb
+	 *            the ByteBuffer to read.
+	 * @return the new UInt16.
+	 */
 	public static UInt16 getUInt16(final ByteBuffer bb) {
-		final byte[] ba = getByteArray(bb, UInt16.SIZE, true);
+		final byte[] ba = getFixedLengthByteArray(bb, UInt16.SIZE, true);
 		return new UInt16(ba);
 	}
 
+	/**
+	 * returns a UInt160 read from the ByteBuffer.
+	 *
+	 * @param bb
+	 *            the ByteBuffer to read.
+	 * @param reverse
+	 *            if true, reverse the byte array creating the data used to create
+	 *            the object before creating the object.
+	 * @return the new UInt160.
+	 */
 	public static UInt160 getUInt160(final ByteBuffer bb, final boolean reverse) {
-		final byte[] ba = getByteArray(bb, UInt160.SIZE, true);
+		final byte[] ba = getFixedLengthByteArray(bb, UInt160.SIZE, true);
 		if (reverse) {
 			ArrayUtils.reverse(ba);
 		}
@@ -284,35 +307,103 @@ public final class ModelUtil {
 	}
 
 	/**
-	 * return a UInt256.
+	 * returns a UInt256 read from the ByteBuffer.
 	 *
 	 * @param bb
 	 *            the byte buffer to use.
-	 * @return a UInt256
+	 * @return the new UInt256.
 	 */
 	public static UInt256 getUInt256(final ByteBuffer bb) {
 		return getUInt256(bb, false);
 	}
 
+	/**
+	 * returns a UInt256 read from the ByteBuffer.
+	 *
+	 * @param bb
+	 *            the ByteBuffer to read.
+	 * @param reverse
+	 *            if true, reverse the byte array creating the data used to create
+	 *            the object before creating the object.
+	 * @return the new UInt256.
+	 */
 	public static UInt256 getUInt256(final ByteBuffer bb, final boolean reverse) {
-		final byte[] ba = getByteArray(bb, UInt256.SIZE, true);
+		final byte[] ba = getFixedLengthByteArray(bb, UInt256.SIZE, true);
 		if (reverse) {
 			ArrayUtils.reverse(ba);
 		}
 		return new UInt256(ba);
 	}
 
+	/**
+	 * returns a UInt32 read from the ByteBuffer.
+	 *
+	 * @param bb
+	 *            the ByteBuffer to read.
+	 * @return the new UInt32.
+	 */
 	public static UInt32 getUInt32(final ByteBuffer bb) {
-		final byte[] ba = getByteArray(bb, UInt32.SIZE, true);
+		final byte[] ba = getFixedLengthByteArray(bb, UInt32.SIZE, true);
 		return new UInt32(ba);
 	}
 
+	/**
+	 * returns a UInt64 read from the ByteBuffer.
+	 *
+	 * @param bb
+	 *            the ByteBuffer to read.
+	 * @return the new UInt64.
+	 */
 	public static UInt64 getUInt64(final ByteBuffer bb) {
-		final byte[] ba = getByteArray(bb, UInt64.SIZE, true);
+		final byte[] ba = getFixedLengthByteArray(bb, UInt64.SIZE, true);
 		return new UInt64(ba);
 	}
 
-	public static <T extends ByteArraySerializable> List<T> readArray(final ByteBuffer bb, final Class<T> cl) {
+	/**
+	 * gets a variable length byte array from the ByteBuffer.
+	 *
+	 * @param bb
+	 *            the ByteBuffer to read.
+	 * @return a variable length byte array.
+	 */
+	public static byte[] getVariableLengthByteArray(final ByteBuffer bb) {
+		final BigInteger length = getBigInteger(bb);
+		final byte[] ba = new byte[length.intValue()];
+		bb.get(ba);
+		return ba;
+	}
+
+	/**
+	 * returns a String, which was previously encoded as a variable length UTF-8
+	 * byte array.
+	 *
+	 * @param bb
+	 *            the ByteBuffer to read.
+	 * @return the string.
+	 */
+	public static String getVariableLengthString(final ByteBuffer bb) {
+		final byte[] ba = getVariableLengthByteArray(bb);
+		try {
+			return new String(ba, UTF_8);
+		} catch (final UnsupportedEncodingException e) {
+			throw new RuntimeException(e);
+		}
+	}
+
+	/**
+	 * reads a variable length list of byte array serializable objects.
+	 *
+	 * @param bb
+	 *            the byte buffer to read.
+	 * @param cl
+	 *            the class of the objects in the list, which must implement
+	 *            ByteArraySerializable.
+	 * @param <T>
+	 *            the type of the objects in the list.
+	 * @return the list.
+	 */
+	public static <T extends ByteArraySerializable> List<T> readVariableLengthList(final ByteBuffer bb,
+			final Class<T> cl) {
 		final BigInteger lengthBi = getBigInteger(bb);
 		final int length = lengthBi.intValue();
 
@@ -340,6 +431,13 @@ public final class ModelUtil {
 		return list;
 	}
 
+	/**
+	 * coverts a scriptHash to an address.
+	 *
+	 * @param scriptHash
+	 *            the scriptHash to use.
+	 * @return the address.
+	 */
 	public static String toAddress(final UInt160 scriptHash) {
 		final byte[] data = new byte[21];
 
@@ -372,10 +470,24 @@ public final class ModelUtil {
 		return address;
 	}
 
+	/**
+	 * converts an array of bytes to a base58 string.
+	 *
+	 * @param bytes
+	 *            the bytes to use.
+	 * @return the new string.
+	 */
 	public static String toBase58String(final byte[] bytes) {
 		return Base58Util.encode(bytes);
 	}
 
+	/**
+	 * converts an array of bytes to a base64 string.
+	 *
+	 * @param bytes
+	 *            the bytes to use.
+	 * @return the new string.
+	 */
 	public static String toBase64String(final byte[] bytes) {
 		return Base64.getEncoder().encodeToString(bytes);
 	}
@@ -424,16 +536,33 @@ public final class ModelUtil {
 		final ByteBuffer listBb = ByteBuffer.wrap(ba);
 		final long size = listBb.getLong();
 		for (long ix = 0; ix < size; ix++) {
-			final byte[] keyBa = ModelUtil.getByteArray(listBb);
+			final byte[] keyBa = ModelUtil.getVariableLengthByteArray(listBb);
 			baList.add(keyBa);
 		}
 		return baList;
 	}
 
+	/**
+	 * converts a byte array to a hex string.
+	 *
+	 * @param ba
+	 *            the byte array to encode.
+	 * @return the string.
+	 */
 	public static String toHexString(final byte... ba) {
 		return new String(Hex.encodeHex(ba));
 	}
 
+	/**
+	 * converts a list of objects that implement the ToJsonObject interface into a
+	 * JSONArray of JSONObjects.
+	 *
+	 * @param list
+	 *            the list of objects to use.
+	 * @param <T>
+	 *            the type of the objects that implements ToJsonObject .
+	 * @return the JSONArray of JSONObjects.
+	 */
 	public static <T extends ToJsonObject> JSONArray toJSONArray(final List<T> list) {
 		final JSONArray jsonArray = new JSONArray();
 
@@ -444,6 +573,13 @@ public final class ModelUtil {
 		return jsonArray;
 	}
 
+	/**
+	 * converts a byte array to a hex string in reverse byte order.
+	 *
+	 * @param bytes
+	 *            the array of bytes.
+	 * @return the string.
+	 */
 	public static String toReverseHexString(final byte... bytes) {
 		final byte[] ba = new byte[bytes.length];
 		System.arraycopy(bytes, 0, ba, 0, bytes.length);

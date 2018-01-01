@@ -77,10 +77,10 @@ public final class Transaction implements ToJsonObject, ByteArraySerializable, S
 		type = TransactionType.valueOfByte(ModelUtil.getByte(bb));
 		version = ModelUtil.getByte(bb);
 		exclusiveData = TransactionUtil.deserializeExclusiveData(type, version, bb);
-		attributes = ModelUtil.readArray(bb, TransactionAttribute.class);
-		inputs = ModelUtil.readArray(bb, CoinReference.class);
-		outputs = ModelUtil.readArray(bb, TransactionOutput.class);
-		scripts = ModelUtil.readArray(bb, Witness.class);
+		attributes = ModelUtil.readVariableLengthList(bb, TransactionAttribute.class);
+		inputs = ModelUtil.readVariableLengthList(bb, CoinReference.class);
+		outputs = ModelUtil.readVariableLengthList(bb, TransactionOutput.class);
+		scripts = ModelUtil.readVariableLengthList(bb, Witness.class);
 
 		hash = calculateHash();
 	}

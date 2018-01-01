@@ -20,7 +20,7 @@ import neo.model.util.NetworkUtil;
 
 /**
  * the version payload.
- * 
+ *
  * @author coranos
  *
  */
@@ -73,22 +73,22 @@ public final class VersionPayload implements ByteArraySerializable, Payload {
 
 	/**
 	 * the constructor.
-	 * 
+	 *
 	 * @param bb
 	 *            the ByteBuffer to use.
 	 */
 	public VersionPayload(final ByteBuffer bb) {
-		version = new UInt32(ModelUtil.getByteArray(bb, 4, true));
-		services = new UInt64(ModelUtil.getByteArray(bb, 8, true));
-		timestamp = new UInt32(ModelUtil.getByteArray(bb, 4, true));
-		port = new UInt16(ModelUtil.getByteArray(bb, 2, true));
-		nonce = new UInt32(ModelUtil.getByteArray(bb, 4, true));
+		version = new UInt32(ModelUtil.getFixedLengthByteArray(bb, 4, true));
+		services = new UInt64(ModelUtil.getFixedLengthByteArray(bb, 8, true));
+		timestamp = new UInt32(ModelUtil.getFixedLengthByteArray(bb, 4, true));
+		port = new UInt16(ModelUtil.getFixedLengthByteArray(bb, 2, true));
+		nonce = new UInt32(ModelUtil.getFixedLengthByteArray(bb, 4, true));
 		try {
-			userAgent = new String(ModelUtil.getByteArray(bb), "UTF-8");
+			userAgent = new String(ModelUtil.getVariableLengthByteArray(bb), "UTF-8");
 		} catch (final UnsupportedEncodingException e) {
 			throw new RuntimeException(e);
 		}
-		startHeight = new UInt32(ModelUtil.getByteArray(bb, 4, true));
+		startHeight = new UInt32(ModelUtil.getFixedLengthByteArray(bb, 4, true));
 
 		if (bb.get() == 0) {
 			relay = false;
@@ -99,7 +99,7 @@ public final class VersionPayload implements ByteArraySerializable, Payload {
 
 	/**
 	 * the constructor.
-	 * 
+	 *
 	 * @param timestamp
 	 *            the timestamp to use.
 	 * @param port

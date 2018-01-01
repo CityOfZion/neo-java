@@ -84,20 +84,20 @@ public final class PublishExclusiveData implements ExclusiveData, ToJsonObject, 
 	 */
 	public PublishExclusiveData(final byte version, final ByteBuffer bb) {
 		this.version = version;
-		script = ModelUtil.getByteArray(bb);
-		parameterList = Collections
-				.unmodifiableList(Arrays.asList(ContractParameterType.valuesOf(ModelUtil.getByteArray(bb))));
+		script = ModelUtil.getVariableLengthByteArray(bb);
+		parameterList = Collections.unmodifiableList(
+				Arrays.asList(ContractParameterType.valuesOf(ModelUtil.getVariableLengthByteArray(bb))));
 		returnType = ContractParameterType.valueOfByte(ModelUtil.getByte(bb));
 		if (version >= 1) {
 			needStorage = ModelUtil.getBoolean(bb);
 		} else {
 			needStorage = false;
 		}
-		name = ModelUtil.getString(bb);
-		codeVersion = ModelUtil.getString(bb);
-		author = ModelUtil.getString(bb);
-		email = ModelUtil.getString(bb);
-		description = ModelUtil.getString(bb);
+		name = ModelUtil.getVariableLengthString(bb);
+		codeVersion = ModelUtil.getVariableLengthString(bb);
+		author = ModelUtil.getVariableLengthString(bb);
+		email = ModelUtil.getVariableLengthString(bb);
+		description = ModelUtil.getVariableLengthString(bb);
 	}
 
 	@Override
