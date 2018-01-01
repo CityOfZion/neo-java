@@ -10,18 +10,11 @@ import org.slf4j.LoggerFactory;
 
 /**
  * utility for base58 encoding.
- * 
+ *
  * @author coranos
  *
  */
 public final class Base58Util {
-
-	/**
-	 * the constructor.
-	 */
-	private Base58Util() {
-
-	}
 
 	/**
 	 * the alphabet.
@@ -40,7 +33,7 @@ public final class Base58Util {
 
 	/**
 	 * decodes a Base58 byte array.
-	 * 
+	 *
 	 * @param input
 	 *            the base58 string to use.
 	 * @return the decoded byte array.
@@ -85,7 +78,7 @@ public final class Base58Util {
 
 	/**
 	 * encodes a Base58 byte array.
-	 * 
+	 *
 	 * @param input
 	 *            the byte array to use.
 	 * @return the encoded Base58 string.
@@ -130,5 +123,12 @@ public final class Base58Util {
 		} catch (final Exception e) {
 			throw new RuntimeException("error encoding \"" + ModelUtil.toHexString(input) + "\"", e);
 		}
+	}
+
+	/**
+	 * the constructor.
+	 */
+	private Base58Util() {
+
 	}
 }

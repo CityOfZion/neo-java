@@ -29,10 +29,10 @@ public final class TransactionOutputFactory extends AbstractByteBufferFactory<Tr
 	@Override
 	public TransactionOutput toObject(final ByteBuffer bb) {
 		bb.getLong();
-		final byte[] assetIdBa = ModelUtil.getByteArray(bb);
-		final byte[] valueBa = ModelUtil.getByteArray(bb);
+		final byte[] assetIdBa = ModelUtil.getVariableLengthByteArray(bb);
+		final byte[] valueBa = ModelUtil.getVariableLengthByteArray(bb);
 		ArrayUtils.reverse(valueBa);
-		final byte[] scriptHashBa = ModelUtil.getByteArray(bb);
+		final byte[] scriptHashBa = ModelUtil.getVariableLengthByteArray(bb);
 
 		final UInt256 assetId = new UInt256(ByteBuffer.wrap(assetIdBa));
 		final Fixed8 value = new Fixed8(ByteBuffer.wrap(valueBa));

@@ -8,6 +8,8 @@
     <file-match-pattern match-pattern="." include-pattern="true"/>
   </fileset>
   <filter name="FilesFromPackage" enabled="true">
+    <filter-data value="src/main/java/neo/model/crypto/ecc"/>
+    <filter-data value="src/test/java/neo/rpc/client/test"/>
     <filter-data value="src/test/resources/neo/rpc/client/test"/>
   </filter>
 </fileset-config>

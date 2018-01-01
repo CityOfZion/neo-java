@@ -63,22 +63,22 @@ public final class TransactionAttribute implements ToJsonObject, ByteArraySerial
 		case HASH_13:
 		case HASH_14:
 		case HASH_15:
-			data = ModelUtil.getByteArray(bb, 32, false);
+			data = ModelUtil.getFixedLengthByteArray(bb, 32, false);
 			break;
 		case ECDH02:
 		case ECDH03: {
-			final byte[] readData = ModelUtil.getByteArray(bb, 32, false);
+			final byte[] readData = ModelUtil.getFixedLengthByteArray(bb, 32, false);
 			data = new byte[readData.length + 1];
 			System.arraycopy(readData, 0, data, 1, readData.length);
 			data[0] = usage.getTypeByte();
 			break;
 		}
 		case SCRIPT:
-			data = ModelUtil.getByteArray(bb, 20, false);
+			data = ModelUtil.getFixedLengthByteArray(bb, 20, false);
 			break;
 		case DESCRIPTION_URL: {
 			final int length = ModelUtil.getByte(bb) & 0xff;
-			data = ModelUtil.getByteArray(bb, length, false);
+			data = ModelUtil.getFixedLengthByteArray(bb, length, false);
 			break;
 		}
 		case DESCRIPTION:
@@ -98,7 +98,7 @@ public final class TransactionAttribute implements ToJsonObject, ByteArraySerial
 		case REMARK_13:
 		case REMARK_14:
 		case REMARK_15: {
-			data = ModelUtil.getByteArray(bb);
+			data = ModelUtil.getVariableLengthByteArray(bb);
 			break;
 		}
 		default:

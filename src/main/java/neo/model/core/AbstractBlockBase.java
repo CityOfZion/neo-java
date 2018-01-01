@@ -179,7 +179,7 @@ public abstract class AbstractBlockBase implements ToJsonObject, ByteArraySerial
 	/**
 	 * return a byte array containing only the base data. Useful for breaking up the
 	 * block and storing in a database.
-	 * 
+	 *
 	 * @return a byte array containing only the base data. Useful for breaking up
 	 *         the block and storing in a database.
 	 */

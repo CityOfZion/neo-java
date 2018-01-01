@@ -1,15 +1,28 @@
 package neo.network.model;
 
+/**
+ * the type of timer.
+ *
+ * @author coranos
+ *
+ */
 public enum TimerTypeEnum {
-	/** verify */
+	/** verify. */
 	VERIFY("verify"),
-	/** refresh */
+	/** refresh. */
 	REFRESH("refresh"),
-	/** send */
+	/** send. */
 	SEND("send"),
 	/** trailing semicolon */
 	;
 
+	/**
+	 * returns a timer type from a given name.
+	 *
+	 * @param name
+	 *            the name to use.
+	 * @return a timer type from a given name.
+	 */
 	public static final TimerTypeEnum fromName(final String name) {
 		for (final TimerTypeEnum timerType : values()) {
 			if (timerType.name.equals(name)) {
@@ -19,12 +32,26 @@ public enum TimerTypeEnum {
 		return null;
 	}
 
+	/**
+	 * the timer name.
+	 */
 	private final String name;
 
-	private TimerTypeEnum(final String name) {
+	/**
+	 * the timer type.
+	 *
+	 * @param name
+	 *            the name to use.
+	 */
+	TimerTypeEnum(final String name) {
 		this.name = name;
 	}
 
+	/**
+	 * return the name.
+	 *
+	 * @return the name.
+	 */
 	public String getName() {
 		return name;
 	}

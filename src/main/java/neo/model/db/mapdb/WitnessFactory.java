@@ -23,8 +23,8 @@ public final class WitnessFactory extends AbstractByteBufferFactory<Witness> {
 	@Override
 	public Witness toObject(final ByteBuffer bb) {
 		bb.getLong();
-		final byte[] invocationBa = ModelUtil.getByteArray(bb);
-		final byte[] verificationBa = ModelUtil.getByteArray(bb);
+		final byte[] invocationBa = ModelUtil.getVariableLengthByteArray(bb);
+		final byte[] verificationBa = ModelUtil.getVariableLengthByteArray(bb);
 		final Witness witness = new Witness(invocationBa, verificationBa);
 		return witness;
 	}

@@ -25,8 +25,8 @@ public final class CoinReferenceFactory extends AbstractByteBufferFactory<CoinRe
 	@Override
 	public CoinReference toObject(final ByteBuffer bb) {
 		bb.getLong();
-		final byte[] prevHashBa = ModelUtil.getByteArray(bb);
-		final byte[] prevIndexBa = ModelUtil.getByteArray(bb);
+		final byte[] prevHashBa = ModelUtil.getVariableLengthByteArray(bb);
+		final byte[] prevIndexBa = ModelUtil.getVariableLengthByteArray(bb);
 		final UInt256 prevHash = new UInt256(ByteBuffer.wrap(prevHashBa));
 		final UInt16 prevIndex = new UInt16(prevIndexBa);
 		final CoinReference coinReference = new CoinReference(prevHash, prevIndex);
