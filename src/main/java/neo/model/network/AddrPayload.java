@@ -27,6 +27,8 @@ public final class AddrPayload implements Payload, ToJsonObject, ByteArraySerial
 	private final List<NetworkAddressWithTime> addressList;
 
 	/**
+	 * the constructor.
+	 * 
 	 * @param bb
 	 *            the byte buffer to read.
 	 */
@@ -34,6 +36,11 @@ public final class AddrPayload implements Payload, ToJsonObject, ByteArraySerial
 		addressList = ModelUtil.readArray(bb, NetworkAddressWithTime.class);
 	}
 
+	/**
+	 * return the address list.
+	 * 
+	 * @return the address list.
+	 */
 	public List<NetworkAddressWithTime> getAddressList() {
 		return Collections.unmodifiableList(addressList);
 	}

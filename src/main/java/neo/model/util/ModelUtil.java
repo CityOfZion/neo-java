@@ -112,6 +112,13 @@ public final class ModelUtil {
 	 */
 	public static final byte ADDRESS_VERSION = 23;
 
+	/**
+	 * copies and reverses a byte array.
+	 * 
+	 * @param input
+	 *            the byte array to copy and reverse.
+	 * @return a copy of the byte array, in reverse byte order.
+	 */
 	public static byte[] copyAndReverse(final byte[] input) {
 		final byte[] revInput = new byte[input.length];
 		System.arraycopy(input, 0, revInput, 0, input.length);
@@ -119,6 +126,13 @@ public final class ModelUtil {
 		return revInput;
 	}
 
+	/**
+	 * decodes a hex string.
+	 * 
+	 * @param string
+	 *            the string to decode.
+	 * @return the decoded hex string.
+	 */
 	public static byte[] decodeHex(final String string) {
 		try {
 			return Hex.decodeHex(string.toCharArray());
@@ -127,10 +141,24 @@ public final class ModelUtil {
 		}
 	}
 
+	/**
+	 * converts a byte array to a BigInteger.
+	 * 
+	 * @param ba
+	 *            the byte array to use.
+	 * @return the BigInteger.
+	 */
 	public static BigInteger getBigInteger(final byte[] ba) {
 		return getBigInteger(ByteBuffer.wrap(ba));
 	}
 
+	/**
+	 * converts a ByteBuffer to a BigInteger.
+	 * 
+	 * @param bb
+	 *            the ByteBuffer to use.
+	 * @return the BigInteger.
+	 */
 	public static BigInteger getBigInteger(final ByteBuffer bb) {
 		final byte lengthType = bb.get();
 
@@ -159,14 +187,35 @@ public final class ModelUtil {
 		return retval;
 	}
 
+	/**
+	 * gets a boolean from a ByteBuffer.
+	 * 
+	 * @param bb
+	 *            the ByteBuffer to read.
+	 * @return true if the next byte was not zero, false otherwise.
+	 */
 	public static boolean getBoolean(final ByteBuffer bb) {
 		return bb.get() != 0;
 	}
 
+	/**
+	 * gets a byte from a ByteBuffer.
+	 * 
+	 * @param bb
+	 *            the ByteBuffer to read.
+	 * @return the byte.
+	 */
 	public static byte getByte(final ByteBuffer bb) {
 		return bb.get();
 	}
 
+	/**
+	 * gets a variable length byte array from the ByteBuffer.
+	 * 
+	 * @param bb
+	 *            the ByteBuffer to read.
+	 * @return a variable length byte array.
+	 */
 	public static byte[] getByteArray(final ByteBuffer bb) {
 		final BigInteger length = getBigInteger(bb);
 		final byte[] ba = new byte[length.intValue()];
@@ -174,6 +223,17 @@ public final class ModelUtil {
 		return ba;
 	}
 
+	/**
+	 * gets a fixed length byte array from the ByteBuffer.
+	 * 
+	 * @param bb
+	 *            the ByteBuffer to read.
+	 * @param size
+	 *            the size of the byte array.
+	 * @param reverse
+	 *            if true, reverse the byte array.
+	 * @return the fixed length byte array.
+	 */
 	public static byte[] getByteArray(final ByteBuffer bb, final int size, final boolean reverse) {
 		final byte[] ba = new byte[size];
 		bb.get(ba);
