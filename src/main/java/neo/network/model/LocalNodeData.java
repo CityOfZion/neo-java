@@ -64,7 +64,7 @@ public class LocalNodeData {
 	/**
 	 * the blockchain block count.
 	 */
-	private int blockchainBlockCount;
+	private long blockchainBlockCount;
 
 	/**
 	 * the block file size.
@@ -205,7 +205,7 @@ public class LocalNodeData {
 	 *
 	 * @return the blockchain block count.
 	 */
-	public int getBlockchainBlockCount() {
+	public long getBlockchainBlockCount() {
 		return blockchainBlockCount;
 	}
 
@@ -379,7 +379,7 @@ public class LocalNodeData {
 	 * @param blockchainBlockCount
 	 *            the block count to use.
 	 */
-	public void setBlockchainBlockCount(final int blockchainBlockCount) {
+	public void setBlockchainBlockCount(final long blockchainBlockCount) {
 		this.blockchainBlockCount = blockchainBlockCount;
 	}
 

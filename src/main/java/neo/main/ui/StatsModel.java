@@ -140,7 +140,7 @@ public final class StatsModel extends AbstractRefreshingModel {
 		final long blockCount = localNodeData.getBlockDb().getBlockCount();
 		final long blockFileSize = localNodeData.getBlockFileSize();
 
-		final int allChainBlockCount = localNodeData.getBlockchainBlockCount();
+		final long allChainBlockCount = localNodeData.getBlockchainBlockCount();
 		addNameAndValue(BLOCKCHAIN_BLOCK_COUNT, allChainBlockCount);
 		addNameAndValue(KNOWN_BLOCK_COUNT, blockCount);
 

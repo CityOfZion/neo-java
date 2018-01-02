@@ -54,6 +54,8 @@ public class TestDBH2 {
 		final JSONObject localJson = controllerNodeConfig.getJSONObject(ConfigurationUtil.LOCAL);
 		final JSONObject blockDbJson = localJson.getJSONObject(ConfigurationUtil.BLOCK_DB);
 		blockDbJson.put(ConfigurationUtil.URL, "jdbc:h2:mem:db");
+		blockDbJson.put(ConfigurationUtil.FILE_SIZE_DIR, "src/test/resources");
+		blockDbJson.put(ConfigurationUtil.IMPL, "neo.model.db.h2.BlockDbH2Impl");
 		localJson.put(ConfigurationUtil.PORT, 30333);
 		final JSONObject remoteJson = controllerNodeConfig.getJSONObject(ConfigurationUtil.REMOTE);
 		final JSONObject recycleIntervalJson = new JSONObject();

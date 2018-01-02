@@ -47,6 +47,11 @@ public final class ConfigurationUtil {
 	public static final String URL = "url";
 
 	/**
+	 * the JSON key, "file-size-dir".
+	 */
+	public static final String FILE_SIZE_DIR = "file-size-dir";
+
+	/**
 	 * the JSON key, "socket-factory-impl".
 	 */
 	public static final String SOCKET_FACTORY_IMPL = "socket-factory-impl";

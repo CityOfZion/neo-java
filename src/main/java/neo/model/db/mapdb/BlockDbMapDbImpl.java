@@ -98,7 +98,7 @@ public final class BlockDbMapDbImpl implements BlockDb {
 	/**
 	 * the directory.
 	 */
-	private static final File DIR = new File("java-chain/db");
+	private static final File DIR = new File("java-chain/db-mapdb");
 
 	/**
 	 * the file.

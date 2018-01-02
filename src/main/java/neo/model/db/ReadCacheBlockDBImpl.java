@@ -12,7 +12,7 @@ import neo.model.bytes.UInt160;
 import neo.model.bytes.UInt256;
 import neo.model.core.Block;
 import neo.model.core.Transaction;
-import neo.model.db.h2.BlockDbH2Impl;
+import neo.model.db.mapdb.BlockDbMapDbImpl;
 
 /**
  * a blockdb implementation that caches read-only requests between writes.
@@ -44,7 +44,7 @@ public final class ReadCacheBlockDBImpl implements BlockDb {
 	 *            the configuration to use.
 	 */
 	public ReadCacheBlockDBImpl(final JSONObject config) {
-		delegate = new BlockDbH2Impl(config);
+		delegate = new BlockDbMapDbImpl();
 	}
 
 	/**

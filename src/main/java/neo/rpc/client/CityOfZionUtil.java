@@ -1,12 +1,14 @@
 package neo.rpc.client;
 
 import java.io.IOException;
+import java.net.SocketTimeoutException;
 
 import org.apache.http.HttpEntity;
-import org.apache.http.client.methods.CloseableHttpResponse;
+import org.apache.http.HttpResponse;
+import org.apache.http.client.HttpClient;
+import org.apache.http.client.config.RequestConfig;
 import org.apache.http.client.methods.HttpGet;
-import org.apache.http.impl.client.CloseableHttpClient;
-import org.apache.http.impl.client.HttpClients;
+import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.http.util.EntityUtils;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -42,6 +44,20 @@ public final class CityOfZionUtil {
 	private static final Logger LOG = LoggerFactory.getLogger(CityOfZionUtil.class);
 
 	/**
+	 * return the http client.
+	 *
+	 * @return the http client.
+	 */
+	private static HttpClient getHttpClient() {
+		final RequestConfig requestConfig = RequestConfig.custom().setConnectTimeout(2000)
+				.setConnectionRequestTimeout(2000).setSocketTimeout(2000).build();
+		final HttpClient client = HttpClientBuilder.create().disableAuthCaching().disableAutomaticRetries()
+				.disableConnectionState().disableContentCompression().disableCookieManagement()
+				.disableRedirectHandling().setDefaultRequestConfig(requestConfig).build();
+		return client;
+	}
+
+	/**
 	 * return the mainnet URL with the given suffix.
 	 *
 	 * @param urlSuffix
@@ -52,8 +68,8 @@ public final class CityOfZionUtil {
 		try {
 			final String url = MAINNET_API + urlSuffix;
 			final HttpGet get = new HttpGet(url);
-			final CloseableHttpClient client = HttpClients.createDefault();
-			final CloseableHttpResponse response = client.execute(get);
+			final HttpClient client = getHttpClient();
+			final HttpResponse response = client.execute(get);
 			LOG.debug("main net status:{}", response.getStatusLine());
 			final HttpEntity entity = response.getEntity();
 			final String entityStr = EntityUtils.toString(entity);
@@ -65,6 +81,9 @@ public final class CityOfZionUtil {
 				LOG.error("url:" + url + ";entityStr:" + entityStr, e);
 				throw e;
 			}
+		} catch (final SocketTimeoutException e) {
+			LOG.debug("main net SocketTimeoutException:{}", e);
+			return null;
 		} catch (final IOException e) {
 			throw new RuntimeException(e);
 		}
@@ -77,6 +96,9 @@ public final class CityOfZionUtil {
 	 */
 	public static String getMainNetRpcNode() {
 		final JSONObject json = getMainNetApiJsonAtUrl("/v2/network/best_node");
+		if (json == null) {
+			return null;
+		}
 		final String rpcNode = json.getString(NODE);
 		LOG.debug("main net rpcNode {}", rpcNode);
 		return rpcNode;
@@ -92,8 +114,8 @@ public final class CityOfZionUtil {
 	private static JSONObject getTestNetApiJsonAtUrl(final String urlSuffix) {
 		try {
 			final HttpGet get = new HttpGet(TESTNET_API + urlSuffix);
-			final CloseableHttpClient client = HttpClients.createDefault();
-			final CloseableHttpResponse response = client.execute(get);
+			final HttpClient client = getHttpClient();
+			final HttpResponse response = client.execute(get);
 			LOG.debug("test net status:{}", response.getStatusLine());
 			final HttpEntity entity = response.getEntity();
 			final String entityStr = EntityUtils.toString(entity);

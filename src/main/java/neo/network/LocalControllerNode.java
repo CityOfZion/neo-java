@@ -729,8 +729,14 @@ public class LocalControllerNode {
 		synchronized (data) {
 			final VersionPayload payload = message.getPayload(VersionPayload.class);
 			data.setVersion(payload.userAgent);
-			data.setBlockHeight(payload.startHeight.asLong());
+			final long blockHeight = payload.startHeight.asLong();
+			data.setBlockHeight(blockHeight);
 			data.setLastMessageTimestamp(System.currentTimeMillis());
+
+			if (blockHeight > localNodeData.getBlockchainBlockCount()) {
+				localNodeData.setBlockchainBlockCount(blockHeight);
+			}
+
 		}
 		synchronized (RemoteNodeData.class) {
 			data.setConnectionPhase(NodeConnectionPhaseEnum.ACKNOWLEDGED);
