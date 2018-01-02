@@ -33,6 +33,7 @@ import neo.model.core.Transaction;
 import neo.model.core.TransactionOutput;
 import neo.model.core.Witness;
 import neo.model.db.BlockDb;
+import neo.model.util.ConfigurationUtil;
 
 /**
  * the block database.
@@ -78,6 +79,11 @@ public final class BlockDbH2Impl implements BlockDb {
 	private boolean closed = false;
 
 	/**
+	 * the directory to read to get the db file size.
+	 */
+	private final File fileSizeDir;
+
+	/**
 	 * the constructor.
 	 *
 	 * @param config
@@ -91,8 +97,10 @@ public final class BlockDbH2Impl implements BlockDb {
 			throw new RuntimeException("error reading resource\"" + SQL_CACHE_XML + "\" ", e);
 		}
 
+		fileSizeDir = new File(config.getString(ConfigurationUtil.FILE_SIZE_DIR));
+
 		ds = new JdbcDataSource();
-		ds.setUrl(config.getString("url"));
+		ds.setUrl(config.getString(ConfigurationUtil.URL));
 
 		final JdbcTemplate t = new JdbcTemplate(ds);
 
@@ -290,8 +298,7 @@ public final class BlockDbH2Impl implements BlockDb {
 	 */
 	@Override
 	public long getFileSize() {
-		final File dir = new File(sqlCache.getString("getFileSizeDir"));
-		return FileUtils.sizeOfDirectory(dir);
+		return FileUtils.sizeOfDirectory(fileSizeDir);
 	}
 
 	@Override
