@@ -5,6 +5,13 @@
       SHUTDOWN
     </sql>
   </close>
+  <deleteBlockAtHeight>
+    <sql>delete from block where index = ?</sql>
+    <sql>delete from transaction where block_index = ?</sql>
+    <sql>delete from transaction_input where block_index = ?</sql>
+    <sql>delete from transaction_output where block_index = ?</sql>
+    <sql>delete from transaction_script where block_index = ?</sql>
+  </deleteBlockAtHeight>
   <create>
     <sql>SET DB_CLOSE_DELAY=10</sql>
     <sql>SET DB_CLOSE_ON_EXIT=FALSE</sql>

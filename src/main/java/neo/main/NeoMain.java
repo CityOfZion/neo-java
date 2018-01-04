@@ -137,10 +137,12 @@ public final class NeoMain {
 		frame.getContentPane().add(mainPanel);
 
 		controller.startThreadPool();
-		controller.startRefreshThread();
 
+		frame.pack();
 		frame.setSize(640, 960);
 		frame.setVisible(true);
+
+		controller.startRefreshThread();
 
 		LOG.info("SUCCESS main");
 	}

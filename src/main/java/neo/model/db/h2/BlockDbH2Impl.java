@@ -19,8 +19,14 @@ import org.json.JSONObject;
 import org.json.XML;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.dao.DataAccessException;
 import org.springframework.jdbc.core.JdbcOperations;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.jdbc.datasource.DataSourceTransactionManager;
+import org.springframework.transaction.TransactionDefinition;
+import org.springframework.transaction.TransactionStatus;
+import org.springframework.transaction.support.TransactionCallbackWithoutResult;
+import org.springframework.transaction.support.TransactionTemplate;
 
 import neo.model.bytes.Fixed8;
 import neo.model.bytes.UInt16;
@@ -161,6 +167,40 @@ public final class BlockDbH2Impl implements BlockDb {
 	}
 
 	/**
+	 * used to get blocks unstuck, during debugging.
+	 *
+	 * @param blockHeight
+	 *            the block height to remove.
+	 */
+	public void deleteBlockAtHeight(final long blockHeight) {
+
+		final byte[] blockHeightBa = getBlockHeightBa(blockHeight);
+		final DataSourceTransactionManager tsMan = new DataSourceTransactionManager(ds);
+
+		final TransactionTemplate txTemplate = new TransactionTemplate(tsMan);
+		txTemplate.setPropagationBehavior(TransactionDefinition.PROPAGATION_REQUIRES_NEW);
+		try {
+			txTemplate.execute(new TransactionCallbackWithoutResult() {
+				@Override
+				protected void doInTransactionWithoutResult(final TransactionStatus ts) {
+					try {
+						final JdbcTemplate t = new JdbcTemplate(ds);
+						executeSqlGroup(t, "deleteBlockAtHeight", blockHeightBa);
+					} catch (final Exception e) {
+						if (LOG.isErrorEnabled()) {
+							LOG.error("deleteBlockAtHeight sql exception", e);
+						}
+					}
+				}
+			});
+		} catch (final DataAccessException e) {
+			if (LOG.isErrorEnabled()) {
+				LOG.error("deleteBlockAtHeight data access exception", e);
+			}
+		}
+	}
+
+	/**
 	 * executes the group of SQL in the SQL Cache.
 	 *
 	 * @param jdbc
@@ -168,8 +208,10 @@ public final class BlockDbH2Impl implements BlockDb {
 	 *
 	 * @param sqlGroup
 	 *            the group of SQL to pull out of the sqlcache to execute.
+	 * @param parms
+	 *            the parameters to use.
 	 */
-	private void executeSqlGroup(final JdbcOperations jdbc, final String sqlGroup) {
+	private void executeSqlGroup(final JdbcOperations jdbc, final String sqlGroup, final Object... parms) {
 		final JSONObject sqlGroupJo = sqlCache.getJSONObject(sqlGroup);
 		if (!sqlGroupJo.has(SQL)) {
 			throw new RuntimeException("no key \"" + SQL + "\" in " + sqlGroupJo.keySet());
@@ -179,11 +221,13 @@ public final class BlockDbH2Impl implements BlockDb {
 			final JSONArray createSqls = sqlGroupJo.getJSONArray(SQL);
 			for (int createSqlIx = 0; createSqlIx < createSqls.length(); createSqlIx++) {
 				final String sql = createSqls.getString(createSqlIx);
-				jdbc.execute(sql);
+				LOG.error("[1] sql:{} parms:{};", sql, parms);
+				jdbc.update(sql, parms);
 			}
 		} else if (sqlGroupJo.get(SQL) instanceof String) {
 			final String sql = sqlGroupJo.getString(SQL);
-			jdbc.execute(sql);
+			LOG.error("[2] sql:{} parms:{};", sql, parms);
+			jdbc.update(sql, parms);
 		} else {
 			throw new RuntimeException(
 					"no key of type String or JSONArray in \"" + SQL + "\" found in " + sqlGroupJo.keySet());
@@ -230,8 +274,7 @@ public final class BlockDbH2Impl implements BlockDb {
 			}
 		}
 		final JdbcTemplate t = new JdbcTemplate(ds);
-		final UInt32 indexObj = new UInt32(blockHeight);
-		final byte[] indexBa = indexObj.toByteArray();
+		final byte[] indexBa = getBlockHeightBa(blockHeight);
 		final String sql = getSql("getBlockWithIndex");
 		final List<byte[]> data = t.queryForList(sql, byte[].class, indexBa);
 		if (data.isEmpty()) {
@@ -289,6 +332,19 @@ public final class BlockDbH2Impl implements BlockDb {
 		final JdbcTemplate t = new JdbcTemplate(ds);
 		final String sql = getSql("getBlockCount");
 		return t.queryForObject(sql, Integer.class);
+	}
+
+	/**
+	 * converts the block height to a byte array.
+	 *
+	 * @param blockHeight
+	 *            the block height to use.
+	 * @return the block height as a byte array.
+	 */
+	public byte[] getBlockHeightBa(final long blockHeight) {
+		final UInt32 indexObj = new UInt32(blockHeight);
+		final byte[] indexBa = indexObj.toByteArray();
+		return indexBa;
 	}
 
 	/**
@@ -547,59 +603,102 @@ public final class BlockDbH2Impl implements BlockDb {
 				return;
 			}
 		}
-		final JdbcTemplate t = new JdbcTemplate(ds);
-		final byte[] prevHashBa = block.prevHash.toByteArray();
-		ArrayUtils.reverse(prevHashBa);
+		final DataSourceTransactionManager tsMan = new DataSourceTransactionManager(ds);
 
-		final String putBlockSql = getSql("putBlock");
-		final byte[] blockIndexBa = block.index.toByteArray();
-		t.update(putBlockSql, block.hash.toByteArray(), prevHashBa, blockIndexBa, block.toHeaderByteArray());
-
-		final String putTransactionSql = getSql("putTransaction");
-		final String putTransactionInputSql = getSql("putTransactionInput");
-		final String putTransactionOutputSql = getSql("putTransactionOutput");
-		final String putTransactionScriptSql = getSql("putTransactionScript");
-		int transactionIndex = 0;
-
-		final List<Object[]> putTransactionList = new ArrayList<>();
-		final List<Object[]> putTransactionInputList = new ArrayList<>();
-		final List<Object[]> putTransactionOutputList = new ArrayList<>();
-		final List<Object[]> putTransactionScriptList = new ArrayList<>();
-
-		for (final Transaction transaction : block.getTransactionList()) {
-			final byte[] txIxByte = new UInt16(transactionIndex).toByteArray();
-			final byte[] transactionBaseBa = transaction.toBaseByteArray();
-			add(putTransactionList, blockIndexBa, txIxByte, transaction.hash.toByteArray(), transactionBaseBa);
-
-			for (int inputIx = 0; inputIx < transaction.inputs.size(); inputIx++) {
-				final byte[] txInputIxByte = new UInt32(inputIx).toByteArray();
-				final CoinReference input = transaction.inputs.get(inputIx);
-				add(putTransactionInputList, blockIndexBa, txIxByte, txInputIxByte, input.prevHash.toByteArray(),
-						input.prevIndex.toByteArray());
+		final TransactionTemplate txTemplate = new TransactionTemplate(tsMan);
+		// set behavior
+		txTemplate.setPropagationBehavior(TransactionDefinition.PROPAGATION_REQUIRES_NEW);
+		try {
+			txTemplate.execute(new TransactionCallback(block));
+		} catch (final DataAccessException e) {
+			if (LOG.isErrorEnabled()) {
+				LOG.error("data access exception", e);
 			}
-
-			for (int outputIx = 0; outputIx < transaction.outputs.size(); outputIx++) {
-				final byte[] txOutputIxByte = new UInt16(outputIx).toByteArray();
-				final TransactionOutput output = transaction.outputs.get(outputIx);
-				add(putTransactionOutputList, blockIndexBa, txIxByte, txOutputIxByte, output.assetId.toByteArray(),
-						output.value.toByteArray(), output.scriptHash.toByteArray());
-			}
-
-			for (int scriptIx = 0; scriptIx < transaction.scripts.size(); scriptIx++) {
-				final byte[] txScriptIxByte = new UInt32(scriptIx).toByteArray();
-				final Witness script = transaction.scripts.get(scriptIx);
-				add(putTransactionScriptList, blockIndexBa, txIxByte, txScriptIxByte,
-						script.getCopyOfInvocationScript(), script.getCopyOfVerificationScript());
-			}
-
-			transactionIndex++;
 		}
-
-		t.batchUpdate(putTransactionSql, putTransactionList);
-		t.batchUpdate(putTransactionInputSql, putTransactionInputList);
-		t.batchUpdate(putTransactionOutputSql, putTransactionOutputList);
-		t.batchUpdate(putTransactionScriptSql, putTransactionScriptList);
-
 	}
 
+	/**
+	 * the transaction callback class.
+	 *
+	 * @author coranos
+	 *
+	 */
+	private final class TransactionCallback extends TransactionCallbackWithoutResult {
+
+		/**
+		 * the list of blocks to update.
+		 */
+		private final Block[] blocks;
+
+		/**
+		 * the constructor.
+		 *
+		 * @param blocks
+		 *            the list of blocks.
+		 */
+		private TransactionCallback(final Block... blocks) {
+			this.blocks = blocks;
+		}
+
+		@Override
+		public void doInTransactionWithoutResult(final TransactionStatus status) {
+
+			final JdbcTemplate t = new JdbcTemplate(ds);
+
+			for (final Block block : blocks) {
+				final byte[] prevHashBa = block.prevHash.toByteArray();
+				ArrayUtils.reverse(prevHashBa);
+
+				final String putBlockSql = getSql("putBlock");
+				final byte[] blockIndexBa = block.index.toByteArray();
+				t.update(putBlockSql, block.hash.toByteArray(), prevHashBa, blockIndexBa, block.toHeaderByteArray());
+
+				final String putTransactionSql = getSql("putTransaction");
+				final String putTransactionInputSql = getSql("putTransactionInput");
+				final String putTransactionOutputSql = getSql("putTransactionOutput");
+				final String putTransactionScriptSql = getSql("putTransactionScript");
+				int transactionIndex = 0;
+
+				final List<Object[]> putTransactionList = new ArrayList<>();
+				final List<Object[]> putTransactionInputList = new ArrayList<>();
+				final List<Object[]> putTransactionOutputList = new ArrayList<>();
+				final List<Object[]> putTransactionScriptList = new ArrayList<>();
+
+				for (final Transaction transaction : block.getTransactionList()) {
+					final byte[] txIxByte = new UInt16(transactionIndex).toByteArray();
+					final byte[] transactionBaseBa = transaction.toBaseByteArray();
+					add(putTransactionList, blockIndexBa, txIxByte, transaction.hash.toByteArray(), transactionBaseBa);
+
+					for (int inputIx = 0; inputIx < transaction.inputs.size(); inputIx++) {
+						final byte[] txInputIxByte = new UInt32(inputIx).toByteArray();
+						final CoinReference input = transaction.inputs.get(inputIx);
+						add(putTransactionInputList, blockIndexBa, txIxByte, txInputIxByte,
+								input.prevHash.toByteArray(), input.prevIndex.toByteArray());
+					}
+
+					for (int outputIx = 0; outputIx < transaction.outputs.size(); outputIx++) {
+						final byte[] txOutputIxByte = new UInt16(outputIx).toByteArray();
+						final TransactionOutput output = transaction.outputs.get(outputIx);
+						add(putTransactionOutputList, blockIndexBa, txIxByte, txOutputIxByte,
+								output.assetId.toByteArray(), output.value.toByteArray(),
+								output.scriptHash.toByteArray());
+					}
+
+					for (int scriptIx = 0; scriptIx < transaction.scripts.size(); scriptIx++) {
+						final byte[] txScriptIxByte = new UInt32(scriptIx).toByteArray();
+						final Witness script = transaction.scripts.get(scriptIx);
+						add(putTransactionScriptList, blockIndexBa, txIxByte, txScriptIxByte,
+								script.getCopyOfInvocationScript(), script.getCopyOfVerificationScript());
+					}
+
+					transactionIndex++;
+				}
+
+				t.batchUpdate(putTransactionSql, putTransactionList);
+				t.batchUpdate(putTransactionInputSql, putTransactionInputList);
+				t.batchUpdate(putTransactionOutputSql, putTransactionOutputList);
+				t.batchUpdate(putTransactionScriptSql, putTransactionScriptList);
+			}
+		}
+	}
 }

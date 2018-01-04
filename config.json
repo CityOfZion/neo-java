@@ -13,6 +13,7 @@
 		"block-db": {
 			"file-size-dir":"java-chain/db",
 			"url": "jdbc:h2:retry:./java-chain/db/db",
+			"impl1": "neo.model.db.h2.BlockDbH2Impl",
 			"impl": "neo.perfmon.PerformanceMonitoringBlockDb"
 		},
 		"socket-factory-impl": "neo.network.model.socket.SocketFactoryImpl",

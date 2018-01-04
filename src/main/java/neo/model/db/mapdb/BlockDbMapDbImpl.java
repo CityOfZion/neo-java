@@ -117,6 +117,11 @@ public final class BlockDbMapDbImpl implements BlockDb {
 	private boolean closed = false;
 
 	/**
+	 * the commit counter.
+	 */
+	private Integer commitCounter = 0;
+
+	/**
 	 * the constructor.
 	 */
 	public BlockDbMapDbImpl() {
@@ -611,7 +616,13 @@ public final class BlockDbMapDbImpl implements BlockDb {
 		putWithByteBufferKey(TRANSACTION_OUTPUTS_BY_HASH, toByteBufferValue(txOutputByTxKeyAndIndexMap));
 		putWithByteBufferKey(TRANSACTION_SCRIPTS_BY_HASH, toByteBufferValue(txScriptByTxKeyAndIndexMap));
 
-		DB.commit();
+		synchronized (commitCounter) {
+			commitCounter++;
+			if (commitCounter > 1000) {
+				DB.commit();
+				commitCounter = 0;
+			}
+		}
 	}
 
 	/**
