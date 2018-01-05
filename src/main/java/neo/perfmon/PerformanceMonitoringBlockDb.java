@@ -111,9 +111,9 @@ public final class PerformanceMonitoringBlockDb implements BlockDb {
 	}
 
 	@Override
-	public void put(final Block block) {
+	public void put(final Block... blocks) {
 		try (PerformanceMonitor m = new PerformanceMonitor("BlockDb.put")) {
-			delegate.put(block);
+			delegate.put(blocks);
 		}
 	}
 

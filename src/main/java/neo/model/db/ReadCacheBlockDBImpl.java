@@ -135,8 +135,8 @@ public final class ReadCacheBlockDBImpl implements BlockDb {
 	}
 
 	@Override
-	public void put(final Block block) {
-		delegate.put(block);
+	public void put(final Block... blocks) {
+		delegate.put(blocks);
 		clearCache();
 	}
 

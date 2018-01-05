@@ -221,12 +221,16 @@ public final class BlockDbH2Impl implements BlockDb {
 			final JSONArray createSqls = sqlGroupJo.getJSONArray(SQL);
 			for (int createSqlIx = 0; createSqlIx < createSqls.length(); createSqlIx++) {
 				final String sql = createSqls.getString(createSqlIx);
-				LOG.error("[1] sql:{} parms:{};", sql, parms);
+				if (LOG.isTraceEnabled()) {
+					LOG.trace("[1] sql:{} parms:{};", sql, parms);
+				}
 				jdbc.update(sql, parms);
 			}
 		} else if (sqlGroupJo.get(SQL) instanceof String) {
 			final String sql = sqlGroupJo.getString(SQL);
-			LOG.error("[2] sql:{} parms:{};", sql, parms);
+			if (LOG.isTraceEnabled()) {
+				LOG.trace("[2] sql:{} parms:{};", sql, parms);
+			}
 			jdbc.update(sql, parms);
 		} else {
 			throw new RuntimeException(
@@ -593,11 +597,11 @@ public final class BlockDbH2Impl implements BlockDb {
 	/**
 	 * puts the block into the database.
 	 *
-	 * @param block
-	 *            the block to use.
+	 * @param blocks
+	 *            the blocks to use.
 	 */
 	@Override
-	public void put(final Block block) {
+	public void put(final Block... blocks) {
 		synchronized (this) {
 			if (closed) {
 				return;
@@ -609,7 +613,7 @@ public final class BlockDbH2Impl implements BlockDb {
 		// set behavior
 		txTemplate.setPropagationBehavior(TransactionDefinition.PROPAGATION_REQUIRES_NEW);
 		try {
-			txTemplate.execute(new TransactionCallback(block));
+			txTemplate.execute(new TransactionCallback(blocks));
 		} catch (final DataAccessException e) {
 			if (LOG.isErrorEnabled()) {
 				LOG.error("data access exception", e);

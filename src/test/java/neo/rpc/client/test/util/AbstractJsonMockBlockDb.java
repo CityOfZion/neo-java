@@ -234,14 +234,15 @@ public abstract class AbstractJsonMockBlockDb implements BlockDb {
 	}
 
 	@Override
-	public final void put(final Block block) {
-		if (containsBlockWithHash(block.hash)) {
-			return;
+	public final void put(final Block... blocks) {
+		for (final Block block : blocks) {
+			if (!containsBlockWithHash(block.hash)) {
+				final JSONObject mockBlock = new JSONObject();
+				mockBlock.put(HASH, block.hash.toHexString());
+				mockBlock.put(INDEX, block.getIndexAsLong());
+				mockBlock.put(BLOCK, ModelUtil.toHexString(block.toByteArray()));
+				getMockBlockDb().put(mockBlock);
+			}
 		}
-		final JSONObject mockBlock = new JSONObject();
-		mockBlock.put(HASH, block.hash.toHexString());
-		mockBlock.put(INDEX, block.getIndexAsLong());
-		mockBlock.put(BLOCK, ModelUtil.toHexString(block.toByteArray()));
-		getMockBlockDb().put(mockBlock);
 	}
 }
