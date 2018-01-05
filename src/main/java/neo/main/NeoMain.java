@@ -136,6 +136,10 @@ public final class NeoMain {
 
 		frame.getContentPane().add(mainPanel);
 
+		// final BlockDbH2Impl db = (BlockDbH2Impl)
+		// controller.getLocalNodeData().getBlockDb();
+		// db.deleteBlockAtHeight(db.getHeaderOfBlockWithMaxIndex().getIndexAsLong());
+
 		controller.startThreadPool();
 
 		frame.pack();

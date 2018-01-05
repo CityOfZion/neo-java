@@ -4,6 +4,8 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map.Entry;
+import java.util.Set;
+import java.util.TreeSet;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -13,8 +15,6 @@ import neo.model.core.Block;
 import neo.model.core.Header;
 import neo.model.network.InvPayload;
 import neo.model.util.GenesisBlockUtil;
-import neo.model.util.MapUtil;
-import neo.model.util.ModelUtil;
 import neo.network.model.LocalNodeData;
 import neo.network.model.RemoteNodeData;
 
@@ -27,72 +27,9 @@ import neo.network.model.RemoteNodeData;
 public final class LocalNodeDataSynchronizedUtil {
 
 	/**
-	 * the block height exceeds the header height.
-	 */
-	private static final String TOO_HIGH_IN_BLOCK = "too-high-in-block";
-
-	/**
-	 * the block is a duplicate.
-	 */
-	private static final String DUPLICATE_IN_BLOCK = "duplicate-in-block";
-
-	/**
 	 * the logger.
 	 */
 	private static final Logger LOG = LoggerFactory.getLogger(LocalNodeDataSynchronizedUtil.class);
-
-	/**
-	 * add the block if it is new, and the parent hash exists.
-	 *
-	 * @param localNodeData
-	 *            the local node data to use.
-	 * @param block
-	 *            the block to add.
-	 * @return true if added, gfalse if not.
-	 */
-	private static boolean addBlockIfNewAndParentExistsUnsynchronized(final LocalNodeData localNodeData,
-			final Block block) {
-		boolean blockChanged = false;
-		final long blockIndex = block.getIndexAsLong();
-		LOG.trace("STARTED addBlockIfNewAndParentExistsUnsynchronized adding block to db : index:{}; hash:{}; prev:{};",
-				blockIndex, block.hash, block.prevHash);
-		if (localNodeData.getBlockDb().containsBlockWithHash(block.prevHash)
-				|| block.hash.equals(GenesisBlockUtil.GENESIS_HASH)) {
-			if (!localNodeData.getBlockDb().containsBlockWithHash(block.hash)) {
-				localNodeData.getBlockDb().put(block);
-				final Block checkBlock = localNodeData.getBlockDb().getFullBlockFromHash(block.hash);
-
-				final String blockBaHash = ModelUtil.toHexString(block.toByteArray());
-				final String checkBlockBaHash = ModelUtil.toHexString(checkBlock.toByteArray());
-
-				if (!blockBaHash.equals(checkBlockBaHash)) {
-					LOG.error("checkBlockBaHash does not match blockBaHash.");
-					LOG.error("blockBaHash     :{}", blockBaHash);
-					LOG.error("checkBlockBaHash:{}", checkBlockBaHash);
-				}
-
-				localNodeData.updateHighestBlockTime();
-
-				localNodeData.getVerifiedHeaderPoolMap().remove(blockIndex);
-
-				blockChanged = true;
-				LOG.trace(
-						"SUCCESS addBlockIfNewAndParentExistsUnsynchronized adding block to db : index:{}; hash:{}; prev:{};",
-						blockIndex, block.hash, block.prevHash);
-			} else {
-				MapUtil.increment(LocalNodeData.API_CALL_MAP, DUPLICATE_IN_BLOCK);
-				LOG.trace(
-						"FAILURE addBlockIfNewAndParentExistsUnsynchronized hash exists in db : index:{}; hash:{}; prev:{};",
-						blockIndex, block.hash, block.prevHash);
-			}
-		} else {
-			LOG.trace(
-					"FAILURE addBlockIfNewAndParentExistsUnsynchronized prevHash does not exist in db : index:{}; hash:{}; prev:{};",
-					blockIndex, block.hash, block.prevHash);
-			MapUtil.increment(LocalNodeData.API_CALL_MAP, TOO_HIGH_IN_BLOCK);
-		}
-		return blockChanged;
-	}
 
 	/**
 	 * add the header if it is new.
@@ -371,12 +308,21 @@ public final class LocalNodeDataSynchronizedUtil {
 	public static boolean verifyUnverifiedBlocks(final LocalNodeData localNodeData) {
 		synchronized (localNodeData) {
 			boolean anyBlockChanged = false;
+
+			final List<Block> putBlockList = new ArrayList<>();
+			final Set<UInt256> putBlockHashs = new TreeSet<>();
 			for (final Block block : localNodeData.getUnverifiedBlockPoolSet()) {
-				final boolean blockChanged = addBlockIfNewAndParentExistsUnsynchronized(localNodeData, block);
-				if (blockChanged) {
+				if (localNodeData.getBlockDb().containsBlockWithHash(block.prevHash)
+						|| block.hash.equals(GenesisBlockUtil.GENESIS_HASH) || putBlockHashs.contains(block.prevHash)) {
+					putBlockList.add(block);
+					putBlockHashs.add(block.hash);
 					anyBlockChanged = true;
+					localNodeData.updateHighestBlockTime();
+					final long blockIndex = block.getIndexAsLong();
+					localNodeData.getVerifiedHeaderPoolMap().remove(blockIndex);
 				}
 			}
+			localNodeData.getBlockDb().put(putBlockList.toArray(new Block[0]));
 
 			final Block highestBlock = localNodeData.getBlockDb().getHeaderOfBlockWithMaxIndex();
 			if (highestBlock != null) {
