@@ -136,9 +136,11 @@ public final class NeoMain {
 
 		frame.getContentPane().add(mainPanel);
 
+		// LOG.info("INTERIM main STARTED deleteBlockAtMaxHeight");
 		// final BlockDbH2Impl db = (BlockDbH2Impl)
 		// controller.getLocalNodeData().getBlockDb();
 		// db.deleteBlockAtHeight(db.getHeaderOfBlockWithMaxIndex().getIndexAsLong());
+		// LOG.info("INTERIM main SUCCESS deleteBlockAtMaxHeight");
 
 		controller.startThreadPool();
 
