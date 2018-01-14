@@ -29,6 +29,10 @@
     <level value="error" />
   </logger>
 
+  <logger name="neo.model.db.mapdb.BlockDbMapDbImpl">
+    <level value="info" />
+  </logger>
+
   <logger name="neo.main.NeoMain">
     <level value="info" />
   </logger>

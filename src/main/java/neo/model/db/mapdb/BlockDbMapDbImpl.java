@@ -109,7 +109,7 @@ public final class BlockDbMapDbImpl implements BlockDb {
 
 	static {
 		DIR.mkdirs();
-		DB = DBMaker.fileDB(FILE).transactionEnable().make();
+		DB = DBMaker.fileDB(FILE).transactionEnable().closeOnJvmShutdown().make();
 
 	}
 
@@ -559,6 +559,9 @@ public final class BlockDbMapDbImpl implements BlockDb {
 			}
 		}
 
+		final HTreeMap<byte[], Long> blockIndexByHashMap = getBlockIndexByHashMap();
+		final HTreeMap<Long, byte[]> blockHeaderByIndexMap = getBlockHeaderByIndexMap();
+
 		for (final Block block : blocks) {
 			final long blockIndex = block.getIndexAsLong();
 			DB.atomicLong(MAX_BLOCK_INDEX, blockIndex).createOrOpen().set(blockIndex);
@@ -566,9 +569,7 @@ public final class BlockDbMapDbImpl implements BlockDb {
 			final byte[] prevHashBa = block.prevHash.toByteArray();
 			ArrayUtils.reverse(prevHashBa);
 
-			final HTreeMap<byte[], Long> blockIndexByHashMap = getBlockIndexByHashMap();
 			blockIndexByHashMap.put(block.hash.toByteArray(), blockIndex);
-			final HTreeMap<Long, byte[]> blockHeaderByIndexMap = getBlockHeaderByIndexMap();
 			blockHeaderByIndexMap.put(blockIndex, block.toHeaderByteArray());
 
 			int transactionIndex = 0;
@@ -629,8 +630,8 @@ public final class BlockDbMapDbImpl implements BlockDb {
 			putWithByteBufferKey(TRANSACTION_INPUTS_BY_HASH, toByteBufferValue(txInputByTxKeyAndIndexMap));
 			putWithByteBufferKey(TRANSACTION_OUTPUTS_BY_HASH, toByteBufferValue(txOutputByTxKeyAndIndexMap));
 			putWithByteBufferKey(TRANSACTION_SCRIPTS_BY_HASH, toByteBufferValue(txScriptByTxKeyAndIndexMap));
-
 		}
+		DB.commit();
 	}
 
 	/**
