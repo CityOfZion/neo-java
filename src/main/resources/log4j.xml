@@ -26,7 +26,7 @@
   </logger>
 
   <logger name="neo.model.db.h2">
-    <level value="info" />
+    <level value="debug" />
   </logger>
 
   <logger name="neo.main.NeoMain">

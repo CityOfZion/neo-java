@@ -115,7 +115,7 @@
   </getBlockWithHash>
   <getBlockCount>
     <sql>
-      select count(*)
+      select count(index)
       from block
     </sql>
   </getBlockCount>
