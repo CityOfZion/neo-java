@@ -131,13 +131,13 @@ public final class NeoMain {
 		mainPanel.setLayout(new BoxLayout(mainPanel, BoxLayout.X_AXIS));
 		mainPanel.add(tabbedPane);
 
+		// controller.getLocalNodeData().getBlockDb().validate();
+
 		addBlockchainStatsPanel(controller, statsModel, tabbedPane);
 		addRemotePeerDetailsPanel(controller, remotePeerDataModel, tabbedPane);
 		addApiStatsPanel(controller, apiCallModel, tabbedPane);
 
 		frame.getContentPane().add(mainPanel);
-
-		// controller.getLocalNodeData().getBlockDb().validate();
 
 		controller.startNodesInConfigFiles();
 		controller.startThreadPool();

@@ -32,7 +32,7 @@ public final class TestBlockDbMapDbImpl {
 
 	@Test
 	public void test001getHeaderOfBlockWithMaxIndex() throws IOException, DecoderException {
-		final BlockDb blockDb = new BlockDbMapDbImpl();
+		final BlockDb blockDb = new BlockDbMapDbImpl(null);
 		Assert.assertNotNull("header of block database should not be null", blockDb.getHeaderOfBlockWithMaxIndex());
 	}
 

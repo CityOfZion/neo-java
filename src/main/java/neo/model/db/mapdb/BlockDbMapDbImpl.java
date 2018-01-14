@@ -13,6 +13,7 @@ import java.util.TreeMap;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang.ArrayUtils;
+import org.json.JSONObject;
 import org.mapdb.DB;
 import org.mapdb.DBMaker;
 import org.mapdb.HTreeMap;
@@ -29,6 +30,7 @@ import neo.model.core.Transaction;
 import neo.model.core.TransactionOutput;
 import neo.model.core.Witness;
 import neo.model.db.BlockDb;
+import neo.model.util.GenesisBlockUtil;
 import neo.model.util.ModelUtil;
 import neo.model.util.NetworkUtil;
 
@@ -118,8 +120,11 @@ public final class BlockDbMapDbImpl implements BlockDb {
 
 	/**
 	 * the constructor.
+	 *
+	 * @param config
+	 *            the configuration to use.
 	 */
-	public BlockDbMapDbImpl() {
+	public BlockDbMapDbImpl(final JSONObject config) {
 	}
 
 	/**
@@ -192,6 +197,18 @@ public final class BlockDbMapDbImpl implements BlockDb {
 		}
 		final HTreeMap<byte[], Long> map = getBlockIndexByHashMap();
 		return map.containsKey(hash.toByteArray());
+	}
+
+	/**
+	 * used to get blocks unstuck, during debugging.
+	 *
+	 * @param blockHeight
+	 *            the block height to remove.
+	 */
+	private void deleteBlockAtHeight(final long blockHeight) {
+		final HTreeMap<Long, byte[]> map = getBlockHeaderByIndexMap();
+		map.remove(blockHeight);
+		map.close();
 	}
 
 	@Override
@@ -692,6 +709,44 @@ public final class BlockDbMapDbImpl implements BlockDb {
 
 	@Override
 	public void validate() {
+		LOG.info("STARTED validate");
+
+		final Block block0 = getBlock(0, false);
+		if (!block0.hash.equals(GenesisBlockUtil.GENESIS_HASH)) {
+			throw new RuntimeException("height 0 block hash \"" + block0.hash.toHexString()
+					+ "\" does not match genesis block hash \"" + GenesisBlockUtil.GENESIS_HASH.toHexString() + "\".");
+		}
+
+		long lastInfoMs = System.currentTimeMillis();
+
+		long validBlockHeight = 1;
+		final long maxBlockCount = getBlockCount();
+		while (validBlockHeight < maxBlockCount) {
+			LOG.debug("INTERIM DEBUG validate {} of {} STARTED ", validBlockHeight, maxBlockCount);
+			final Block block = getBlock(validBlockHeight, false);
+			if (block == null) {
+				LOG.error("INTERIM validate {} of {} FAILURE, block not found in blockchain.", validBlockHeight,
+						maxBlockCount);
+			} else if (!containsBlockWithHash(block.prevHash)) {
+				LOG.error("INTERIM validate {} of {} FAILURE, prevHash {} not found in blockchain.", validBlockHeight,
+						maxBlockCount, block.prevHash.toHexString());
+				deleteBlockAtHeight(validBlockHeight);
+			} else if (block.getIndexAsLong() != validBlockHeight) {
+				LOG.error("INTERIM validate {} of {} FAILURE, indexAsLong {} does not match blockchain.",
+						validBlockHeight, maxBlockCount, block.getIndexAsLong());
+				deleteBlockAtHeight(validBlockHeight);
+			} else {
+				if (System.currentTimeMillis() > (lastInfoMs + 1000)) {
+					LOG.info("INTERIM INFO  validate {} of {} SUCCESS ", validBlockHeight, maxBlockCount);
+					lastInfoMs = System.currentTimeMillis();
+				} else {
+					LOG.debug("INTERIM DEBUG validate {} of {} SUCCESS ", validBlockHeight, maxBlockCount);
+				}
+			}
+			validBlockHeight++;
+		}
+
+		LOG.info("SUCCESS validate");
 	}
 
 }

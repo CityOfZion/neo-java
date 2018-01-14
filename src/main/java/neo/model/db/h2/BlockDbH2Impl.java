@@ -40,6 +40,7 @@ import neo.model.core.Transaction;
 import neo.model.core.TransactionOutput;
 import neo.model.core.Witness;
 import neo.model.db.BlockDb;
+import neo.model.util.BlockUtil;
 import neo.model.util.ConfigurationUtil;
 import neo.model.util.GenesisBlockUtil;
 
@@ -176,7 +177,7 @@ public final class BlockDbH2Impl implements BlockDb {
 	 */
 	public void deleteBlockAtHeight(final long blockHeight) {
 
-		final byte[] blockHeightBa = getBlockHeightBa(blockHeight);
+		final byte[] blockHeightBa = BlockUtil.getBlockHeightBa(blockHeight);
 		final DataSourceTransactionManager tsMan = new DataSourceTransactionManager(ds);
 
 		final TransactionTemplate txTemplate = new TransactionTemplate(tsMan);
@@ -280,7 +281,7 @@ public final class BlockDbH2Impl implements BlockDb {
 			}
 		}
 		final JdbcTemplate t = new JdbcTemplate(ds);
-		final byte[] indexBa = getBlockHeightBa(blockHeight);
+		final byte[] indexBa = BlockUtil.getBlockHeightBa(blockHeight);
 		final String sql = getSql("getBlockWithIndex");
 		final List<byte[]> data = t.queryForList(sql, byte[].class, indexBa);
 		if (data.isEmpty()) {
@@ -338,19 +339,6 @@ public final class BlockDbH2Impl implements BlockDb {
 		final JdbcTemplate t = new JdbcTemplate(ds);
 		final String sql = getSql("getBlockCount");
 		return t.queryForObject(sql, Integer.class);
-	}
-
-	/**
-	 * converts the block height to a byte array.
-	 *
-	 * @param blockHeight
-	 *            the block height to use.
-	 * @return the block height as a byte array.
-	 */
-	public byte[] getBlockHeightBa(final long blockHeight) {
-		final UInt32 indexObj = new UInt32(blockHeight);
-		final byte[] indexBa = indexObj.toByteArray();
-		return indexBa;
 	}
 
 	/**
