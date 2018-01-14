@@ -322,7 +322,9 @@ public final class LocalNodeDataSynchronizedUtil {
 					localNodeData.getVerifiedHeaderPoolMap().remove(blockIndex);
 				}
 			}
-			localNodeData.getBlockDb().put(putBlockList.toArray(new Block[0]));
+			if (!putBlockList.isEmpty()) {
+				localNodeData.getBlockDb().put(putBlockList.toArray(new Block[0]));
+			}
 
 			final Block highestBlock = localNodeData.getBlockDb().getHeaderOfBlockWithMaxIndex();
 			if (highestBlock != null) {

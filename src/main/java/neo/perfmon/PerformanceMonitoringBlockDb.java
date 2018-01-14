@@ -10,7 +10,7 @@ import neo.model.bytes.UInt256;
 import neo.model.core.Block;
 import neo.model.core.Transaction;
 import neo.model.db.BlockDb;
-import neo.model.db.ReadCacheBlockDBImpl;
+import neo.model.db.h2.BlockDbH2Impl;
 
 /**
  * the performance monitoring class.
@@ -32,7 +32,7 @@ public final class PerformanceMonitoringBlockDb implements BlockDb {
 	 *            the configuration to use.
 	 */
 	public PerformanceMonitoringBlockDb(final JSONObject config) {
-		delegate = new ReadCacheBlockDBImpl(config);
+		delegate = new BlockDbH2Impl(config);
 	}
 
 	@Override
@@ -114,6 +114,13 @@ public final class PerformanceMonitoringBlockDb implements BlockDb {
 	public void put(final Block... blocks) {
 		try (PerformanceMonitor m = new PerformanceMonitor("BlockDb.put")) {
 			delegate.put(blocks);
+		}
+	}
+
+	@Override
+	public void validate() {
+		try (PerformanceMonitor m = new PerformanceMonitor("BlockDb.validate")) {
+			delegate.validate();
 		}
 	}
 

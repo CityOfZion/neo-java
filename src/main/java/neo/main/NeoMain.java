@@ -116,7 +116,6 @@ public final class NeoMain {
 		LOG.info("STARTED main");
 		final JSONObject controllerNodeConfig = ConfigurationUtil.getConfiguration();
 		final LocalControllerNode controller = new LocalControllerNode(controllerNodeConfig);
-		controller.loadNodeFiles();
 
 		final StatsModel statsModel = new StatsModel();
 		final ApiCallModel apiCallModel = new ApiCallModel();
@@ -138,14 +137,9 @@ public final class NeoMain {
 
 		frame.getContentPane().add(mainPanel);
 
-		// LOG.info("INTERIM main STARTED deleteBlockAtMaxHeight");
-		// final BlockDbH2Impl db = (BlockDbH2Impl)
-		// controller.getLocalNodeData().getBlockDb();
-		// db.deleteBlockAtHeight(db.getHeaderOfBlockWithMaxIndex().getIndexAsLong());
-		// windowClosingAdapter.shutdown();
-		// LOG.info("INTERIM main SUCCESS deleteBlockAtMaxHeight");
-		// System.exit(0);
+		// controller.getLocalNodeData().getBlockDb().validate();
 
+		controller.startNodesInConfigFiles();
 		controller.startThreadPool();
 
 		frame.pack();

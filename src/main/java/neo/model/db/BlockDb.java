@@ -111,4 +111,8 @@ public interface BlockDb {
 	 */
 	void put(Block... blocks);
 
+	/**
+	 * validates the database.
+	 */
+	void validate();
 }

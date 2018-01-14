@@ -245,4 +245,8 @@ public abstract class AbstractJsonMockBlockDb implements BlockDb {
 			}
 		}
 	}
+
+	@Override
+	public void validate() {
+	}
 }

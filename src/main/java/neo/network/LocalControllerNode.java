@@ -349,20 +349,6 @@ public class LocalControllerNode {
 	}
 
 	/**
-	 * loads the node files.
-	 */
-	public void loadNodeFiles() {
-		if (stopped) {
-			return;
-		}
-		synchronized (this) {
-			loadNodeFile(localNodeData.getSeedNodeFile());
-			loadNodeFile(localNodeData.getGoodNodeFile());
-		}
-		notifyNodeDataChangeListeners();
-	}
-
-	/**
 	 * notify the node data change listeners that a data change occurred.
 	 */
 	public void notifyNodeDataChangeListeners() {
@@ -820,6 +806,20 @@ public class LocalControllerNode {
 				throw new RuntimeException(e);
 			}
 		}
+	}
+
+	/**
+	 * loads the node files.
+	 */
+	public void startNodesInConfigFiles() {
+		if (stopped) {
+			return;
+		}
+		synchronized (this) {
+			loadNodeFile(localNodeData.getSeedNodeFile());
+			loadNodeFile(localNodeData.getGoodNodeFile());
+		}
+		notifyNodeDataChangeListeners();
 	}
 
 	/**

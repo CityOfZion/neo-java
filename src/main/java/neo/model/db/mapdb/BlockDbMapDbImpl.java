@@ -690,4 +690,8 @@ public final class BlockDbMapDbImpl implements BlockDb {
 		return destMap;
 	}
 
+	@Override
+	public void validate() {
+	}
+
 }
