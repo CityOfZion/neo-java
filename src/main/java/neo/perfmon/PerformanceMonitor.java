@@ -89,6 +89,11 @@ public final class PerformanceMonitor implements AutoCloseable {
 	private final String name;
 
 	/**
+	 * the count.
+	 */
+	private final long count;
+
+	/**
 	 * the name for logging total milliseconds used.
 	 */
 	private final String totalMillisName;
@@ -105,8 +110,21 @@ public final class PerformanceMonitor implements AutoCloseable {
 	 *            the name of the monitor.
 	 */
 	public PerformanceMonitor(final String name) {
+		this(name, 1);
+	}
+
+	/**
+	 * the constructor.
+	 *
+	 * @param name
+	 *            the name of the monitor.
+	 * @param count
+	 *            the number of elements being processed.
+	 */
+	public PerformanceMonitor(final String name, final long count) {
 		startTime = System.currentTimeMillis();
 		this.name = name;
+		this.count = count;
 		totalMillisName = name + "TotalMillis";
 		averageMillisName = name + "AverageMillis";
 		LOG.debug("STARTED {}", name);
@@ -114,8 +132,9 @@ public final class PerformanceMonitor implements AutoCloseable {
 
 	@Override
 	public void close() {
-		final long measurement = System.currentTimeMillis() - startTime;
-		addToPerfDataSumMap(totalMillisName, measurement);
+		final long measurementOverall = System.currentTimeMillis() - startTime;
+		final long measurementPerElement = measurementOverall / count;
+		addToPerfDataSumMap(totalMillisName, measurementPerElement);
 		addToPerfDataSumMap(name, 1L);
 		MapUtil.increment(PERF_DATA_COUNT_MAP, name);
 		final long totalCount = PERF_DATA_COUNT_MAP.get(name);
@@ -124,7 +143,8 @@ public final class PerformanceMonitor implements AutoCloseable {
 		final long averageMillis = getSum(totalMillisName) / sum;
 		LocalNodeData.API_CALL_MAP.put(name, totalCount);
 		LocalNodeData.API_CALL_MAP.put(averageMillisName, Math.max(1, averageMillis));
-		LOG.debug("SUCCESS {}, {} ms", name, NumberFormat.getIntegerInstance().format(measurement));
+		LOG.debug("SUCCESS {}, {} elts, {} ms each.", name, count,
+				NumberFormat.getIntegerInstance().format(measurementPerElement));
 	}
 
 }
