@@ -30,7 +30,7 @@
   </logger>
 
   <logger name="neo.model.db.mapdb.BlockDbMapDbImpl">
-    <level value="info" />
+    <level value="error" />
   </logger>
 
   <logger name="neo.main.NeoMain">
