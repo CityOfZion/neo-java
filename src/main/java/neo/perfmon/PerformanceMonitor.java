@@ -135,8 +135,8 @@ public final class PerformanceMonitor implements AutoCloseable {
 		final long measurementOverall = System.currentTimeMillis() - startTime;
 		final long measurementPerElement = measurementOverall / count;
 		addToPerfDataSumMap(totalMillisName, measurementPerElement);
-		addToPerfDataSumMap(name, 1L);
-		MapUtil.increment(PERF_DATA_COUNT_MAP, name);
+		addToPerfDataSumMap(name, count);
+		MapUtil.increment(PERF_DATA_COUNT_MAP, name, count);
 		final long totalCount = PERF_DATA_COUNT_MAP.get(name);
 
 		final long sum = getSum(name);
