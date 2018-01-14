@@ -437,7 +437,7 @@ public class LocalControllerNode {
 		}
 
 		LocalNodeDataSynchronizedUtil.addUnverifiedBlock(localNodeData, newBlock);
-		LocalNodeDataSynchronizedUtil.verifyUnverifiedBlocks(localNodeData);
+		// LocalNodeDataSynchronizedUtil.verifyUnverifiedBlocks(localNodeData);
 	}
 
 	/**

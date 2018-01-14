@@ -592,13 +592,13 @@ public final class BlockDbH2Impl implements BlockDb {
 	 */
 	@Override
 	public void put(final Block... blocks) {
-		if (LOG.isInfoEnabled()) {
-			LOG.info("STARTED put, {} blocks", NumberFormat.getIntegerInstance().format(blocks.length));
-		}
 		synchronized (this) {
 			if (closed) {
 				return;
 			}
+		}
+		if (LOG.isInfoEnabled()) {
+			LOG.info("STARTED put, {} blocks", NumberFormat.getIntegerInstance().format(blocks.length));
 		}
 		final DataSourceTransactionManager tsMan = new DataSourceTransactionManager(ds);
 

@@ -5,6 +5,7 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.sql.SQLException;
+import java.text.NumberFormat;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -559,6 +560,9 @@ public final class BlockDbMapDbImpl implements BlockDb {
 			}
 		}
 
+		if (LOG.isInfoEnabled()) {
+			LOG.info("STARTED put, {} blocks", NumberFormat.getIntegerInstance().format(blocks.length));
+		}
 		final HTreeMap<byte[], Long> blockIndexByHashMap = getBlockIndexByHashMap();
 		final HTreeMap<Long, byte[]> blockHeaderByIndexMap = getBlockHeaderByIndexMap();
 
@@ -632,6 +636,9 @@ public final class BlockDbMapDbImpl implements BlockDb {
 			putWithByteBufferKey(TRANSACTION_SCRIPTS_BY_HASH, toByteBufferValue(txScriptByTxKeyAndIndexMap));
 		}
 		DB.commit();
+		if (LOG.isInfoEnabled()) {
+			LOG.info("SUCCESS put, {} blocks", NumberFormat.getIntegerInstance().format(blocks.length));
+		}
 	}
 
 	/**
