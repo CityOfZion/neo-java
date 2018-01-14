@@ -604,7 +604,9 @@ public final class BlockDbH2Impl implements BlockDb {
 	 */
 	@Override
 	public void put(final Block... blocks) {
-		LOG.info("STARTED put, {} blocks", NumberFormat.getIntegerInstance().format(blocks.length));
+		if (LOG.isInfoEnabled()) {
+			LOG.info("STARTED put, {} blocks", NumberFormat.getIntegerInstance().format(blocks.length));
+		}
 		synchronized (this) {
 			if (closed) {
 				return;
@@ -622,7 +624,9 @@ public final class BlockDbH2Impl implements BlockDb {
 				LOG.error("data access exception", e);
 			}
 		}
-		LOG.info("SUCCESS put, {} blocks", NumberFormat.getIntegerInstance().format(blocks.length));
+		if (LOG.isInfoEnabled()) {
+			LOG.info("SUCCESS put, {} blocks", NumberFormat.getIntegerInstance().format(blocks.length));
+		}
 	}
 
 	@Override

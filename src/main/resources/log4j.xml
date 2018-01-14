@@ -25,7 +25,7 @@
     <level value="info" />
   </logger>
 
-  <logger name="neo.model.db.h2">
+  <logger name="neo.model.db.h2.BlockDbH2Impl">
     <level value="debug" />
   </logger>
 
