@@ -110,7 +110,8 @@ public final class BlockDbMapDbImpl implements BlockDb {
 
 	static {
 		DIR.mkdirs();
-		DB = DBMaker.fileDB(FILE).transactionEnable().closeOnJvmShutdown().make();
+		DB = DBMaker.fileDB(FILE).transactionEnable().closeOnJvmShutdown().fileMmapEnableIfSupported()
+				.fileMmapPreclearDisable().allocateIncrement(8 * 1024 * 1024).make();
 
 	}
 
