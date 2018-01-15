@@ -132,9 +132,8 @@ public final class PerformanceMonitor implements AutoCloseable {
 
 	@Override
 	public void close() {
-		final long measurementOverall = System.currentTimeMillis() - startTime;
-		final long measurementPerElement = measurementOverall / count;
-		addToPerfDataSumMap(totalMillisName, measurementPerElement);
+		final long measurement = System.currentTimeMillis() - startTime;
+		addToPerfDataSumMap(totalMillisName, measurement);
 		addToPerfDataSumMap(name, count);
 		MapUtil.increment(PERF_DATA_COUNT_MAP, name, count);
 		final long totalCount = PERF_DATA_COUNT_MAP.get(name);
@@ -143,8 +142,8 @@ public final class PerformanceMonitor implements AutoCloseable {
 		final long averageMillis = getSum(totalMillisName) / sum;
 		LocalNodeData.API_CALL_MAP.put(name, totalCount);
 		LocalNodeData.API_CALL_MAP.put(averageMillisName, Math.max(1, averageMillis));
-		LOG.debug("SUCCESS {}, {} elts, {} ms each.", name, count,
-				NumberFormat.getIntegerInstance().format(measurementPerElement));
+		LOG.debug("SUCCESS {}, {} elts, {} ms total.", name, count,
+				NumberFormat.getIntegerInstance().format(measurement));
 	}
 
 }
