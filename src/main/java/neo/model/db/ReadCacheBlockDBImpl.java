@@ -81,13 +81,13 @@ public final class ReadCacheBlockDBImpl implements BlockDb {
 	@Override
 	public void close() {
 		clearCache();
-		delegate.close();
 		putRunnable.stop();
 		try {
 			putThread.join();
 		} catch (final InterruptedException e) {
 			throw new RuntimeException(e);
 		}
+		delegate.close();
 	}
 
 	@Override
@@ -230,15 +230,15 @@ public final class ReadCacheBlockDBImpl implements BlockDb {
 							delegate.put(putList.toArray(new Block[0]));
 						}
 					}
-				}
-
-				synchronized (blockList) {
-					if (blockList.isEmpty()) {
-						try (PerformanceMonitor m1 = new PerformanceMonitor("ReadCacheBlockDBImpl.clearCache")) {
-							clearCache();
+					synchronized (blockList) {
+						if (blockList.isEmpty()) {
+							try (PerformanceMonitor m1 = new PerformanceMonitor("ReadCacheBlockDBImpl.clearCache")) {
+								clearCache();
+							}
 						}
 					}
 				}
+
 				try {
 					Thread.sleep(1000);
 				} catch (final InterruptedException e) {
