@@ -9,7 +9,6 @@ import neo.model.bytes.UInt160;
 import neo.model.bytes.UInt256;
 import neo.model.core.Block;
 import neo.model.core.Transaction;
-import neo.model.db.mapdb.BlockDbMapDbImpl;
 import neo.perfmon.PerformanceMonitor;
 
 /**
@@ -32,7 +31,7 @@ public final class PerformanceMonitoringBlockDb implements BlockDb {
 	 *            the configuration to use.
 	 */
 	public PerformanceMonitoringBlockDb(final JSONObject config) {
-		delegate = new BlockDbMapDbImpl(config);
+		delegate = new ReadCacheBlockDBImpl(config);
 	}
 
 	@Override
