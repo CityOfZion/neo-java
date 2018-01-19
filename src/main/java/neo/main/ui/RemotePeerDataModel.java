@@ -117,6 +117,9 @@ public final class RemotePeerDataModel extends AbstractRefreshingModel {
 			synchronized (RemoteNodeData.class) {
 				tableDataList.sort(RemoteNodeData.getComparator());
 			}
+
+			printToFile("RemotePeerDataModel.txt");
+
 			setRefresh(true);
 		}
 		LOG.trace("SUCCESS peersChanged");

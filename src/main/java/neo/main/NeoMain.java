@@ -114,6 +114,8 @@ public final class NeoMain {
 	 */
 	public static void main(final String[] args) throws Exception {
 		LOG.info("STARTED main");
+		LOG.info("INTERIM main os.arch:{};", System.getProperty("os.arch"));
+
 		final JSONObject controllerNodeConfig = ConfigurationUtil.getConfiguration();
 		final LocalControllerNode controller = new LocalControllerNode(controllerNodeConfig);
 

@@ -1,8 +1,5 @@
 package neo.main.ui;
 
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.PrintWriter;
 import java.text.NumberFormat;
 import java.util.ArrayList;
 import java.util.List;
@@ -135,23 +132,7 @@ public final class ApiCallModel extends AbstractRefreshingModel {
 
 				addApiCallStats();
 
-				try (FileOutputStream fout = new FileOutputStream("ApiCallModel.txt");
-						PrintWriter pw = new PrintWriter(fout, true)) {
-					for (int columnIndex = 0; columnIndex < getColumnCount(); columnIndex++) {
-						pw.print(getColumnName(columnIndex));
-						pw.print("\t");
-					}
-					pw.println();
-					for (int rowIndex = 0; rowIndex < getRowCount(); rowIndex++) {
-						for (int columnIndex = 0; columnIndex < getColumnCount(); columnIndex++) {
-							pw.print(getValueAt(rowIndex, columnIndex));
-							pw.print("\t");
-						}
-						pw.println();
-					}
-				} catch (final IOException e) {
-					throw new RuntimeException(e);
-				}
+				printToFile("ApiCallModel.txt");
 
 				setRefresh(true);
 			}

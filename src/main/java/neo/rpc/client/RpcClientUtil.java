@@ -48,13 +48,13 @@ public final class RpcClientUtil {
 	 *            if false, log all timeout errors.
 	 * @return the block count.
 	 */
-	public static int getBlockCount(final long timeoutMillis, final String rpcNode, final boolean silentErrors) {
+	public static Integer getBlockCount(final long timeoutMillis, final String rpcNode, final boolean silentErrors) {
 		final JSONObject inputJson = new JSONObject(
 				"{\"jsonrpc\": \"2.0\", \"method\": \"getblockcount\", \"params\": [], \"id\": 1}");
 		final JSONObject outputJson = post(timeoutMillis, rpcNode, silentErrors, inputJson);
 		LOG.trace("getBlockCount outputJson:{}", outputJson);
 		if (outputJson == null) {
-			return 0;
+			return null;
 		}
 		return outputJson.getInt(RESULT);
 	}
