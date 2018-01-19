@@ -106,6 +106,11 @@ public final class StatsModel extends AbstractRefreshingModel {
 	private static final String MAX_BLOCK_HEIGHT = "Max Block Height";
 
 	/**
+	 * maximum known block timestamp.
+	 */
+	private static final String MAX_BLOCK_TIMESTAMP = "Max Block Timestamp";
+
+	/**
 	 * maximum known header height.
 	 */
 	private static final String MAX_HEADER_HEIGHT = "Max Header Height";
@@ -144,6 +149,7 @@ public final class StatsModel extends AbstractRefreshingModel {
 		final Block highestBlock = localNodeData.getBlockDb().getHeaderOfBlockWithMaxIndex();
 		if (highestBlock != null) {
 			addNameAndValue(MAX_BLOCK_HEIGHT, highestBlock.getIndexAsLong());
+			addNameAndValue(MAX_BLOCK_TIMESTAMP, highestBlock.getTimestamp());
 		}
 		if (localNodeData.getHighestBlockTime() != null) {
 			addNameAndValue(LAST_BLOCK_HEIGHT_CHANGE, localNodeData.getHighestBlockTime());

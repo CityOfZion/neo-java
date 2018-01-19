@@ -5,6 +5,7 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.io.Serializable;
 import java.nio.ByteBuffer;
+import java.sql.Timestamp;
 import java.util.Comparator;
 
 import org.apache.commons.lang3.ArrayUtils;
@@ -171,6 +172,15 @@ public abstract class AbstractBlockBase implements ToJsonObject, ByteArraySerial
 	 */
 	public final long getIndexAsLong() {
 		return index.asLong();
+	}
+
+	/**
+	 * returns the timestamp.
+	 *
+	 * @return the timestamp.
+	 */
+	public final Timestamp getTimestamp() {
+		return new Timestamp(timestamp.asLong());
 	}
 
 	@Override
