@@ -180,7 +180,7 @@ public abstract class AbstractBlockBase implements ToJsonObject, ByteArraySerial
 	 * @return the timestamp.
 	 */
 	public final Timestamp getTimestamp() {
-		return new Timestamp(timestamp.asLong());
+		return new Timestamp(timestamp.asLong() * 1000);
 	}
 
 	@Override
