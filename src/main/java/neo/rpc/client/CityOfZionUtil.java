@@ -1,6 +1,7 @@
 package neo.rpc.client;
 
 import java.io.IOException;
+import java.net.SocketException;
 import java.net.SocketTimeoutException;
 
 import org.apache.http.HttpEntity;
@@ -79,10 +80,13 @@ public final class CityOfZionUtil {
 				return json;
 			} catch (final JSONException e) {
 				LOG.error("url:" + url + ";entityStr:" + entityStr, e);
-				throw e;
+				return null;
 			}
 		} catch (final SocketTimeoutException e) {
 			LOG.debug("main net SocketTimeoutException:{}", e);
+			return null;
+		} catch (final SocketException e) {
+			LOG.debug("main net SocketException:{}", e);
 			return null;
 		} catch (final IOException e) {
 			throw new RuntimeException(e);
