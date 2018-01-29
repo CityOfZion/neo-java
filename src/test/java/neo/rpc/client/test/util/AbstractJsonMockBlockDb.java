@@ -82,6 +82,10 @@ public abstract class AbstractJsonMockBlockDb implements BlockDb {
 	}
 
 	@Override
+	public void deleteHighestBlock() {
+	}
+
+	@Override
 	public final Map<UInt160, Map<UInt256, Fixed8>> getAccountAssetValueMap() {
 		final Map<UInt160, Map<UInt256, Fixed8>> accountAssetValueMap = new TreeMap<>();
 		final JSONArray mockBlockDb = getMockBlockDb();

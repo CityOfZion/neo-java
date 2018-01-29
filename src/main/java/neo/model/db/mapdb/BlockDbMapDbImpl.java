@@ -210,7 +210,28 @@ public final class BlockDbMapDbImpl implements BlockDb {
 	private void deleteBlockAtHeight(final long blockHeight) {
 		final HTreeMap<Long, byte[]> map = getBlockHeaderByIndexMap();
 		map.remove(blockHeight);
-		map.close();
+	}
+
+	@Override
+	public void deleteHighestBlock() {
+		LOG.info("STARTED deleteHighestBlock");
+		try {
+			long blockHeight = getHeaderOfBlockWithMaxIndex().getIndexAsLong();
+			Block block = getBlock(blockHeight, false);
+			while (block == null) {
+				LOG.error("INTERIM INFO deleteHighestBlock height:{} block is null, decrementing by 1 and retrying");
+				blockHeight--;
+				block = getBlock(blockHeight, false);
+			}
+			LOG.info("INTERIM INFO deleteHighestBlock height:{};hash:{};", blockHeight, block.hash);
+			deleteBlockAtHeight(blockHeight);
+			setBlockIndex(blockHeight - 1);
+			DB.commit();
+		} catch (final Exception e) {
+			LOG.error("FAILURE deleteHighestBlock", e);
+			DB.rollback();
+		}
+		LOG.info("SUCCESS deleteHighestBlock");
 	}
 
 	@Override
@@ -570,7 +591,7 @@ public final class BlockDbMapDbImpl implements BlockDb {
 
 			for (final Block block : blocks) {
 				final long blockIndex = block.getIndexAsLong();
-				DB.atomicLong(MAX_BLOCK_INDEX, blockIndex).createOrOpen().set(blockIndex);
+				updateMaxBlockIndex(blockIndex);
 
 				final byte[] prevHashBa = block.prevHash.toByteArray();
 				ArrayUtils.reverse(prevHashBa);
@@ -706,6 +727,16 @@ public final class BlockDbMapDbImpl implements BlockDb {
 	}
 
 	/**
+	 * sets the blockindex to be the given block index.
+	 *
+	 * @param blockIndex
+	 *            the block index to use.
+	 */
+	private void setBlockIndex(final long blockIndex) {
+		DB.atomicLong(MAX_BLOCK_INDEX, blockIndex).createOrOpen().set(blockIndex);
+	}
+
+	/**
 	 * serializes a list of byte array values into a single byte array.
 	 *
 	 * @param sourceMap
@@ -723,6 +754,19 @@ public final class BlockDbMapDbImpl implements BlockDb {
 		return destMap;
 	}
 
+	/**
+	 * updates the block index, if the new block index is greater than the existing
+	 * block index.
+	 *
+	 * @param blockIndex
+	 *            the new block index.
+	 */
+	private void updateMaxBlockIndex(final long blockIndex) {
+		if (blockIndex > getMaxBlockIndex()) {
+			setBlockIndex(blockIndex);
+		}
+	}
+
 	@Override
 	public void validate() {
 		LOG.info("STARTED validate");
@@ -736,7 +780,10 @@ public final class BlockDbMapDbImpl implements BlockDb {
 		long lastInfoMs = System.currentTimeMillis();
 
 		long validBlockHeight = 1;
+		long lastGoodBlockIndex = -1;
 		final long maxBlockCount = getBlockCount();
+
+		setBlockIndex(validBlockHeight);
 		while (validBlockHeight < maxBlockCount) {
 			LOG.debug("INTERIM DEBUG validate {} of {} STARTED ", validBlockHeight, maxBlockCount);
 			final Block block = getBlock(validBlockHeight, false);
@@ -758,9 +805,11 @@ public final class BlockDbMapDbImpl implements BlockDb {
 				} else {
 					LOG.debug("INTERIM DEBUG validate {} of {} SUCCESS ", validBlockHeight, maxBlockCount);
 				}
+				lastGoodBlockIndex = block.getIndexAsLong();
 			}
 			validBlockHeight++;
 		}
+		setBlockIndex(lastGoodBlockIndex);
 
 		LOG.info("SUCCESS validate");
 	}

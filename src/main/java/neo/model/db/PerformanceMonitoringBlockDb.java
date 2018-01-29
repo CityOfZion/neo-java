@@ -47,6 +47,13 @@ public final class PerformanceMonitoringBlockDb implements BlockDb {
 	}
 
 	@Override
+	public void deleteHighestBlock() {
+		try (PerformanceMonitor m = new PerformanceMonitor("BlockDb.deleteHighestBlock")) {
+			delegate.deleteHighestBlock();
+		}
+	}
+
+	@Override
 	public Map<UInt160, Map<UInt256, Fixed8>> getAccountAssetValueMap() {
 		try (PerformanceMonitor m = new PerformanceMonitor("BlockDb.getAccountAssetValueMap")) {
 			return delegate.getAccountAssetValueMap();

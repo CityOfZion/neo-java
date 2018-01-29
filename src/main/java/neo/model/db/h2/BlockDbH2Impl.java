@@ -203,6 +203,12 @@ public final class BlockDbH2Impl implements BlockDb {
 		}
 	}
 
+	@Override
+	public void deleteHighestBlock() {
+		final long blockHeight = getHeaderOfBlockWithMaxIndex().getIndexAsLong();
+		deleteBlockAtHeight(blockHeight);
+	}
+
 	/**
 	 * executes the group of SQL in the SQL Cache.
 	 *

@@ -119,6 +119,19 @@ public final class NeoMain {
 		final JSONObject controllerNodeConfig = ConfigurationUtil.getConfiguration();
 		final LocalControllerNode controller = new LocalControllerNode(controllerNodeConfig);
 
+		for (final String arg : args) {
+			if (arg.equals("/validate")) {
+				LOG.info("STARTED validate");
+				controller.getLocalNodeData().getBlockDb().validate();
+				LOG.info("SUCCESS validate");
+			}
+			if (arg.equals("/decapitate")) {
+				LOG.info("STARTED decapitate");
+				controller.getLocalNodeData().getBlockDb().deleteHighestBlock();
+				LOG.info("SUCCESS decapitate");
+			}
+		}
+
 		final StatsModel statsModel = new StatsModel();
 		final ApiCallModel apiCallModel = new ApiCallModel();
 		final RemotePeerDataModel remotePeerDataModel = new RemotePeerDataModel();
@@ -132,14 +145,6 @@ public final class NeoMain {
 		final JTabbedPane tabbedPane = new JTabbedPane();
 		mainPanel.setLayout(new BoxLayout(mainPanel, BoxLayout.X_AXIS));
 		mainPanel.add(tabbedPane);
-
-		for (final String arg : args) {
-			if (arg.equals("/validate")) {
-				LOG.info("STARTED validate");
-				controller.getLocalNodeData().getBlockDb().validate();
-				LOG.info("SUCCESS validate");
-			}
-		}
 
 		addBlockchainStatsPanel(controller, statsModel, tabbedPane);
 		addRemotePeerDetailsPanel(controller, remotePeerDataModel, tabbedPane);

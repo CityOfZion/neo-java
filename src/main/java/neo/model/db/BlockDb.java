@@ -31,6 +31,11 @@ public interface BlockDb {
 	boolean containsBlockWithHash(UInt256 hash);
 
 	/**
+	 * deletes the highest block in the database.
+	 */
+	void deleteHighestBlock();
+
+	/**
 	 * return a map of account, assetid, and value for all accounts.
 	 *
 	 * @return a map of account, assetid, and value for all accounts.

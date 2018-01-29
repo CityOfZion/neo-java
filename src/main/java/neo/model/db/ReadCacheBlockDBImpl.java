@@ -103,6 +103,11 @@ public final class ReadCacheBlockDBImpl implements BlockDb {
 	}
 
 	@Override
+	public void deleteHighestBlock() {
+		delegate.deleteHighestBlock();
+	}
+
+	@Override
 	public Map<UInt160, Map<UInt256, Fixed8>> getAccountAssetValueMap() {
 		return delegate.getAccountAssetValueMap();
 	}
@@ -257,5 +262,4 @@ public final class ReadCacheBlockDBImpl implements BlockDb {
 		}
 
 	}
-
 }
