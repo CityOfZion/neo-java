@@ -133,7 +133,13 @@ public final class NeoMain {
 		mainPanel.setLayout(new BoxLayout(mainPanel, BoxLayout.X_AXIS));
 		mainPanel.add(tabbedPane);
 
-		// controller.getLocalNodeData().getBlockDb().validate();
+		for (final String arg : args) {
+			if (arg.equals("/validate")) {
+				LOG.info("STARTED validate");
+				controller.getLocalNodeData().getBlockDb().validate();
+				LOG.info("SUCCESS validate");
+			}
+		}
 
 		addBlockchainStatsPanel(controller, statsModel, tabbedPane);
 		addRemotePeerDetailsPanel(controller, remotePeerDataModel, tabbedPane);
