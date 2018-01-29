@@ -1,17 +1,22 @@
 <?xml version="1.0" ?>
 <BlockDbImpl>
-  <url>jdbc:h2:retry:./java-chain/db/db</url>
-  <getFileSizeDir>java-chain/db</getFileSizeDir>
   <close>
     <sql>
       SHUTDOWN
     </sql>
   </close>
+  <deleteBlockAtHeight>
+    <sql>delete from block where index = ?</sql>
+    <sql>delete from transaction where block_index = ?</sql>
+    <sql>delete from transaction_input where block_index = ?</sql>
+    <sql>delete from transaction_output where block_index = ?</sql>
+    <sql>delete from transaction_script where block_index = ?</sql>
+  </deleteBlockAtHeight>
   <create>
     <sql>SET DB_CLOSE_DELAY=10</sql>
     <sql>SET DB_CLOSE_ON_EXIT=FALSE</sql>
     <sql>SET MULTI_THREADED=TRUE</sql>
-    
+
     <sql>
       CREATE CACHED TABLE IF NOT EXISTS block (
       hash BINARY(32) not null,
@@ -110,7 +115,7 @@
   </getBlockWithHash>
   <getBlockCount>
     <sql>
-      select count(*)
+      select count(index)
       from block
     </sql>
   </getBlockCount>
@@ -140,6 +145,13 @@
       order by transaction_index asc
     </sql>
   </getTransactionsWithIndex>
+  <getTransactionWithHash>
+    <sql>
+      select block_index, transaction_index, transaction
+      from transaction
+      where transaction_hash = ?
+    </sql>
+  </getTransactionWithHash>
   <putTransactionOutput>
     <sql><![CDATA[
       insert into transaction_output (
@@ -152,15 +164,21 @@
       ) values (?,?,?,?,?,?)
     ]]></sql>
   </putTransactionOutput>
-  <getTransactionOutputsWithIndex>
-    <sql>
+  <getTransactionOutputsWithBlockIndex>
+    <sql><![CDATA[
       select transaction_index,asset_id,value,script_hash
       from transaction_output
       where block_index = ?
-      order by transaction_index, transaction_output_index
-      asc
-    </sql>
-  </getTransactionOutputsWithIndex>
+      order by transaction_index, transaction_output_index asc
+    ]]></sql>
+  </getTransactionOutputsWithBlockIndex>
+  <getTransactionOutputsWithBlockAndTransactionIndex>
+    <sql><![CDATA[
+      select transaction_index,asset_id,value,script_hash
+      from transaction_output
+      where block_index = ? and transaction_index = ?
+    ]]></sql>
+  </getTransactionOutputsWithBlockAndTransactionIndex>
   <putTransactionInput>
     <sql><![CDATA[
       insert into transaction_input (
@@ -172,14 +190,21 @@
       ) values (?,?,?,?,?)
     ]]></sql>
   </putTransactionInput>
-  <getTransactionInputsWithIndex>
+  <getTransactionInputsWithBlockIndex>
     <sql><![CDATA[
       select transaction_index,prev_transaction_hash,prev_transaction_output_index
       from transaction_input
       where block_index = ?
       order by transaction_input_index asc
     ]]></sql>
-  </getTransactionInputsWithIndex>
+  </getTransactionInputsWithBlockIndex>
+  <getTransactionInputsWithBlockAndTransactionIndex>
+    <sql><![CDATA[
+      select transaction_index,prev_transaction_hash,prev_transaction_output_index
+      from transaction_input
+      where block_index = ? and transaction_index = ?
+    ]]></sql>
+  </getTransactionInputsWithBlockAndTransactionIndex>
   <putTransactionScript>
     <sql><![CDATA[
       insert into transaction_script (
@@ -191,12 +216,19 @@
       ) values (?,?,?,?,?)
     ]]></sql>
   </putTransactionScript>
-  <getTransactionScriptsWithIndex>
+  <getTransactionScriptsWithBlockIndex>
     <sql><![CDATA[
       select transaction_index,invocation_script,verification_script
       from transaction_script
       where block_index = ?
       order by transaction_script_index asc
     ]]></sql>
-  </getTransactionScriptsWithIndex>
+  </getTransactionScriptsWithBlockIndex>
+  <getTransactionScriptsWithBlockAndTransactionIndex>
+    <sql><![CDATA[
+      select transaction_index,invocation_script,verification_script
+      from transaction_script
+      where block_index = ? and transaction_index = ?
+    ]]></sql>
+  </getTransactionScriptsWithBlockAndTransactionIndex>
 </BlockDbImpl>

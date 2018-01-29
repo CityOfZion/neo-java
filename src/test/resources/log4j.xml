@@ -19,6 +19,14 @@
     </layout>
   </appender>
 
+  <logger name="neo.model.db.h2.BlockDbH2Impl">
+    <level value="error" />
+  </logger>
+
+  <logger name="neo.model.db.mapdb.BlockDbMapDbImpl">
+    <level value="error" />
+  </logger>
+
   <logger name="neo.network.LocalControllerNodeCoreRpcRunnable">
     <level value="info" />
   </logger>

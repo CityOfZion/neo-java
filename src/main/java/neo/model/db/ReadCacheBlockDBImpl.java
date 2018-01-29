@@ -1,16 +1,23 @@
 package neo.model.db;
 
+import java.util.ArrayList;
 import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
+
+import org.json.JSONObject;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import neo.model.bytes.Fixed8;
 import neo.model.bytes.UInt160;
 import neo.model.bytes.UInt256;
 import neo.model.core.Block;
 import neo.model.core.Transaction;
-import neo.model.db.h2.BlockDbH2Impl;
+import neo.model.db.mapdb.BlockDbMapDbImpl;
+import neo.perfmon.PerformanceMonitor;
 
 /**
  * a blockdb implementation that caches read-only requests between writes.
@@ -21,9 +28,14 @@ import neo.model.db.h2.BlockDbH2Impl;
 public final class ReadCacheBlockDBImpl implements BlockDb {
 
 	/**
+	 * the logger.
+	 */
+	private static final Logger LOG = LoggerFactory.getLogger(ReadCacheBlockDBImpl.class);
+
+	/**
 	 * the delegate.
 	 */
-	private final BlockDb delegate = new BlockDbH2Impl();
+	private final BlockDb delegate;
 
 	/**
 	 * the set of known hashes.
@@ -36,6 +48,29 @@ public final class ReadCacheBlockDBImpl implements BlockDb {
 	private Long cachedBlockCount;
 
 	/**
+	 * the thread for putting blocks.
+	 */
+	private final Thread putThread;
+
+	/**
+	 * the runnable for putting blocks.
+	 */
+	private final PutRunnable putRunnable;
+
+	/**
+	 * the constructor.
+	 *
+	 * @param config
+	 *            the configuration to use.
+	 */
+	public ReadCacheBlockDBImpl(final JSONObject config) {
+		delegate = new BlockDbMapDbImpl(config);
+		putRunnable = new PutRunnable();
+		putThread = new Thread(putRunnable);
+		putThread.start();
+	}
+
+	/**
 	 * clears all cached objects.
 	 */
 	private void clearCache() {
@@ -46,6 +81,12 @@ public final class ReadCacheBlockDBImpl implements BlockDb {
 	@Override
 	public void close() {
 		clearCache();
+		putRunnable.stop();
+		try {
+			putThread.join();
+		} catch (final InterruptedException e) {
+			throw new RuntimeException(e);
+		}
 		delegate.close();
 	}
 
@@ -123,9 +164,8 @@ public final class ReadCacheBlockDBImpl implements BlockDb {
 	}
 
 	@Override
-	public void put(final Block block) {
-		delegate.put(block);
-		clearCache();
+	public void put(final Block... blocks) {
+		putRunnable.put(blocks);
 	}
 
 	/**
@@ -136,6 +176,86 @@ public final class ReadCacheBlockDBImpl implements BlockDb {
 	 */
 	public synchronized void setCachedBlockCount(final Long cachedBlockCount) {
 		this.cachedBlockCount = cachedBlockCount;
+	}
+
+	@Override
+	public void validate() {
+		delegate.validate();
+	}
+
+	/**
+	 * the runnable object for putting blocks asynchronously.
+	 *
+	 * @author coranos
+	 *
+	 */
+	private final class PutRunnable implements Runnable {
+
+		/**
+		 * the block list.
+		 */
+		private final List<Block> blockList = Collections.synchronizedList(new ArrayList<>());
+
+		/**
+		 * the stopped flag.
+		 */
+		private boolean stopped = false;
+
+		/**
+		 * puts the blocks into the putList.
+		 *
+		 * @param blocks
+		 *            the blocks to add.
+		 */
+		public void put(final Block... blocks) {
+			synchronized (blockList) {
+				for (final Block block : blocks) {
+					blockList.add(block);
+				}
+			}
+		}
+
+		@Override
+		public void run() {
+			while (!stopped) {
+				final List<Block> putList = new ArrayList<>();
+				synchronized (blockList) {
+					putList.addAll(blockList);
+					blockList.clear();
+				}
+				if (!putList.isEmpty()) {
+					try (PerformanceMonitor m1 = new PerformanceMonitor("ReadCacheBlockDBImpl.put")) {
+						try (PerformanceMonitor m2 = new PerformanceMonitor("ReadCacheBlockDBImpl.put[PerBlock]",
+								putList.size())) {
+							delegate.put(putList.toArray(new Block[0]));
+						}
+					}
+					synchronized (blockList) {
+						if (blockList.isEmpty()) {
+							try (PerformanceMonitor m1 = new PerformanceMonitor("ReadCacheBlockDBImpl.clearCache")) {
+								clearCache();
+							}
+						}
+					}
+				}
+
+				try {
+					Thread.sleep(1000);
+				} catch (final InterruptedException e) {
+					LOG.debug("thread interrupted, stopping", e);
+					stopped = true;
+				}
+			}
+		}
+
+		/**
+		 * stops the thread.
+		 */
+		public void stop() {
+			stopped = true;
+
+		}
+
 	}
 
 }

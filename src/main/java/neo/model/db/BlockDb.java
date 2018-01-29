@@ -106,9 +106,13 @@ public interface BlockDb {
 	/**
 	 * puts the given block into the database.
 	 *
-	 * @param block
-	 *            the block to use.
+	 * @param blocks
+	 *            the blocks to use.
 	 */
-	void put(Block block);
+	void put(Block... blocks);
 
+	/**
+	 * validates the database.
+	 */
+	void validate();
 }

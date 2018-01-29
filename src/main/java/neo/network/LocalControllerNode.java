@@ -142,7 +142,8 @@ public class LocalControllerNode {
 		final Map<String, TimerData> timersMap = TimerUtil.getTimerMap(timersJson);
 		final long rpcClientTimeoutMillis = JsonUtil.getTime(localJson, ConfigurationUtil.RPC_CLIENT_TIMOUT);
 		final long rpcServerTimeoutMillis = JsonUtil.getTime(localJson, ConfigurationUtil.RPC_SERVER_TIMOUT);
-		final String blockDbImplStr = localJson.getString(ConfigurationUtil.BLOCK_DB_IMPL);
+		final JSONObject blockDbJson = localJson.getJSONObject(ConfigurationUtil.BLOCK_DB);
+		final String blockDbImplStr = blockDbJson.getString(ConfigurationUtil.IMPL);
 		final Class<BlockDb> blockDbImplClass = getBlockDbImplClass(blockDbImplStr);
 
 		final String socketFactoryImplStr = localJson.getString(ConfigurationUtil.SOCKET_FACTORY_IMPL);
@@ -154,7 +155,7 @@ public class LocalControllerNode {
 		final File goodNodeFile = new File(localJson.getString(ConfigurationUtil.GOOD_NODE_FILE));
 
 		localNodeData = new LocalNodeData(magic, activeThreadCount, rpcClientTimeoutMillis, rpcServerTimeoutMillis,
-				blockDbImplClass, timersMap, nonce, port, seedNodeFile, goodNodeFile, socketFactoryClass);
+				blockDbImplClass, timersMap, nonce, port, seedNodeFile, goodNodeFile, socketFactoryClass, blockDbJson);
 		LocalNodeDataSynchronizedUtil.refreshCityOfZionBlockHeight(localNodeData);
 
 		threadPool = new ThreadPool(localJson.getInt(ConfigurationUtil.THREAD_POOL_COUNT));
@@ -348,20 +349,6 @@ public class LocalControllerNode {
 	}
 
 	/**
-	 * loads the node files.
-	 */
-	public void loadNodeFiles() {
-		if (stopped) {
-			return;
-		}
-		synchronized (this) {
-			loadNodeFile(localNodeData.getSeedNodeFile());
-			loadNodeFile(localNodeData.getGoodNodeFile());
-		}
-		notifyNodeDataChangeListeners();
-	}
-
-	/**
 	 * notify the node data change listeners that a data change occurred.
 	 */
 	public void notifyNodeDataChangeListeners() {
@@ -450,7 +437,7 @@ public class LocalControllerNode {
 		}
 
 		LocalNodeDataSynchronizedUtil.addUnverifiedBlock(localNodeData, newBlock);
-		LocalNodeDataSynchronizedUtil.verifyUnverifiedBlocks(localNodeData);
+		// LocalNodeDataSynchronizedUtil.verifyUnverifiedBlocks(localNodeData);
 	}
 
 	/**
@@ -728,8 +715,14 @@ public class LocalControllerNode {
 		synchronized (data) {
 			final VersionPayload payload = message.getPayload(VersionPayload.class);
 			data.setVersion(payload.userAgent);
-			data.setBlockHeight(payload.startHeight.asLong());
+			final long blockHeight = payload.startHeight.asLong();
+			data.setBlockHeight(blockHeight);
 			data.setLastMessageTimestamp(System.currentTimeMillis());
+
+			if (blockHeight > localNodeData.getBlockchainBlockCount()) {
+				localNodeData.setBlockchainBlockCount(blockHeight);
+			}
+
 		}
 		synchronized (RemoteNodeData.class) {
 			data.setConnectionPhase(NodeConnectionPhaseEnum.ACKNOWLEDGED);
@@ -813,6 +806,20 @@ public class LocalControllerNode {
 				throw new RuntimeException(e);
 			}
 		}
+	}
+
+	/**
+	 * loads the node files.
+	 */
+	public void startNodesInConfigFiles() {
+		if (stopped) {
+			return;
+		}
+		synchronized (this) {
+			loadNodeFile(localNodeData.getSeedNodeFile());
+			loadNodeFile(localNodeData.getGoodNodeFile());
+		}
+		notifyNodeDataChangeListeners();
 	}
 
 	/**

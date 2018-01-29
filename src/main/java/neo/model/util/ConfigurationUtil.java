@@ -32,9 +32,24 @@ public final class ConfigurationUtil {
 	public static final String PORT = "port";
 
 	/**
-	 * the JSON key, "block-db-impl".
+	 * the JSON key, "block-db".
 	 */
-	public static final String BLOCK_DB_IMPL = "block-db-impl";
+	public static final String BLOCK_DB = "block-db";
+
+	/**
+	 * the JSON key, "impl".
+	 */
+	public static final String IMPL = "impl";
+
+	/**
+	 * the JSON key, "url".
+	 */
+	public static final String URL = "url";
+
+	/**
+	 * the JSON key, "file-size-dir".
+	 */
+	public static final String FILE_SIZE_DIR = "file-size-dir";
 
 	/**
 	 * the JSON key, "socket-factory-impl".

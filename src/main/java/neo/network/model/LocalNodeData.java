@@ -1,6 +1,7 @@
 package neo.network.model;
 
 import java.io.File;
+import java.lang.reflect.InvocationTargetException;
 import java.util.Collections;
 import java.util.Date;
 import java.util.Map;
@@ -8,6 +9,8 @@ import java.util.SortedMap;
 import java.util.SortedSet;
 import java.util.TreeMap;
 import java.util.TreeSet;
+
+import org.json.JSONObject;
 
 import neo.model.core.AbstractBlockBase;
 import neo.model.core.Block;
@@ -61,7 +64,7 @@ public class LocalNodeData {
 	/**
 	 * the blockchain block count.
 	 */
-	private int blockchainBlockCount;
+	private long blockchainBlockCount;
 
 	/**
 	 * the block file size.
@@ -157,11 +160,13 @@ public class LocalNodeData {
 	 *            the block DB class.
 	 * @param socketFactoryClass
 	 *            the socket factory class.
+	 * @param blockDbConfig
+	 *            the blockdb configuration.
 	 */
 	public LocalNodeData(final long magic, final int activeThreadCount, final long rpcClientTimeoutMillis,
 			final long rpcServerTimeoutMillis, final Class<BlockDb> blockDbClass,
 			final Map<String, TimerData> timersMap, final int nonce, final int port, final File seedNodeFile,
-			final File goodNodeFile, final Class<SocketFactory> socketFactoryClass) {
+			final File goodNodeFile, final Class<SocketFactory> socketFactoryClass, final JSONObject blockDbConfig) {
 		startTime = System.currentTimeMillis();
 		this.magic = magic;
 		this.activeThreadCount = activeThreadCount;
@@ -173,8 +178,9 @@ public class LocalNodeData {
 		this.seedNodeFile = seedNodeFile;
 		this.goodNodeFile = goodNodeFile;
 		try {
-			blockDb = blockDbClass.newInstance();
-		} catch (InstantiationException | IllegalAccessException e) {
+			blockDb = blockDbClass.getConstructor(JSONObject.class).newInstance(blockDbConfig);
+		} catch (InstantiationException | IllegalAccessException | IllegalArgumentException | InvocationTargetException
+				| NoSuchMethodException | SecurityException e) {
 			throw new RuntimeException(e);
 		}
 		try {
@@ -199,7 +205,7 @@ public class LocalNodeData {
 	 *
 	 * @return the blockchain block count.
 	 */
-	public int getBlockchainBlockCount() {
+	public long getBlockchainBlockCount() {
 		return blockchainBlockCount;
 	}
 
@@ -373,7 +379,7 @@ public class LocalNodeData {
 	 * @param blockchainBlockCount
 	 *            the block count to use.
 	 */
-	public void setBlockchainBlockCount(final int blockchainBlockCount) {
+	public void setBlockchainBlockCount(final long blockchainBlockCount) {
 		this.blockchainBlockCount = blockchainBlockCount;
 	}
 

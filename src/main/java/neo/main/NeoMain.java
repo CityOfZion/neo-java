@@ -98,7 +98,7 @@ public final class NeoMain {
 	 *            the api call model.
 	 * @return the WindowAdapter.
 	 */
-	private static WindowAdapter getWindowClosingAdapter(final LocalControllerNode controller,
+	private static WindowClosingAdapter getWindowClosingAdapter(final LocalControllerNode controller,
 			final StatsModel statsModel, final RemotePeerDataModel remotePeerDataModel,
 			final ApiCallModel apiCallModel) {
 		return new WindowClosingAdapter(apiCallModel, remotePeerDataModel, statsModel, controller);
@@ -114,9 +114,10 @@ public final class NeoMain {
 	 */
 	public static void main(final String[] args) throws Exception {
 		LOG.info("STARTED main");
+		LOG.info("INTERIM main os.arch:{};", System.getProperty("os.arch"));
+
 		final JSONObject controllerNodeConfig = ConfigurationUtil.getConfiguration();
 		final LocalControllerNode controller = new LocalControllerNode(controllerNodeConfig);
-		controller.loadNodeFiles();
 
 		final StatsModel statsModel = new StatsModel();
 		final ApiCallModel apiCallModel = new ApiCallModel();
@@ -124,11 +125,15 @@ public final class NeoMain {
 
 		final JFrame frame = new JFrame("NEO Main");
 		frame.setDefaultCloseOperation(WindowConstants.DO_NOTHING_ON_CLOSE);
-		frame.addWindowListener(getWindowClosingAdapter(controller, statsModel, remotePeerDataModel, apiCallModel));
+		final WindowClosingAdapter windowClosingAdapter = getWindowClosingAdapter(controller, statsModel,
+				remotePeerDataModel, apiCallModel);
+		frame.addWindowListener(windowClosingAdapter);
 		final JPanel mainPanel = new JPanel();
 		final JTabbedPane tabbedPane = new JTabbedPane();
 		mainPanel.setLayout(new BoxLayout(mainPanel, BoxLayout.X_AXIS));
 		mainPanel.add(tabbedPane);
+
+		// controller.getLocalNodeData().getBlockDb().validate();
 
 		addBlockchainStatsPanel(controller, statsModel, tabbedPane);
 		addRemotePeerDetailsPanel(controller, remotePeerDataModel, tabbedPane);
@@ -136,11 +141,14 @@ public final class NeoMain {
 
 		frame.getContentPane().add(mainPanel);
 
+		controller.startNodesInConfigFiles();
 		controller.startThreadPool();
-		controller.startRefreshThread();
 
+		frame.pack();
 		frame.setSize(640, 960);
 		frame.setVisible(true);
+
+		controller.startRefreshThread();
 
 		LOG.info("SUCCESS main");
 	}
@@ -199,8 +207,10 @@ public final class NeoMain {
 			this.controller = controller;
 		}
 
-		@Override
-		public void windowClosing(final WindowEvent evt) {
+		/**
+		 * shuts down and exits.
+		 */
+		private void shutdown() {
 			try {
 				LOG.info("STARTED SHUTTING DOWN");
 				LOG.info("STARTED SHUTTING DOWN GUI REFRESH");
@@ -218,7 +228,13 @@ public final class NeoMain {
 			} catch (final InterruptedException ex) {
 				LOG.error("error closing", ex);
 			}
+		}
+
+		@Override
+		public void windowClosing(final WindowEvent evt) {
+			shutdown();
 			System.exit(0);
 		}
+
 	}
 }

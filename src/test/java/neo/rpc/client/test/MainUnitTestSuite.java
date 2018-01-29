@@ -29,6 +29,8 @@ import org.junit.runners.Suite;
 		/** */
 		TestNetwork.class,
 		/** */
+		TestDBH2.class,
+		/** */
 })
 
 public class MainUnitTestSuite {

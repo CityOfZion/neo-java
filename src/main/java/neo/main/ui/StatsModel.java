@@ -1,8 +1,5 @@
 package neo.main.ui;
 
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.PrintWriter;
 import java.text.NumberFormat;
 import java.util.ArrayList;
 import java.util.Date;
@@ -109,6 +106,11 @@ public final class StatsModel extends AbstractRefreshingModel {
 	private static final String MAX_BLOCK_HEIGHT = "Max Block Height";
 
 	/**
+	 * maximum known block timestamp.
+	 */
+	private static final String MAX_BLOCK_TIMESTAMP = "Max Block Timestamp";
+
+	/**
 	 * maximum known header height.
 	 */
 	private static final String MAX_HEADER_HEIGHT = "Max Header Height";
@@ -140,13 +142,14 @@ public final class StatsModel extends AbstractRefreshingModel {
 		final long blockCount = localNodeData.getBlockDb().getBlockCount();
 		final long blockFileSize = localNodeData.getBlockFileSize();
 
-		final int allChainBlockCount = localNodeData.getBlockchainBlockCount();
+		final long allChainBlockCount = localNodeData.getBlockchainBlockCount();
 		addNameAndValue(BLOCKCHAIN_BLOCK_COUNT, allChainBlockCount);
 		addNameAndValue(KNOWN_BLOCK_COUNT, blockCount);
 
 		final Block highestBlock = localNodeData.getBlockDb().getHeaderOfBlockWithMaxIndex();
 		if (highestBlock != null) {
 			addNameAndValue(MAX_BLOCK_HEIGHT, highestBlock.getIndexAsLong());
+			addNameAndValue(MAX_BLOCK_TIMESTAMP, highestBlock.getTimestamp());
 		}
 		if (localNodeData.getHighestBlockTime() != null) {
 			addNameAndValue(LAST_BLOCK_HEIGHT_CHANGE, localNodeData.getHighestBlockTime());
@@ -349,23 +352,7 @@ public final class StatsModel extends AbstractRefreshingModel {
 				setRefresh(true);
 			}
 
-			try (FileOutputStream fout = new FileOutputStream("StatsModel.txt");
-					PrintWriter pw = new PrintWriter(fout, true)) {
-				for (int columnIndex = 0; columnIndex < getColumnCount(); columnIndex++) {
-					pw.print(getColumnName(columnIndex));
-					pw.print("\t");
-				}
-				pw.println();
-				for (int rowIndex = 0; rowIndex < getRowCount(); rowIndex++) {
-					for (int columnIndex = 0; columnIndex < getColumnCount(); columnIndex++) {
-						pw.print(getValueAt(rowIndex, columnIndex));
-						pw.print("\t");
-					}
-					pw.println();
-				}
-			} catch (final IOException e) {
-				throw new RuntimeException(e);
-			}
+			printToFile("StatsModel.txt");
 		}
 		LOG.trace("SUCCESS peersChanged");
 	}

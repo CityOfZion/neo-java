@@ -29,9 +29,16 @@ public final class CityOfZionBlockUtil {
 	public static void refreshCityOfZionBlockHeight(final LocalNodeData localNodeData) {
 		try {
 			final String rpcNode = CityOfZionUtil.getMainNetRpcNode();
-			final int blockchainHeight = RpcClientUtil.getBlockCount(localNodeData.getRpcClientTimeoutMillis(), rpcNode,
-					false);
-			localNodeData.setBlockchainBlockCount(blockchainHeight);
+			if (rpcNode == null) {
+				return;
+			}
+			final Integer blockchainHeight = RpcClientUtil.getBlockCount(localNodeData.getRpcClientTimeoutMillis(),
+					rpcNode, true);
+			if (blockchainHeight != null) {
+				if (blockchainHeight > localNodeData.getBlockchainBlockCount()) {
+					localNodeData.setBlockchainBlockCount(blockchainHeight);
+				}
+			}
 		} catch (final Exception e) {
 			LOG.error("error refreshing block height", e);
 		}

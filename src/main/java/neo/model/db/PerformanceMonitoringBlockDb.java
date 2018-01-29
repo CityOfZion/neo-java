@@ -1,14 +1,15 @@
-package neo.perfmon;
+package neo.model.db;
 
 import java.util.Map;
+
+import org.json.JSONObject;
 
 import neo.model.bytes.Fixed8;
 import neo.model.bytes.UInt160;
 import neo.model.bytes.UInt256;
 import neo.model.core.Block;
 import neo.model.core.Transaction;
-import neo.model.db.BlockDb;
-import neo.model.db.ReadCacheBlockDBImpl;
+import neo.perfmon.PerformanceMonitor;
 
 /**
  * the performance monitoring class.
@@ -21,12 +22,16 @@ public final class PerformanceMonitoringBlockDb implements BlockDb {
 	/**
 	 * the delegate.
 	 */
-	private final BlockDb delegate = new ReadCacheBlockDBImpl();
+	private final BlockDb delegate;
 
 	/**
 	 * the constructor.
+	 *
+	 * @param config
+	 *            the configuration to use.
 	 */
-	public PerformanceMonitoringBlockDb() {
+	public PerformanceMonitoringBlockDb(final JSONObject config) {
+		delegate = new ReadCacheBlockDBImpl(config);
 	}
 
 	@Override
@@ -105,9 +110,18 @@ public final class PerformanceMonitoringBlockDb implements BlockDb {
 	}
 
 	@Override
-	public void put(final Block block) {
-		try (PerformanceMonitor m = new PerformanceMonitor("BlockDb.put")) {
-			delegate.put(block);
+	public void put(final Block... blocks) {
+		try (PerformanceMonitor m1 = new PerformanceMonitor("BlockDb.put")) {
+			try (PerformanceMonitor m2 = new PerformanceMonitor("BlockDb.put[PerBlock]", blocks.length)) {
+				delegate.put(blocks);
+			}
+		}
+	}
+
+	@Override
+	public void validate() {
+		try (PerformanceMonitor m = new PerformanceMonitor("BlockDb.validate")) {
+			delegate.validate();
 		}
 	}
 
