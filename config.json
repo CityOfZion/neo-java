@@ -11,10 +11,15 @@
 			"seconds": 5
 		},
 		"block-db": {
-			"file-size-dir":"java-chain/db",
+			"file-size-dir": "java-chain/db",
 			"url": "jdbc:h2:retry:./java-chain/db/db",
 			"impl1": "neo.model.db.h2.BlockDbH2Impl",
 			"impl": "neo.model.db.PerformanceMonitoringBlockDb"
+		},
+		"rpc": {
+			"disable": [
+				"submitblock"
+			]
 		},
 		"socket-factory-impl": "neo.network.model.socket.SocketFactoryImpl",
 		"thread-pool-count": 8,

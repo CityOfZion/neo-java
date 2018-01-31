@@ -18,10 +18,12 @@ import neo.model.core.Block;
 import neo.model.core.Transaction;
 import neo.model.util.ConfigurationUtil;
 import neo.model.util.GenesisBlockUtil;
+import neo.model.util.ModelUtil;
 import neo.network.LocalControllerNode;
 import neo.network.model.NodeConnectionPhaseEnum;
 import neo.network.model.RemoteNodeData;
 import neo.rpc.client.test.util.AbstractJsonMockBlockDb;
+import neo.rpc.client.test.util.MockUtil;
 import neo.rpc.client.test.util.TestRpcServerUtil;
 import neo.rpc.client.test.util.TestUtil;
 import neo.rpc.server.CityOfZionCommandEnum;
@@ -397,6 +399,27 @@ public class TestRpcServer {
 
 		final String expectedStrRaw = TestUtil.getJsonTestResourceAsString(getClass().getSimpleName(),
 				"test014CoreGetBlockWithHashNotVerbose");
+
+		final String actualStrRaw = TestRpcServerUtil.getResponse(CONTROLLER, "", RpcServerUtil.VERSION_2_0, params,
+				method);
+
+		final String expectedStr = new JSONObject(expectedStrRaw).toString(2);
+		final String actualStr = new JSONObject(actualStrRaw).toString(2);
+
+		Assert.assertEquals(TestUtil.RESPONSES_MUST_MATCH, expectedStr, actualStr);
+	}
+
+	/**
+	 * test submitting core block.
+	 */
+	@Test
+	public void test015CoreSubmitBlock() {
+		final JSONArray params = new JSONArray();
+		params.put(ModelUtil.toHexString(MockUtil.getMockBlock000().toByteArray()));
+		final String method = CoreRpcCommandEnum.SUBMITBLOCK.getName();
+
+		final String expectedStrRaw = TestUtil.getJsonTestResourceAsString(getClass().getSimpleName(),
+				"test015CoreSubmitBlock");
 
 		final String actualStrRaw = TestRpcServerUtil.getResponse(CONTROLLER, "", RpcServerUtil.VERSION_2_0, params,
 				method);

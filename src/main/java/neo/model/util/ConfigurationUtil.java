@@ -117,6 +117,16 @@ public final class ConfigurationUtil {
 	public static final String LOCAL = "local";
 
 	/**
+	 * the JSON key, "rpc".
+	 */
+	public static final String RPC = "rpc";
+
+	/**
+	 * the JSON key, "disable".
+	 */
+	public static final String DISABLE = "disable";
+
+	/**
 	 * the name of the config file.
 	 */
 	private static final File CONFIG_FILE = new File("config.json");

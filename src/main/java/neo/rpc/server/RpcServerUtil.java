@@ -4,6 +4,7 @@ import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.TreeMap;
 
 import org.apache.commons.codec.binary.Hex;
@@ -155,8 +156,7 @@ public final class RpcServerUtil {
 	public static final String METHOD = "method";
 
 	/**
-	 * finds a block with a given timestamp. TODO: make "finds a block with a given
-	 * timestamp" a SQL query.
+	 * finds a block with a given timestamp.
 	 *
 	 * @param controller
 	 *            the controller to use.
@@ -286,7 +286,6 @@ public final class RpcServerUtil {
 		}
 		// errorTrace["3"] = $"accountStateCache";
 
-		// TODO: get cache from the blockchain db.
 		final Map<UInt160, Map<UInt256, Fixed8>> accountStateCache = controller.getLocalNodeData().getBlockDb()
 				.getAccountAssetValueMap();
 
@@ -749,6 +748,45 @@ public final class RpcServerUtil {
 	}
 
 	/**
+	 * submit a block.
+	 *
+	 * @param controller
+	 *            the controller to use.
+	 * @param id
+	 *            the id to use.
+	 * @param params
+	 *            the parameters to use.
+	 * @return true if the block validated, false if it did not.
+	 */
+	private static JSONObject onSubmitBlock(final LocalControllerNode controller, final int id,
+			final JSONArray params) {
+		if (params.length() == 0) {
+			final JSONObject response = new JSONObject();
+			response.put(ERROR, "no parameters, expected a hashed block");
+			response.put(EXPECTED, EXPECTED_GENERIC_HEX);
+			response.put(ACTUAL, NULL);
+			return response;
+		}
+		try {
+			final String hex = params.getString(0);
+			final byte[] ba = ModelUtil.decodeHex(hex);
+			final Block block = new Block(ByteBuffer.wrap(ba));
+			controller.getLocalNodeData().getBlockDb().put(block);
+		} catch (final RuntimeException e) {
+			final JSONObject response = new JSONObject();
+			response.put(ERROR, e.getMessage());
+			response.put(EXPECTED, true);
+			response.put(ACTUAL, params.get(0));
+			return response;
+		}
+		final JSONObject response = new JSONObject();
+		response.put(RESULT, true);
+		response.put(ID, id);
+		response.put(JSONRPC, VERSION_2_0);
+		return response;
+	}
+
+	/**
 	 * process the request.
 	 *
 	 * @param controller
@@ -774,6 +812,15 @@ public final class RpcServerUtil {
 				return response;
 			}
 			final String methodStr = request.getString(METHOD);
+			final Set<String> disabledMethods = controller.getLocalNodeData().getRpcDisabledCalls();
+			if (disabledMethods.contains(methodStr)) {
+				final JSONObject response = new JSONObject();
+				response.put(ERROR, "method disabled");
+				response.put(EXPECTED, methodStr + " enabled");
+				response.put(ACTUAL, methodStr + " disabled");
+				return response;
+			}
+
 			final int id = request.getInt(ID);
 			final CoreRpcCommandEnum coreRpcCommand = CoreRpcCommandEnum.fromName(methodStr);
 
@@ -812,8 +859,8 @@ public final class RpcServerUtil {
 				throw new NotImplementedException(coreRpcCommand.getName());
 			}
 			case SUBMITBLOCK: {
-				// TODO : implement.
-				throw new NotImplementedException(coreRpcCommand.getName());
+				final JSONArray params = request.getJSONArray(PARAMS);
+				return onSubmitBlock(controller, id, params);
 			}
 			case GETACCOUNTLIST: {
 				final JSONArray params = request.getJSONArray(PARAMS);

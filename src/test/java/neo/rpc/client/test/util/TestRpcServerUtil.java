@@ -40,7 +40,7 @@ public final class TestRpcServerUtil {
 	/**
 	 * the connection timeout, in milliseconds.
 	 */
-	private static final int TIMEOUT_MILLIS = 2000;
+	private static final int TIMEOUT_MILLIS = 2000000;
 
 	/**
 	 * the logger.

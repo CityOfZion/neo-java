@@ -5,6 +5,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.util.Collections;
 import java.util.Date;
 import java.util.Map;
+import java.util.Set;
 import java.util.SortedMap;
 import java.util.SortedSet;
 import java.util.TreeMap;
@@ -102,6 +103,11 @@ public class LocalNodeData {
 	private final int port;
 
 	/**
+	 * the JSON disabled calls.
+	 */
+	private final Set<String> rpcDisabledCalls;
+
+	/**
 	 * the local seed node file.
 	 */
 	private final File seedNodeFile;
@@ -162,11 +168,14 @@ public class LocalNodeData {
 	 *            the socket factory class.
 	 * @param blockDbConfig
 	 *            the blockdb configuration.
+	 * @param rpcDisabledCalls
+	 *            the RPC calls taht are disabled.
 	 */
 	public LocalNodeData(final long magic, final int activeThreadCount, final long rpcClientTimeoutMillis,
 			final long rpcServerTimeoutMillis, final Class<BlockDb> blockDbClass,
 			final Map<String, TimerData> timersMap, final int nonce, final int port, final File seedNodeFile,
-			final File goodNodeFile, final Class<SocketFactory> socketFactoryClass, final JSONObject blockDbConfig) {
+			final File goodNodeFile, final Class<SocketFactory> socketFactoryClass, final JSONObject blockDbConfig,
+			final Set<String> rpcDisabledCalls) {
 		startTime = System.currentTimeMillis();
 		this.magic = magic;
 		this.activeThreadCount = activeThreadCount;
@@ -177,6 +186,7 @@ public class LocalNodeData {
 		this.port = port;
 		this.seedNodeFile = seedNodeFile;
 		this.goodNodeFile = goodNodeFile;
+		this.rpcDisabledCalls = Collections.unmodifiableSet(rpcDisabledCalls);
 		try {
 			blockDb = blockDbClass.getConstructor(JSONObject.class).newInstance(blockDbConfig);
 		} catch (InstantiationException | IllegalAccessException | IllegalArgumentException | InvocationTargetException
@@ -288,6 +298,15 @@ public class LocalNodeData {
 	 */
 	public long getRpcClientTimeoutMillis() {
 		return rpcClientTimeoutMillis;
+	}
+
+	/**
+	 * returns the RPC calls that are disabled.
+	 *
+	 * @return the RPC calls that are disabled.
+	 */
+	public Set<String> getRpcDisabledCalls() {
+		return rpcDisabledCalls;
 	}
 
 	/**
