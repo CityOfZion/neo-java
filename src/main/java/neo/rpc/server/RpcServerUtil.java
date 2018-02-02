@@ -667,6 +667,45 @@ public final class RpcServerUtil {
 	}
 
 	/**
+	 * submit a block.
+	 *
+	 * @param controller
+	 *            the controller to use.
+	 * @param id
+	 *            the id to use.
+	 * @param params
+	 *            the parameters to use.
+	 * @return true if the block validated, false if it did not.
+	 */
+	private static JSONObject onGetSubmitBlock(final LocalControllerNode controller, final int id,
+			final JSONArray params) {
+		if (params.length() == 0) {
+			final JSONObject response = new JSONObject();
+			response.put(ERROR, "no parameters, expected a hashed block");
+			response.put(EXPECTED, EXPECTED_GENERIC_HEX);
+			response.put(ACTUAL, NULL);
+			return response;
+		}
+		try {
+			final String hex = params.getString(0);
+			final byte[] ba = ModelUtil.decodeHex(hex);
+			final Block block = new Block(ByteBuffer.wrap(ba));
+			controller.getLocalNodeData().getBlockDb().put(block);
+		} catch (final RuntimeException e) {
+			final JSONObject response = new JSONObject();
+			response.put(ERROR, e.getMessage());
+			response.put(EXPECTED, true);
+			response.put(ACTUAL, params.get(0));
+			return response;
+		}
+		final JSONObject response = new JSONObject();
+		response.put(RESULT, true);
+		response.put(ID, id);
+		response.put(JSONRPC, VERSION_2_0);
+		return response;
+	}
+
+	/**
 	 * responds to a "gettxout" command.
 	 *
 	 * @param controller
