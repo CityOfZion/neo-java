@@ -666,6 +666,7 @@ public final class RpcServerUtil {
 		}
 	}
 
+
 	/**
 	 * responds to a "gettxout" command.
 	 *
