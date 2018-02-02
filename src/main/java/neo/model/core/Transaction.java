@@ -5,6 +5,7 @@ import java.io.OutputStream;
 import java.io.Serializable;
 import java.nio.ByteBuffer;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 
 import org.json.JSONObject;
@@ -26,6 +27,16 @@ import neo.model.util.TransactionUtil;
 public final class Transaction implements ToJsonObject, ByteArraySerializable, Serializable {
 
 	private static final long serialVersionUID = 1L;
+
+	/**
+	 * return the comparator used for comparing Transactions.
+	 *
+	 * @return the comparator used for comparing Transactions.
+	 */
+	public static Comparator<Transaction> getComparator() {
+		final Comparator<Transaction> c = Comparator.comparing((final Transaction transaction) -> transaction.hash);
+		return c;
+	}
 
 	/**
 	 * the transaction type.

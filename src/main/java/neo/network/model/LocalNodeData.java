@@ -16,6 +16,7 @@ import org.json.JSONObject;
 import neo.model.core.AbstractBlockBase;
 import neo.model.core.Block;
 import neo.model.core.Header;
+import neo.model.core.Transaction;
 import neo.model.db.BlockDb;
 import neo.network.model.socket.SocketFactory;
 
@@ -138,6 +139,11 @@ public class LocalNodeData {
 	 */
 	private final SortedSet<Block> unverifiedBlockPoolSet = new TreeSet<>(
 			AbstractBlockBase.getAbstractBlockBaseComparator());
+
+	/**
+	 * the set of unverified transactions, sorted by hash.
+	 */
+	private final SortedSet<Transaction> unverifiedTransactionSet = new TreeSet<>(Transaction.getComparator());
 
 	/**
 	 * the constructor.
@@ -381,6 +387,15 @@ public class LocalNodeData {
 	 */
 	public SortedSet<Header> getUnverifiedHeaderPoolSet() {
 		return unverifiedHeaderPoolSet;
+	}
+
+	/**
+	 * return the set of unverified transactions.
+	 *
+	 * @return the set of unverified transactions.
+	 */
+	public SortedSet<Transaction> getUnverifiedTransactionSet() {
+		return unverifiedTransactionSet;
 	}
 
 	/**

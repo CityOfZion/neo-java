@@ -608,6 +608,38 @@ public final class RpcServerUtil {
 	}
 
 	/**
+	 * return the transactions in the unverified transaction pool.
+	 *
+	 * @param controller
+	 *            the controllers to use
+	 * @param id
+	 *            the id to use.
+	 * @return the transactions in the unverified transaction pool.
+	 */
+	private static JSONObject onGetRawMempool(final LocalControllerNode controller, final int id) {
+		try {
+			final JSONArray resultArray = new JSONArray();
+			for (final Transaction transaction : controller.getLocalNodeData().getUnverifiedTransactionSet()) {
+				final String hex = ModelUtil.toHexString(transaction.toByteArray());
+				resultArray.put(hex);
+			}
+			final JSONObject response = new JSONObject();
+			response.put(RESULT, resultArray);
+			response.put(ID, id);
+			response.put(JSONRPC, VERSION_2_0);
+			return response;
+		} catch (final RuntimeException e) {
+			final JSONObject response = new JSONObject();
+			response.put(ERROR, e.getMessage());
+			final JSONArray expectedArray = new JSONArray();
+			expectedArray.put(EXPECTED_GENERIC_HEX);
+			response.put(EXPECTED, expectedArray);
+			response.put(ACTUAL, expectedArray);
+			return response;
+		}
+	}
+
+	/**
 	 * responds to a "getrawtransaction" command.
 	 *
 	 * @param controller
@@ -665,7 +697,6 @@ public final class RpcServerUtil {
 			return response;
 		}
 	}
-
 
 	/**
 	 * responds to a "gettxout" command.
@@ -746,6 +777,48 @@ public final class RpcServerUtil {
 
 			return response;
 		}
+	}
+
+	/**
+	 * sends a raw transaction to the blockchain.
+	 *
+	 * @param controller
+	 *            the controller to use.
+	 * @param id
+	 *            the id to use.
+	 * @param params
+	 *            the parameters to use.
+	 * @return true if successful
+	 */
+	private static JSONObject onSendRawTransaction(final LocalControllerNode controller, final int id,
+			final JSONArray params) {
+		if (params.length() == 0) {
+			final JSONObject response = new JSONObject();
+			response.put(ERROR, "no parameters, expected a hex encoded transaction");
+			final JSONArray expectedParams = new JSONArray();
+			expectedParams.put(EXPECTED_GENERIC_HEX);
+			expectedParams.put(0);
+			response.put(EXPECTED, expectedParams);
+			response.put(ACTUAL, new JSONArray());
+			return response;
+		}
+		try {
+			final String hex = params.getString(0);
+			final byte[] ba = ModelUtil.decodeHex(hex);
+			final Transaction tx = new Transaction(ByteBuffer.wrap(ba));
+			controller.getLocalNodeData().getUnverifiedTransactionSet().add(tx);
+		} catch (final RuntimeException e) {
+			final JSONObject response = new JSONObject();
+			response.put(ERROR, e.getMessage());
+			response.put(EXPECTED, true);
+			response.put(ACTUAL, params.get(0));
+			return response;
+		}
+		final JSONObject response = new JSONObject();
+		response.put(RESULT, true);
+		response.put(ID, id);
+		response.put(JSONRPC, VERSION_2_0);
+		return response;
 	}
 
 	/**
@@ -844,8 +917,7 @@ public final class RpcServerUtil {
 				return onGetConnectionCount(controller, id);
 			}
 			case GETRAWMEMPOOL: {
-				// TODO : implement.
-				throw new NotImplementedException(coreRpcCommand.getName());
+				return onGetRawMempool(controller, id);
 			}
 			case GETRAWTRANSACTION: {
 				final JSONArray params = request.getJSONArray(PARAMS);
@@ -856,8 +928,8 @@ public final class RpcServerUtil {
 				return onGetTransactionOutput(controller, id, params);
 			}
 			case SENDRAWTRANSACTION: {
-				// TODO : implement.
-				throw new NotImplementedException(coreRpcCommand.getName());
+				final JSONArray params = request.getJSONArray(PARAMS);
+				return onSendRawTransaction(controller, id, params);
 			}
 			case SUBMITBLOCK: {
 				final JSONArray params = request.getJSONArray(PARAMS);

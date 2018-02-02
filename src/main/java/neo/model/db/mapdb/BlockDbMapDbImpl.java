@@ -779,35 +779,43 @@ public final class BlockDbMapDbImpl implements BlockDb {
 
 		long lastInfoMs = System.currentTimeMillis();
 
-		long validBlockHeight = 1;
+		long blockHeight = 1;
 		long lastGoodBlockIndex = -1;
 		final long maxBlockCount = getBlockCount();
 
-		setBlockIndex(validBlockHeight);
-		while (validBlockHeight < maxBlockCount) {
-			LOG.debug("INTERIM DEBUG validate {} of {} STARTED ", validBlockHeight, maxBlockCount);
-			final Block block = getBlock(validBlockHeight, false);
+		boolean blockHeightNoLongerValid = false;
+
+		while (blockHeight < maxBlockCount) {
+			LOG.debug("INTERIM DEBUG validate {} of {} STARTED ", blockHeight, maxBlockCount);
+			final Block block = getBlock(blockHeight, false);
 			if (block == null) {
-				LOG.error("INTERIM validate {} of {} FAILURE, block not found in blockchain.", validBlockHeight,
+				LOG.error("INTERIM validate {} of {} FAILURE, block not found in blockchain.", blockHeight,
 						maxBlockCount);
+				blockHeightNoLongerValid = true;
 			} else if (!containsBlockWithHash(block.prevHash)) {
-				LOG.error("INTERIM validate {} of {} FAILURE, prevHash {} not found in blockchain.", validBlockHeight,
+				LOG.error("INTERIM validate {} of {} FAILURE, prevHash {} not found in blockchain.", blockHeight,
 						maxBlockCount, block.prevHash.toHexString());
-				deleteBlockAtHeight(validBlockHeight);
-			} else if (block.getIndexAsLong() != validBlockHeight) {
-				LOG.error("INTERIM validate {} of {} FAILURE, indexAsLong {} does not match blockchain.",
-						validBlockHeight, maxBlockCount, block.getIndexAsLong());
-				deleteBlockAtHeight(validBlockHeight);
+				deleteBlockAtHeight(blockHeight);
+				blockHeightNoLongerValid = true;
+			} else if (block.getIndexAsLong() != blockHeight) {
+				LOG.error("INTERIM validate {} of {} FAILURE, indexAsLong {} does not match blockchain.", blockHeight,
+						maxBlockCount, block.getIndexAsLong());
+				deleteBlockAtHeight(blockHeight);
+				blockHeightNoLongerValid = true;
+			} else if (blockHeightNoLongerValid) {
+				LOG.error("INTERIM validate {} of {} FAILURE, block height tainted.", blockHeight, maxBlockCount,
+						block.getIndexAsLong());
+				deleteBlockAtHeight(blockHeight);
 			} else {
 				if (System.currentTimeMillis() > (lastInfoMs + 1000)) {
-					LOG.info("INTERIM INFO  validate {} of {} SUCCESS ", validBlockHeight, maxBlockCount);
+					LOG.info("INTERIM INFO  validate {} of {} SUCCESS ", blockHeight, maxBlockCount);
 					lastInfoMs = System.currentTimeMillis();
 				} else {
-					LOG.debug("INTERIM DEBUG validate {} of {} SUCCESS ", validBlockHeight, maxBlockCount);
+					LOG.debug("INTERIM DEBUG validate {} of {} SUCCESS ", blockHeight, maxBlockCount);
 				}
 				lastGoodBlockIndex = block.getIndexAsLong();
 			}
-			validBlockHeight++;
+			blockHeight++;
 		}
 		setBlockIndex(lastGoodBlockIndex);
 
