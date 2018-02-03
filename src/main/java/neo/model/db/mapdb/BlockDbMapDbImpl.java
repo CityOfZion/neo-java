@@ -770,56 +770,63 @@ public final class BlockDbMapDbImpl implements BlockDb {
 	@Override
 	public void validate() {
 		LOG.info("STARTED validate");
-
-		final Block block0 = getBlock(0, false);
-		if (!block0.hash.equals(GenesisBlockUtil.GENESIS_HASH)) {
-			throw new RuntimeException("height 0 block hash \"" + block0.hash.toHexString()
-					+ "\" does not match genesis block hash \"" + GenesisBlockUtil.GENESIS_HASH.toHexString() + "\".");
-		}
-
-		long lastInfoMs = System.currentTimeMillis();
-
-		long blockHeight = 1;
-		long lastGoodBlockIndex = -1;
-		final long maxBlockCount = getBlockCount();
-
-		boolean blockHeightNoLongerValid = false;
-
-		while (blockHeight < maxBlockCount) {
-			LOG.debug("INTERIM DEBUG validate {} of {} STARTED ", blockHeight, maxBlockCount);
-			final Block block = getBlock(blockHeight, false);
-			if (block == null) {
-				LOG.error("INTERIM validate {} of {} FAILURE, block not found in blockchain.", blockHeight,
-						maxBlockCount);
-				blockHeightNoLongerValid = true;
-			} else if (!containsBlockWithHash(block.prevHash)) {
-				LOG.error("INTERIM validate {} of {} FAILURE, prevHash {} not found in blockchain.", blockHeight,
-						maxBlockCount, block.prevHash.toHexString());
-				deleteBlockAtHeight(blockHeight);
-				blockHeightNoLongerValid = true;
-			} else if (block.getIndexAsLong() != blockHeight) {
-				LOG.error("INTERIM validate {} of {} FAILURE, indexAsLong {} does not match blockchain.", blockHeight,
-						maxBlockCount, block.getIndexAsLong());
-				deleteBlockAtHeight(blockHeight);
-				blockHeightNoLongerValid = true;
-			} else if (blockHeightNoLongerValid) {
-				LOG.error("INTERIM validate {} of {} FAILURE, block height tainted.", blockHeight, maxBlockCount,
-						block.getIndexAsLong());
-				deleteBlockAtHeight(blockHeight);
-			} else {
-				if (System.currentTimeMillis() > (lastInfoMs + 1000)) {
-					LOG.info("INTERIM INFO  validate {} of {} SUCCESS ", blockHeight, maxBlockCount);
-					lastInfoMs = System.currentTimeMillis();
-				} else {
-					LOG.debug("INTERIM DEBUG validate {} of {} SUCCESS ", blockHeight, maxBlockCount);
-				}
-				lastGoodBlockIndex = block.getIndexAsLong();
+		try {
+			final Block block0 = getBlock(0, false);
+			if (!block0.hash.equals(GenesisBlockUtil.GENESIS_HASH)) {
+				throw new RuntimeException(
+						"height 0 block hash \"" + block0.hash.toHexString() + "\" does not match genesis block hash \""
+								+ GenesisBlockUtil.GENESIS_HASH.toHexString() + "\".");
 			}
-			blockHeight++;
-		}
-		setBlockIndex(lastGoodBlockIndex);
 
-		LOG.info("SUCCESS validate");
+			long lastInfoMs = System.currentTimeMillis();
+
+			long blockHeight = 1;
+			long lastGoodBlockIndex = -1;
+			final long maxBlockCount = getBlockCount();
+
+			boolean blockHeightNoLongerValid = false;
+
+			while (blockHeight < maxBlockCount) {
+				LOG.debug("INTERIM DEBUG validate {} of {} STARTED ", blockHeight, maxBlockCount);
+				final Block block = getBlock(blockHeight, false);
+				if (block == null) {
+					LOG.error("INTERIM validate {} of {} FAILURE, block not found in blockchain.", blockHeight,
+							maxBlockCount);
+					blockHeightNoLongerValid = true;
+				} else if (!containsBlockWithHash(block.prevHash)) {
+					LOG.error("INTERIM validate {} of {} FAILURE, prevHash {} not found in blockchain.", blockHeight,
+							maxBlockCount, block.prevHash.toHexString());
+					deleteBlockAtHeight(blockHeight);
+					blockHeightNoLongerValid = true;
+				} else if (block.getIndexAsLong() != blockHeight) {
+					LOG.error("INTERIM validate {} of {} FAILURE, indexAsLong {} does not match blockchain.",
+							blockHeight, maxBlockCount, block.getIndexAsLong());
+					deleteBlockAtHeight(blockHeight);
+					blockHeightNoLongerValid = true;
+				} else if (blockHeightNoLongerValid) {
+					LOG.error("INTERIM validate {} of {} FAILURE, block height tainted.", blockHeight, maxBlockCount,
+							block.getIndexAsLong());
+					deleteBlockAtHeight(blockHeight);
+				} else {
+					if (System.currentTimeMillis() > (lastInfoMs + 1000)) {
+						LOG.info("INTERIM INFO  validate {} of {} SUCCESS ", blockHeight, maxBlockCount);
+						lastInfoMs = System.currentTimeMillis();
+					} else {
+						LOG.debug("INTERIM DEBUG validate {} of {} SUCCESS ", blockHeight, maxBlockCount);
+					}
+					lastGoodBlockIndex = block.getIndexAsLong();
+				}
+				blockHeight++;
+			}
+			setBlockIndex(lastGoodBlockIndex);
+
+			DB.commit();
+
+			LOG.info("SUCCESS validate");
+		} catch (final Exception e) {
+			LOG.error("FAILURE validate", e);
+			DB.rollback();
+		}
 	}
 
 }
