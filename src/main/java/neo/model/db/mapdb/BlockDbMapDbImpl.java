@@ -183,7 +183,9 @@ public final class BlockDbMapDbImpl implements BlockDb {
 	}
 
 	/**
-	 * returns true if the hash is in the database.
+	 * returns true if the hash is in the database. <br>
+	 * checks both the "hash to block index" and "block index to header" map, in
+	 * case the header was deleted but the hash wasn't.
 	 *
 	 * @param hash
 	 *            the hash to use.
@@ -197,8 +199,15 @@ public final class BlockDbMapDbImpl implements BlockDb {
 				return false;
 			}
 		}
-		final HTreeMap<byte[], Long> map = getBlockIndexByHashMap();
-		return map.containsKey(hash.toByteArray());
+		final HTreeMap<byte[], Long> blockIndexByHashMap = getBlockIndexByHashMap();
+		final HTreeMap<Long, byte[]> blockHeaderByIndexMap = getBlockHeaderByIndexMap();
+		final byte[] hashBa = hash.toByteArray();
+		if (blockIndexByHashMap.containsKey(hashBa)) {
+			final long index = blockIndexByHashMap.get(hashBa);
+			return blockHeaderByIndexMap.containsKey(index);
+		} else {
+			return false;
+		}
 	}
 
 	/**
@@ -786,33 +795,47 @@ public final class BlockDbMapDbImpl implements BlockDb {
 
 			boolean blockHeightNoLongerValid = false;
 
+			final String maxBlockCountStr;
+			if (LOG.isDebugEnabled() || LOG.isErrorEnabled()) {
+				maxBlockCountStr = NumberFormat.getIntegerInstance().format(maxBlockCount);
+			} else {
+				maxBlockCountStr = null;
+			}
+
 			while (blockHeight < maxBlockCount) {
-				LOG.debug("INTERIM DEBUG validate {} of {} STARTED ", blockHeight, maxBlockCount);
+				final String blockHeightStr;
+				if (LOG.isDebugEnabled() || LOG.isErrorEnabled()) {
+					blockHeightStr = NumberFormat.getIntegerInstance().format(blockHeight);
+				} else {
+					blockHeightStr = null;
+				}
+
+				LOG.debug("INTERIM DEBUG validate {} of {} STARTED ", blockHeightStr, maxBlockCountStr);
 				final Block block = getBlock(blockHeight, false);
 				if (block == null) {
-					LOG.error("INTERIM validate {} of {} FAILURE, block not found in blockchain.", blockHeight,
-							maxBlockCount);
+					LOG.error("INTERIM validate {} of {} FAILURE, block not found in blockchain.", blockHeightStr,
+							maxBlockCountStr);
 					blockHeightNoLongerValid = true;
 				} else if (!containsBlockWithHash(block.prevHash)) {
-					LOG.error("INTERIM validate {} of {} FAILURE, prevHash {} not found in blockchain.", blockHeight,
-							maxBlockCount, block.prevHash.toHexString());
+					LOG.error("INTERIM validate {} of {} FAILURE, prevHash {} not found in blockchain.", blockHeightStr,
+							maxBlockCountStr, block.prevHash.toHexString());
 					deleteBlockAtHeight(blockHeight);
 					blockHeightNoLongerValid = true;
 				} else if (block.getIndexAsLong() != blockHeight) {
 					LOG.error("INTERIM validate {} of {} FAILURE, indexAsLong {} does not match blockchain.",
-							blockHeight, maxBlockCount, block.getIndexAsLong());
+							blockHeightStr, maxBlockCountStr, block.getIndexAsLong());
 					deleteBlockAtHeight(blockHeight);
 					blockHeightNoLongerValid = true;
 				} else if (blockHeightNoLongerValid) {
-					LOG.error("INTERIM validate {} of {} FAILURE, block height tainted.", blockHeight, maxBlockCount,
-							block.getIndexAsLong());
+					LOG.error("INTERIM validate {} of {} FAILURE, block height tainted.", blockHeightStr,
+							maxBlockCountStr, block.getIndexAsLong());
 					deleteBlockAtHeight(blockHeight);
 				} else {
 					if (System.currentTimeMillis() > (lastInfoMs + 1000)) {
-						LOG.info("INTERIM INFO  validate {} of {} SUCCESS ", blockHeight, maxBlockCount);
+						LOG.info("INTERIM INFO  validate {} of {} SUCCESS ", blockHeightStr, maxBlockCountStr);
 						lastInfoMs = System.currentTimeMillis();
 					} else {
-						LOG.debug("INTERIM DEBUG validate {} of {} SUCCESS ", blockHeight, maxBlockCount);
+						LOG.debug("INTERIM DEBUG validate {} of {} SUCCESS ", blockHeightStr, maxBlockCountStr);
 					}
 					lastGoodBlockIndex = block.getIndexAsLong();
 				}
