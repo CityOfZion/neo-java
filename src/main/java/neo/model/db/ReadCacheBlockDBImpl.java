@@ -14,6 +14,7 @@ import org.slf4j.LoggerFactory;
 import neo.model.bytes.Fixed8;
 import neo.model.bytes.UInt160;
 import neo.model.bytes.UInt256;
+import neo.model.core.AbstractBlockBase;
 import neo.model.core.Block;
 import neo.model.core.Transaction;
 import neo.model.db.mapdb.BlockDbMapDbImpl;
@@ -56,11 +57,6 @@ public final class ReadCacheBlockDBImpl implements BlockDb {
 	 * the runnable for putting blocks.
 	 */
 	private final PutRunnable putRunnable;
-
-	/**
-	 * the count of blocks in the queue to be put into the database.
-	 */
-	private int putCount = 0;
 
 	/**
 	 * the constructor.
@@ -121,7 +117,7 @@ public final class ReadCacheBlockDBImpl implements BlockDb {
 	public long getBlockCount() {
 		final Long cachedBlockCount = getCachedBlockCount();
 		if (cachedBlockCount != null) {
-			return cachedBlockCount + putCount;
+			return cachedBlockCount + putRunnable.blockSet.size();
 		}
 
 		final long blockCount = delegate.getBlockCount();
@@ -202,14 +198,20 @@ public final class ReadCacheBlockDBImpl implements BlockDb {
 	private final class PutRunnable implements Runnable {
 
 		/**
-		 * the block list.
+		 * the block set.
 		 */
-		private final List<Block> blockList = Collections.synchronizedList(new ArrayList<>());
+		private final Set<Block> blockSet = Collections
+				.synchronizedSet(new TreeSet<>(AbstractBlockBase.getAbstractBlockBaseComparator()));
 
 		/**
 		 * the stopped flag.
 		 */
 		private boolean stopped = false;
+
+		/**
+		 * the count of blocks in the queue to be put into the database.
+		 */
+		private int putCount = 0;
 
 		/**
 		 * puts the blocks into the putList.
@@ -218,9 +220,9 @@ public final class ReadCacheBlockDBImpl implements BlockDb {
 		 *            the blocks to add.
 		 */
 		public void put(final Block... blocks) {
-			synchronized (blockList) {
+			synchronized (blockSet) {
 				for (final Block block : blocks) {
-					blockList.add(block);
+					blockSet.add(block);
 				}
 			}
 		}
@@ -230,29 +232,37 @@ public final class ReadCacheBlockDBImpl implements BlockDb {
 			while (!stopped) {
 				final List<Block> putList = new ArrayList<>();
 				// pull out all the blocks we are going to put into the database.
-				synchronized (blockList) {
-					putList.addAll(blockList);
-					blockList.clear();
+				synchronized (blockSet) {
+					putList.addAll(blockSet);
+					blockSet.clear();
 				}
 				if (!putList.isEmpty()) {
 					// pull out all the blocks into the database.
 					try (PerformanceMonitor m1 = new PerformanceMonitor("ReadCacheBlockDBImpl.put")) {
 						try (PerformanceMonitor m2 = new PerformanceMonitor("ReadCacheBlockDBImpl.put[PerBlock]",
 								putList.size())) {
+							LOG.error("ReadCacheBlockDBImpl.delegate.put STARTED putList.size():{};putCount:{};",
+									putList.size(), putCount);
 							delegate.put(putList.toArray(new Block[0]));
 							putCount += putList.size();
+							LOG.error("ReadCacheBlockDBImpl.delegate.put SUCCESS putList.size():{};putCount:{};",
+									putList.size(), putCount);
 						}
 					}
-					synchronized (blockList) {
+					synchronized (blockSet) {
 						// if we put more than 500 blocks into the database, or no blocks came while we
 						// were comitting, clear cache (which refrehes the stats).
-						if (blockList.isEmpty() || (putCount > 500)) {
+						if (blockSet.isEmpty() || (putCount > 500)) {
 							try (PerformanceMonitor m1 = new PerformanceMonitor("ReadCacheBlockDBImpl.clearCache")) {
 								clearCache();
 								putCount = 0;
 							}
+						} else {
+							LOG.error("ReadCacheBlockDBImpl.clearCache skipped, putCount is {}", putCount);
 						}
 					}
+				} else {
+					LOG.error("ReadCacheBlockDBImpl.delegate.put skipped, putList.isEmpty(), putCount is {}", putCount);
 				}
 
 				try {
