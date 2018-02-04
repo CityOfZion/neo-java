@@ -207,6 +207,11 @@ public final class ReadCacheBlockDBImpl implements BlockDb {
 		private boolean stopped = false;
 
 		/**
+		 * the count of blocks in the queue to be put into the database.
+		 */
+		private int putCount = 0;
+
+		/**
 		 * puts the blocks into the putList.
 		 *
 		 * @param blocks
@@ -235,14 +240,16 @@ public final class ReadCacheBlockDBImpl implements BlockDb {
 						try (PerformanceMonitor m2 = new PerformanceMonitor("ReadCacheBlockDBImpl.put[PerBlock]",
 								putList.size())) {
 							delegate.put(putList.toArray(new Block[0]));
+							putCount += putList.size();
 						}
 					}
 					synchronized (blockList) {
 						// if we put more than 500 blocks into the database, or no blocks came while we
 						// were comitting, clear cache (which refrehes the stats).
-						if (blockList.isEmpty() || (putList.size() > 500)) {
+						if (blockList.isEmpty() || (putCount > 500)) {
 							try (PerformanceMonitor m1 = new PerformanceMonitor("ReadCacheBlockDBImpl.clearCache")) {
 								clearCache();
+								putCount = 0;
 							}
 						}
 					}
