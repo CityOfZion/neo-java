@@ -1,5 +1,5 @@
 {
-	"actual": 0,
-	"expected": 1,
-	"error": "transaction with hex \"c169bb1e4a6d67df8ff2a7d1280b80379b588e99bddb7d591601b75ba1ec6ec0\" has no outputs."
+  "actual": 0,
+  "expected": 1,
+  "error": "transaction with hex \"d6572a459b95d9136b7a713c5485ca709f9efa4f08f1c25dd792672d2bd75bfb\" has no outputs."
 }
