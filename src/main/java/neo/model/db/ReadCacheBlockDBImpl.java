@@ -241,11 +241,11 @@ public final class ReadCacheBlockDBImpl implements BlockDb {
 					try (PerformanceMonitor m1 = new PerformanceMonitor("ReadCacheBlockDBImpl.put")) {
 						try (PerformanceMonitor m2 = new PerformanceMonitor("ReadCacheBlockDBImpl.put[PerBlock]",
 								putList.size())) {
-							LOG.error("ReadCacheBlockDBImpl.delegate.put STARTED putList.size():{};putCount:{};",
+							LOG.debug("ReadCacheBlockDBImpl.delegate.put STARTED putList.size():{};putCount:{};",
 									putList.size(), putCount);
 							delegate.put(putList.toArray(new Block[0]));
 							putCount += putList.size();
-							LOG.error("ReadCacheBlockDBImpl.delegate.put SUCCESS putList.size():{};putCount:{};",
+							LOG.debug("ReadCacheBlockDBImpl.delegate.put SUCCESS putList.size():{};putCount:{};",
 									putList.size(), putCount);
 						}
 					}
@@ -258,11 +258,9 @@ public final class ReadCacheBlockDBImpl implements BlockDb {
 								putCount = 0;
 							}
 						} else {
-							LOG.error("ReadCacheBlockDBImpl.clearCache skipped, putCount is {}", putCount);
+							LOG.debug("ReadCacheBlockDBImpl.clearCache skipped, putCount is {}", putCount);
 						}
 					}
-				} else {
-					LOG.error("ReadCacheBlockDBImpl.delegate.put skipped, putList.isEmpty(), putCount is {}", putCount);
 				}
 
 				try {
