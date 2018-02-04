@@ -1,5 +1,8 @@
 package neo.rpc.client.test;
 
+import java.lang.reflect.Constructor;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Modifier;
 import java.net.InetSocketAddress;
 
 import org.json.JSONArray;
@@ -428,6 +431,78 @@ public class TestRpcServer {
 		final String actualStr = new JSONObject(actualStrRaw).toString(2);
 
 		Assert.assertEquals(TestUtil.RESPONSES_MUST_MATCH, expectedStr, actualStr);
+	}
+
+	/**
+	 * test submitting core block.
+	 */
+	@Test
+	public void test016SendRawTransaction() {
+		final JSONArray params = new JSONArray();
+		params.put(ModelUtil.toHexString(MockUtil.getMockTransaction000().toByteArray()));
+		final String method = CoreRpcCommandEnum.SENDRAWTRANSACTION.getName();
+
+		final String expectedStrRaw = TestUtil.getJsonTestResourceAsString(getClass().getSimpleName(),
+				"test016SendRawTransaction");
+
+		final String actualStrRaw = TestRpcServerUtil.getResponse(CONTROLLER, "", RpcServerUtil.VERSION_2_0, params,
+				method);
+
+		final String expectedStr = new JSONObject(expectedStrRaw).toString(2);
+		final String actualStr = new JSONObject(actualStrRaw).toString(2);
+
+		Assert.assertEquals(TestUtil.RESPONSES_MUST_MATCH, expectedStr, actualStr);
+	}
+
+	/**
+	 * test submitting core block.
+	 */
+	@Test
+	public void test017GetAccountList() {
+		final JSONArray params = new JSONArray();
+		params.put(0);
+		params.put(0);
+		final String method = CoreRpcCommandEnum.GETACCOUNTLIST.getName();
+
+		final String expectedStrRaw = TestUtil.getJsonTestResourceAsString(getClass().getSimpleName(),
+				"test017GetAccountList");
+
+		final String actualStrRaw = TestRpcServerUtil.getResponse(CONTROLLER, "", RpcServerUtil.VERSION_2_0, params,
+				method);
+
+		final String expectedStr = new JSONObject(expectedStrRaw).toString(2);
+		final String actualStr = new JSONObject(actualStrRaw).toString(2);
+
+		Assert.assertEquals(TestUtil.RESPONSES_MUST_MATCH, expectedStr, actualStr);
+	}
+
+	/**
+	 * test submitting core block.
+	 */
+	@Test
+	public void test018GetRawMempool() {
+		final JSONArray params = new JSONArray();
+		final String method = CoreRpcCommandEnum.GETRAWMEMPOOL.getName();
+
+		final String expectedStrRaw = TestUtil.getJsonTestResourceAsString(getClass().getSimpleName(),
+				"test018GetRawMempool");
+
+		final String actualStrRaw = TestRpcServerUtil.getResponse(CONTROLLER, "", RpcServerUtil.VERSION_2_0, params,
+				method);
+
+		final String expectedStr = new JSONObject(expectedStrRaw).toString(2);
+		final String actualStr = new JSONObject(actualStrRaw).toString(2);
+
+		Assert.assertEquals(TestUtil.RESPONSES_MUST_MATCH, expectedStr, actualStr);
+	}
+
+	@Test
+	public void test019ConstructorIsPrivate()
+			throws NoSuchMethodException, IllegalAccessException, InvocationTargetException, InstantiationException {
+		final Constructor<RpcServerUtil> constructor = RpcServerUtil.class.getDeclaredConstructor();
+		Assert.assertTrue(Modifier.isPrivate(constructor.getModifiers()));
+		constructor.setAccessible(true);
+		constructor.newInstance();
 	}
 
 	/**
