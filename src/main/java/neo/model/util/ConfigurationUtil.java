@@ -27,9 +27,14 @@ public final class ConfigurationUtil {
 	public static final String RECYCLE_INTERVAL = "recycle-interval";
 
 	/**
-	 * the JSON key, "port".
+	 * the JSON key, "tcp-port".
 	 */
-	public static final String PORT = "port";
+	public static final String TCP_PORT = "tcp-port";
+
+	/**
+	 * the JSON key, "rpc-port".
+	 */
+	public static final String RPC_PORT = "rpc-port";
 
 	/**
 	 * the JSON key, "block-db".

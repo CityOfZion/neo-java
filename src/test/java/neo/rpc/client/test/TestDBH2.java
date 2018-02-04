@@ -56,7 +56,7 @@ public class TestDBH2 {
 		blockDbJson.put(ConfigurationUtil.URL, "jdbc:h2:mem:db");
 		blockDbJson.put(ConfigurationUtil.FILE_SIZE_DIR, "src/test/resources");
 		blockDbJson.put(ConfigurationUtil.IMPL, "neo.model.db.h2.BlockDbH2Impl");
-		localJson.put(ConfigurationUtil.PORT, 30333);
+		localJson.put(ConfigurationUtil.TCP_PORT, 30333);
 		final JSONObject remoteJson = controllerNodeConfig.getJSONObject(ConfigurationUtil.REMOTE);
 		final JSONObject recycleIntervalJson = new JSONObject();
 		recycleIntervalJson.put(JsonUtil.MILLISECONDS, 0);
@@ -138,7 +138,7 @@ public class TestDBH2 {
 			controller.getBlockDb().put(block);
 			final Transaction expectedTransaction = block.getTransactionList().get(0);
 			final Transaction actualTransaction = controller.getBlockDb()
-					.getTransactionWithHash(expectedTransaction.hash);
+					.getTransactionWithHash(expectedTransaction.getHash());
 			Assert.assertEquals("transactions should match.", expectedTransaction.toJSONObject().toString(2),
 					actualTransaction.toJSONObject().toString(2));
 		}

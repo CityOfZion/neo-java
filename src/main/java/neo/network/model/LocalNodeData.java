@@ -99,9 +99,14 @@ public class LocalNodeData {
 	private final int nonce;
 
 	/**
-	 * the local server port.
+	 * the local tcp server port.
 	 */
-	private final int port;
+	private final int tcpPort;
+
+	/**
+	 * the local rpc server port.
+	 */
+	private final int rpcPort;
 
 	/**
 	 * the JSON disabled calls.
@@ -164,8 +169,8 @@ public class LocalNodeData {
 	 * @param seedNodeFile
 	 *            the file of seed nodes. All seed nodes should be good, but not all
 	 *            good nodes are seed nodes.
-	 * @param port
-	 *            the port for the local server.
+	 * @param tcpPort
+	 *            the tcp port for the local server.
 	 * @param nonce
 	 *            the nonce.
 	 * @param blockDbClass
@@ -176,12 +181,14 @@ public class LocalNodeData {
 	 *            the blockdb configuration.
 	 * @param rpcDisabledCalls
 	 *            the RPC calls taht are disabled.
+	 * @param rpcPort
+	 *            the rpc port for the local server.
 	 */
 	public LocalNodeData(final long magic, final int activeThreadCount, final long rpcClientTimeoutMillis,
 			final long rpcServerTimeoutMillis, final Class<BlockDb> blockDbClass,
-			final Map<String, TimerData> timersMap, final int nonce, final int port, final File seedNodeFile,
+			final Map<String, TimerData> timersMap, final int nonce, final int tcpPort, final File seedNodeFile,
 			final File goodNodeFile, final Class<SocketFactory> socketFactoryClass, final JSONObject blockDbConfig,
-			final Set<String> rpcDisabledCalls) {
+			final Set<String> rpcDisabledCalls, final int rpcPort) {
 		startTime = System.currentTimeMillis();
 		this.magic = magic;
 		this.activeThreadCount = activeThreadCount;
@@ -189,7 +196,8 @@ public class LocalNodeData {
 		this.rpcServerTimeoutMillis = rpcServerTimeoutMillis;
 		this.timersMap = timersMap;
 		this.nonce = nonce;
-		this.port = port;
+		this.tcpPort = tcpPort;
+		this.rpcPort = rpcPort;
 		this.seedNodeFile = seedNodeFile;
 		this.goodNodeFile = goodNodeFile;
 		this.rpcDisabledCalls = Collections.unmodifiableSet(rpcDisabledCalls);
@@ -289,15 +297,6 @@ public class LocalNodeData {
 	}
 
 	/**
-	 * return the port.
-	 *
-	 * @return the port.
-	 */
-	public int getPort() {
-		return port;
-	}
-
-	/**
 	 * return the RPC client timeout.
 	 *
 	 * @return the RPC client timeout.
@@ -313,6 +312,15 @@ public class LocalNodeData {
 	 */
 	public Set<String> getRpcDisabledCalls() {
 		return rpcDisabledCalls;
+	}
+
+	/**
+	 * return the rpc port.
+	 *
+	 * @return the rpc port.
+	 */
+	public int getRpcPort() {
+		return rpcPort;
 	}
 
 	/**
@@ -358,6 +366,15 @@ public class LocalNodeData {
 	 */
 	public long getStartTime() {
 		return startTime;
+	}
+
+	/**
+	 * return the tcp port.
+	 *
+	 * @return the tcp port.
+	 */
+	public int getTcpPort() {
+		return tcpPort;
 	}
 
 	/**

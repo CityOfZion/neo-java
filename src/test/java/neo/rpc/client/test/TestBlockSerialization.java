@@ -80,7 +80,7 @@ public class TestBlockSerialization {
 	private void assertTransactionTypeEquals(final String testFunctionName, final int txIx,
 			final TransactionType expectedTransactionType) {
 		try {
-			final String blockJsonStr = TestUtil.getJsonTestResourceAsString(getClass().getSimpleName(),
+			final String blockJsonStr = TestUtil.getJsonTestResourceAsString("test", getClass().getSimpleName(),
 					testFunctionName);
 			final JSONObject blockJson = new JSONObject(blockJsonStr);
 			final String blockStr = TestUtil.fromHexJsonObject(blockJson);

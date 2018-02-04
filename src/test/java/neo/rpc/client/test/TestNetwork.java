@@ -62,7 +62,7 @@ public class TestNetwork {
 		final JSONObject blockDbJson = localJson.getJSONObject(ConfigurationUtil.BLOCK_DB);
 		blockDbJson.put(ConfigurationUtil.IMPL, "neo.rpc.client.test.TestNetwork$JsonBlockDbImpl");
 		localJson.put(ConfigurationUtil.SOCKET_FACTORY_IMPL, "neo.rpc.client.test.TestNetwork$SocketFactoryImpl");
-		localJson.put(ConfigurationUtil.PORT, 30333);
+		localJson.put(ConfigurationUtil.TCP_PORT, 30333);
 		final JSONObject remoteJson = controllerNodeConfig.getJSONObject(ConfigurationUtil.REMOTE);
 		final JSONObject recycleIntervalJson = new JSONObject();
 		recycleIntervalJson.put(JsonUtil.MILLISECONDS, 0);

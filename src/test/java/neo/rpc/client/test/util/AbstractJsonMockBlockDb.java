@@ -229,7 +229,7 @@ public abstract class AbstractJsonMockBlockDb implements BlockDb {
 			final JSONObject mockBlock = mockBlockDb.getJSONObject(ix);
 			final Block block = getBlock(mockBlock, true);
 			for (final Transaction transaction : block.getTransactionList()) {
-				if (transaction.hash.equals(hash)) {
+				if (transaction.getHash().equals(hash)) {
 					return transaction;
 				}
 			}

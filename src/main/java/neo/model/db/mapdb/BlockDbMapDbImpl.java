@@ -563,6 +563,7 @@ public final class BlockDbMapDbImpl implements BlockDb {
 			getTransactionOutputs(txKey, transaction);
 			getTransactionInputs(txKey, transaction);
 			getTransactionScripts(txKey, transaction);
+			transaction.recalculateHash();
 			block.getTransactionList().add(transaction);
 		}
 	}
@@ -574,7 +575,15 @@ public final class BlockDbMapDbImpl implements BlockDb {
 		if (!map.containsKey(hashBa)) {
 			return null;
 		}
-		return new Transaction(ByteBuffer.wrap(map.get(hashBa)));
+		final byte[] txKey = map.get(hashBa);
+		final HTreeMap<byte[], byte[]> txMap = getTransactionsByKeyMap();
+		final byte[] data = txMap.get(txKey);
+		final Transaction transaction = new Transaction(ByteBuffer.wrap(data));
+		getTransactionOutputs(txKey, transaction);
+		getTransactionInputs(txKey, transaction);
+		getTransactionScripts(txKey, transaction);
+		transaction.recalculateHash();
+		return transaction;
 	}
 
 	/**
@@ -640,7 +649,7 @@ public final class BlockDbMapDbImpl implements BlockDb {
 					final ByteBuffer transactionKeyBb = ByteBuffer.wrap(transactionKeyBa);
 					txByKeyMap.put(transactionKeyBb, transactionBaseBa);
 
-					txKeyByTxHashMap.put(ByteBuffer.wrap(transaction.hash.toByteArray()), transactionKeyBa);
+					txKeyByTxHashMap.put(ByteBuffer.wrap(transaction.getHash().toByteArray()), transactionKeyBa);
 
 					txInputByTxKeyAndIndexMap.put(transactionKeyBb, new ArrayList<>());
 					txOutputByTxKeyAndIndexMap.put(transactionKeyBb, new ArrayList<>());

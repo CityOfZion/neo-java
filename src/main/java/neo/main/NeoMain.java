@@ -130,6 +130,11 @@ public final class NeoMain {
 				controller.getLocalNodeData().getBlockDb().deleteHighestBlock();
 				LOG.info("SUCCESS decapitate");
 			}
+			if (arg.equals("/rpc")) {
+				LOG.info("STARTED rpc");
+				controller.startCoreRpcServer();
+				LOG.info("SUCCESS rpc");
+			}
 		}
 
 		final StatsModel statsModel = new StatsModel();

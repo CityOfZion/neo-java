@@ -88,7 +88,7 @@ public final class LocalControllerNodeCoreRpcRunnable implements Runnable {
 	 */
 	public LocalControllerNodeCoreRpcRunnable(final LocalControllerNode localControllerNode) {
 		this.localControllerNode = localControllerNode;
-		httpServer = new NanoHTTPD(localControllerNode.getLocalNodeData().getPort()) {
+		httpServer = new NanoHTTPD(localControllerNode.getLocalNodeData().getRpcPort()) {
 			@Override
 			public Response serve(final IHTTPSession session) {
 				return newFixedLengthResponse(processRequest(localControllerNode, session));

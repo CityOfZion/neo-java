@@ -715,7 +715,8 @@ public final class BlockDbH2Impl implements BlockDb {
 				for (final Transaction transaction : block.getTransactionList()) {
 					final byte[] txIxByte = new UInt16(transactionIndex).toByteArray();
 					final byte[] transactionBaseBa = transaction.toBaseByteArray();
-					add(putTransactionList, blockIndexBa, txIxByte, transaction.hash.toByteArray(), transactionBaseBa);
+					add(putTransactionList, blockIndexBa, txIxByte, transaction.getHash().toByteArray(),
+							transactionBaseBa);
 
 					for (int inputIx = 0; inputIx < transaction.inputs.size(); inputIx++) {
 						final byte[] txInputIxByte = new UInt32(inputIx).toByteArray();
