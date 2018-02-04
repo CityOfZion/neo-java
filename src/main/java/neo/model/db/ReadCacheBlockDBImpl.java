@@ -58,6 +58,11 @@ public final class ReadCacheBlockDBImpl implements BlockDb {
 	private final PutRunnable putRunnable;
 
 	/**
+	 * the count of blocks in the queue to be put into the database.
+	 */
+	private int putCount = 0;
+
+	/**
 	 * the constructor.
 	 *
 	 * @param config
@@ -116,7 +121,7 @@ public final class ReadCacheBlockDBImpl implements BlockDb {
 	public long getBlockCount() {
 		final Long cachedBlockCount = getCachedBlockCount();
 		if (cachedBlockCount != null) {
-			return cachedBlockCount;
+			return cachedBlockCount + putCount;
 		}
 
 		final long blockCount = delegate.getBlockCount();
@@ -205,11 +210,6 @@ public final class ReadCacheBlockDBImpl implements BlockDb {
 		 * the stopped flag.
 		 */
 		private boolean stopped = false;
-
-		/**
-		 * the count of blocks in the queue to be put into the database.
-		 */
-		private int putCount = 0;
 
 		/**
 		 * puts the blocks into the putList.

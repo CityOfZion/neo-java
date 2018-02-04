@@ -599,6 +599,13 @@ public final class BlockDbMapDbImpl implements BlockDb {
 			final HTreeMap<Long, byte[]> blockHeaderByIndexMap = getBlockHeaderByIndexMap();
 
 			for (final Block block : blocks) {
+				synchronized (this) {
+					if (closed) {
+						DB.rollback();
+						return;
+					}
+				}
+
 				final long blockIndex = block.getIndexAsLong();
 				updateMaxBlockIndex(blockIndex);
 
