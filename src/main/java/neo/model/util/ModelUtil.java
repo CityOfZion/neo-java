@@ -118,6 +118,23 @@ public final class ModelUtil {
 	public static final byte ADDRESS_VERSION = 23;
 
 	/**
+	 * adds two Fixed8 values.
+	 *
+	 * @param value1
+	 *            the first value
+	 * @param value2
+	 *            the second value.
+	 * @return the sum of the two values.
+	 */
+	public static Fixed8 add(final Fixed8 value1, final Fixed8 value2) {
+		final BigInteger oldBi = new BigInteger(1, value2.toByteArray());
+		final BigInteger valBi = new BigInteger(1, value1.toByteArray());
+		final BigInteger newBi = oldBi.add(valBi);
+		final Fixed8 newValue = getFixed8(newBi);
+		return newValue;
+	}
+
+	/**
 	 * copies and reverses a byte array.
 	 *
 	 * @param input
@@ -212,6 +229,18 @@ public final class ModelUtil {
 	 */
 	public static byte getByte(final ByteBuffer bb) {
 		return bb.get();
+	}
+
+	/**
+	 * creates a new Fixed8 from a BigInteger.
+	 *
+	 * @param newBi
+	 *            the BigInteger to use.
+	 * @return the new Fixed8.
+	 */
+	public static Fixed8 getFixed8(final BigInteger newBi) {
+		final Fixed8 newValue = new Fixed8(ByteBuffer.wrap(newBi.toByteArray()));
+		return newValue;
 	}
 
 	/**
@@ -429,6 +458,23 @@ public final class ModelUtil {
 			list.add(t);
 		}
 		return list;
+	}
+
+	/**
+	 * subtracts two Fixed8 values.
+	 *
+	 * @param value1
+	 *            the first value
+	 * @param value2
+	 *            the second value.
+	 * @return the subtraction of the two values.
+	 */
+	public static Fixed8 subtract(final Fixed8 value1, final Fixed8 value2) {
+		final BigInteger oldBi = new BigInteger(1, value2.toByteArray());
+		final BigInteger valBi = new BigInteger(1, value1.toByteArray());
+		final BigInteger newBi = oldBi.subtract(valBi);
+		final Fixed8 newValue = getFixed8(newBi);
+		return newValue;
 	}
 
 	/**

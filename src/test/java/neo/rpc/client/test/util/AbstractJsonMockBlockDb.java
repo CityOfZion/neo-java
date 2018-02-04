@@ -1,6 +1,5 @@
 package neo.rpc.client.test.util;
 
-import java.math.BigInteger;
 import java.nio.ByteBuffer;
 import java.util.Map;
 import java.util.TreeMap;
@@ -98,15 +97,13 @@ public abstract class AbstractJsonMockBlockDb implements BlockDb {
 						accountAssetValueMap.put(output.scriptHash, new TreeMap<>());
 					}
 					final Map<UInt256, Fixed8> assetValueMap = accountAssetValueMap.get(output.scriptHash);
+					final Fixed8 value = output.value;
 					if (assetValueMap.containsKey(output.assetId)) {
 						final Fixed8 oldValue = assetValueMap.get(output.assetId);
-						final BigInteger oldBi = new BigInteger(1, oldValue.toByteArray());
-						final BigInteger valBi = new BigInteger(1, output.value.toByteArray());
-						final BigInteger newBi = oldBi.add(valBi);
-						final Fixed8 newValue = new Fixed8(ByteBuffer.wrap(newBi.toByteArray()));
+						final Fixed8 newValue = ModelUtil.add(value, oldValue);
 						assetValueMap.put(output.assetId, newValue);
 					} else {
-						assetValueMap.put(output.assetId, output.value);
+						assetValueMap.put(output.assetId, value);
 					}
 				}
 			}

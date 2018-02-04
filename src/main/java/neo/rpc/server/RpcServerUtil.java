@@ -181,14 +181,12 @@ public final class RpcServerUtil {
 		if (ts == midBlockTs) {
 			return midHeight;
 		} else if (ts < midBlockTs) {
-			// #if DEBUG
-			// Console.WriteLine($"level:{level};minHeight:{minHeight};midHeight:{midHeight};midBlock.Timestamp:{midBlock.Timestamp};");
-			// #endif
+			LOG.error("getHeightOfTs[upper]level:{};minHeight:{};midHeight:{};midBlock.Timestamp:{};", level, minHeight,
+					midHeight, midBlock.timestamp);
 			return getHeightOfTs(controller, level + 1, minHeight, midHeight, ts);
 		} else {
-			// #if DEBUG
-			// Console.WriteLine($"level:{level};midHeight:{midHeight};maxHeight:{maxHeight};midBlock.Timestamp:{midBlock.Timestamp};");
-			// #endif
+			LOG.error("getHeightOfTs[lower]level:{};minHeight:{};midHeight:{};midBlock.Timestamp:{};", level, midHeight,
+					maxHeight, midBlock.timestamp);
 			return getHeightOfTs(controller, level + 1, midHeight, maxHeight, ts);
 		}
 	}
@@ -208,7 +206,7 @@ public final class RpcServerUtil {
 	private static JSONObject onGetAccountList(final LocalControllerNode controller, final int id,
 			final JSONArray params) {
 		try {
-			// Console.WriteLine("getaccountlist 0");
+			LOG.error("getaccountlist 0");
 
 			final long fromTs = params.getLong(0);
 			final long toTs = params.getLong(1);
@@ -217,9 +215,13 @@ public final class RpcServerUtil {
 			final long fromHeight = getHeightOfTs(controller, 0, minHeight, maxHeight, fromTs);
 			final long toHeight = getHeightOfTs(controller, 0, fromHeight, maxHeight, toTs);
 
-			// Console.WriteLine($"getaccountlist 1 fromHeight:{fromHeight};
-			// toHeight:{toHeight};");
-			// errorTrace["2"] = $"fromHeight:{fromHeight}; toHeight:{toHeight};";
+			LOG.error("getaccountlist 1 fromHeight:{};toHeight:{};", fromHeight, toHeight);
+
+			LOG.error("getaccountlist 2 accountStateCache STARTED");
+
+			final Map<UInt160, Map<UInt256, Fixed8>> accountStateCache = controller.getLocalNodeData().getBlockDb()
+					.getAccountAssetValueMap();
+			LOG.error("getaccountlist 2 accountStateCache SUCCESS");
 
 			final Map<UInt160, Long> neoTxByAccount = new TreeMap<>();
 			final Map<UInt160, Long> gasTxByAccount = new TreeMap<>();
@@ -232,14 +234,10 @@ public final class RpcServerUtil {
 			final Map<UInt160, Long> firstTsByAccount = new TreeMap<>();
 
 			for (long index = fromHeight; index < toHeight; index++) {
-				// Console.WriteLine($"getaccountlist 2 fromHeight:{fromHeight};
-				// toHeight:{toHeight}; index:{index};");
+				LOG.error("getaccountlist 3 fromHeight:{};toHeight:{};index:{};", fromHeight, toHeight, index);
 				final Block block = controller.getLocalNodeData().getBlockDb().getFullBlockFromHeight(index);
 
-				// Console.WriteLine("getaccountlist 2.1");
 				for (final Transaction t : block.getTransactionList()) {
-					// Console.WriteLine("getaccountlist 3");
-
 					final Map<UInt160, Map<UInt256, Long>> friendAssetMap = new TreeMap<>();
 
 					for (final CoinReference cr : t.inputs) {
@@ -291,12 +289,9 @@ public final class RpcServerUtil {
 					}
 				}
 			}
-			// errorTrace["3"] = $"accountStateCache";
 
-			final Map<UInt160, Map<UInt256, Fixed8>> accountStateCache = controller.getLocalNodeData().getBlockDb()
-					.getAccountAssetValueMap();
+			LOG.error("getaccountlist 4 addressByAccount");
 
-			// errorTrace["4"] = $"addressByAccount";
 			final Map<UInt160, String> addressByAccount = new TreeMap<>();
 
 			for (final UInt160 key : accountStateCache.keySet()) {
@@ -304,13 +299,17 @@ public final class RpcServerUtil {
 				addressByAccount.put(key, address);
 			}
 
-			// errorTrace["5"] = $"returnList";
+			LOG.error("getaccountlist 5 returnList");
 			final JSONArray returnList = new JSONArray();
 
 			for (final UInt160 key : accountStateCache.keySet()) {
+				LOG.error("getaccountlist 6 key:{};", key);
 				if (addressByAccount.containsKey(key)) {
 					final Map<UInt256, Fixed8> accountState = accountStateCache.get(key);
 					final String address = addressByAccount.get(key);
+
+					LOG.error("getaccountlist 7 key:{}; address:{};", key, address);
+
 					// Console.WriteLine($"getaccountlist 7 key:{key}; address:{address};");
 					final JSONObject entry = new JSONObject();
 					entry.put("account", address);
@@ -372,8 +371,7 @@ public final class RpcServerUtil {
 					returnList.put(entry);
 				}
 			}
-			// errorTrace["6"] = $"return";
-			// Console.WriteLine($"getaccountlist 8 {returnList.Count()}");
+			LOG.error("getaccountlist 6 return");
 
 			final JSONObject response = new JSONObject();
 			response.put(ID, id);
@@ -382,6 +380,7 @@ public final class RpcServerUtil {
 
 			return response;
 		} catch (final RuntimeException e) {
+			LOG.error("error in onGetAccountList:", e);
 			final JSONObject response = new JSONObject();
 			response.put(ERROR, e.getMessage());
 			response.put(EXPECTED, new JSONArray());

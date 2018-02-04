@@ -119,6 +119,9 @@ public final class NeoMain {
 		final JSONObject controllerNodeConfig = ConfigurationUtil.getConfiguration();
 		final LocalControllerNode controller = new LocalControllerNode(controllerNodeConfig);
 
+		// TODO: bootstrap the blockchain better.
+		// controller.getLocalNodeData().getBlockDb().put(GenesisBlockUtil.GENESIS_BLOCK);
+
 		for (final String arg : args) {
 			if (arg.equals("/validate")) {
 				LOG.info("STARTED validate");

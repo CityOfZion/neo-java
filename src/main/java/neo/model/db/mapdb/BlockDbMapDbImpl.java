@@ -3,6 +3,7 @@ package neo.model.db.mapdb;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
+import java.math.BigInteger;
 import java.nio.ByteBuffer;
 import java.sql.SQLException;
 import java.text.NumberFormat;
@@ -87,6 +88,11 @@ public final class BlockDbMapDbImpl implements BlockDb {
 	 * transaction by keys.
 	 */
 	private static final String TRANSACTION_BY_KEY = "transactionByKey";
+
+	/**
+	 * the max block index.
+	 */
+	private static final String ASSET_AND_VALUE_BY_ACCOUNT = "assetAndValueByAccount";
 
 	/**
 	 * the max block index.
@@ -243,28 +249,73 @@ public final class BlockDbMapDbImpl implements BlockDb {
 		LOG.info("SUCCESS deleteHighestBlock");
 	}
 
+	/**
+	 * makes sure that an account exists with zeroed neo and gas assets.
+	 *
+	 * @param assetAndValueByAccountMap
+	 *            the account asset value map.
+	 * @param account
+	 *            the account to use.account
+	 * @return the account map.
+	 */
+	private Map<UInt256, Fixed8> ensureAccountExists(final HTreeMap<byte[], byte[]> assetAndValueByAccountMap,
+			final UInt160 account) {
+		final byte[] accountBa = account.toByteArray();
+		if (!assetAndValueByAccountMap.containsKey(accountBa)) {
+			final Map<UInt256, Fixed8> friendAssetValueMap = new TreeMap<>();
+			friendAssetValueMap.put(ModelUtil.NEO_HASH, ModelUtil.getFixed8(BigInteger.ZERO));
+			friendAssetValueMap.put(ModelUtil.GAS_HASH, ModelUtil.getFixed8(BigInteger.ZERO));
+			putAssetValueMap(assetAndValueByAccountMap, accountBa, friendAssetValueMap);
+		}
+		return getAssetValueMapFromByteArray(assetAndValueByAccountMap.get(accountBa));
+	}
+
 	@Override
 	public Map<UInt160, Map<UInt256, Fixed8>> getAccountAssetValueMap() {
 		final Map<UInt160, Map<UInt256, Fixed8>> accountAssetValueMap = new TreeMap<>();
 
-		final TransactionOutputFactory objectFactory = new TransactionOutputFactory();
+		final HTreeMap<byte[], byte[]> assetAndValueByAccountMap = getAssetAndValueByAccountMap();
 
-		final HTreeMap<Long, byte[]> map = getByteArrayByBlockIndexMap(TRANSACTION_OUTPUTS_BY_HASH);
-		for (final long key : map.getKeys()) {
-			final byte[] listBa = map.get(key);
-			final List<byte[]> baList = ModelUtil.toByteArrayList(listBa);
-			for (final byte[] ba : baList) {
-				final TransactionOutput output = objectFactory.toObject(ByteBuffer.wrap(ba));
-
-				if (!accountAssetValueMap.containsKey(output.scriptHash)) {
-					accountAssetValueMap.put(output.scriptHash, new TreeMap<>());
-				}
-				final Map<UInt256, Fixed8> assetValueMap = accountAssetValueMap.get(output.scriptHash);
-				assetValueMap.put(output.assetId, output.value);
-			}
+		for (final byte[] key : assetAndValueByAccountMap.getKeys()) {
+			final byte[] value = assetAndValueByAccountMap.get(key);
+			final UInt160 account = new UInt160(key);
+			final Map<UInt256, Fixed8> map = getAssetValueMapFromByteArray(value);
+			accountAssetValueMap.put(account, map);
 		}
 
 		return accountAssetValueMap;
+	}
+
+	/**
+	 * return the map of transactions by key.
+	 *
+	 * @return the map of transactions by key.
+	 */
+	private HTreeMap<byte[], byte[]> getAssetAndValueByAccountMap() {
+		final HTreeMap<byte[], byte[]> map = DB
+				.hashMap(ASSET_AND_VALUE_BY_ACCOUNT, Serializer.BYTE_ARRAY, Serializer.BYTE_ARRAY).counterEnable()
+				.createOrOpen();
+		return map;
+	}
+
+	/**
+	 * converts a byte array into a map of assets and values.
+	 *
+	 * @param ba
+	 *            the byte array to use.
+	 * @return the map.
+	 */
+	private Map<UInt256, Fixed8> getAssetValueMapFromByteArray(final byte[] ba) {
+		final Map<UInt256, Fixed8> map = new TreeMap<>();
+		final ByteBuffer bb = ByteBuffer.wrap(ba);
+		final int size = ModelUtil.getBigInteger(bb).intValue();
+
+		while (map.size() < size) {
+			final UInt256 key = new UInt256(ModelUtil.getVariableLengthByteArray(bb));
+			final Fixed8 value = new Fixed8(ByteBuffer.wrap(ModelUtil.getVariableLengthByteArray(bb)));
+			map.put(key, value);
+		}
+		return map;
 	}
 
 	/**
@@ -387,6 +438,31 @@ public final class BlockDbMapDbImpl implements BlockDb {
 		final HTreeMap<Long, byte[]> map = DB.hashMap(mapName, Serializer.LONG, Serializer.BYTE_ARRAY).counterEnable()
 				.createOrOpen();
 		return map;
+	}
+
+	/**
+	 * converts a map of assets and values into a byte array.
+	 *
+	 * @param friendAssetValueMap
+	 *            the map to use.
+	 * @return the byte array.
+	 */
+	private byte[] getByteArrayFromAssetValueMap(final Map<UInt256, Fixed8> friendAssetValueMap) {
+		final byte[] mapBa;
+		final ByteArrayOutputStream bout;
+		try (ByteArrayOutputStream out = new ByteArrayOutputStream();) {
+			NetworkUtil.writeVarInt(out, friendAssetValueMap.size());
+			for (final UInt256 key : friendAssetValueMap.keySet()) {
+				final Fixed8 value = friendAssetValueMap.get(key);
+				NetworkUtil.writeByteArray(out, key.toByteArray());
+				NetworkUtil.writeByteArray(out, value.toByteArray());
+			}
+			bout = out;
+		} catch (final IOException e) {
+			throw new RuntimeException(e);
+		}
+		mapBa = bout.toByteArray();
+		return mapBa;
 	}
 
 	/**
@@ -683,6 +759,8 @@ public final class BlockDbMapDbImpl implements BlockDb {
 				putWithByteBufferKey(TRANSACTION_INPUTS_BY_HASH, toByteBufferValue(txInputByTxKeyAndIndexMap));
 				putWithByteBufferKey(TRANSACTION_OUTPUTS_BY_HASH, toByteBufferValue(txOutputByTxKeyAndIndexMap));
 				putWithByteBufferKey(TRANSACTION_SCRIPTS_BY_HASH, toByteBufferValue(txScriptByTxKeyAndIndexMap));
+
+				updateAssetAndValueByAccountMap(block);
 			}
 			DB.commit();
 		} catch (final Exception e) {
@@ -693,6 +771,22 @@ public final class BlockDbMapDbImpl implements BlockDb {
 		if (LOG.isDebugEnabled()) {
 			LOG.debug("SUCCESS put, {} blocks", NumberFormat.getIntegerInstance().format(blocks.length));
 		}
+	}
+
+	/**
+	 * puts the asset value map into the account map.
+	 *
+	 * @param assetAndValueByAccountMap
+	 *            the account map to use.
+	 * @param accountBa
+	 *            the account key byte array.
+	 * @param friendAssetValueMap
+	 *            the asset value map to use.
+	 */
+	private void putAssetValueMap(final HTreeMap<byte[], byte[]> assetAndValueByAccountMap, final byte[] accountBa,
+			final Map<UInt256, Fixed8> friendAssetValueMap) {
+		final byte[] mapBa = getByteArrayFromAssetValueMap(friendAssetValueMap);
+		assetAndValueByAccountMap.put(accountBa, mapBa);
 	}
 
 	/**
@@ -780,6 +874,49 @@ public final class BlockDbMapDbImpl implements BlockDb {
 	}
 
 	/**
+	 * updates the asset and value by account map.
+	 *
+	 * @param block
+	 *            the block to update.
+	 */
+	private void updateAssetAndValueByAccountMap(final Block block) {
+		final HTreeMap<byte[], byte[]> assetAndValueByAccountMap = getAssetAndValueByAccountMap();
+		for (final Transaction t : block.getTransactionList()) {
+			for (final CoinReference cr : t.inputs) {
+				final UInt256 prevHashReversed = cr.prevHash.reverse();
+				if (prevHashReversed.equals(GenesisBlockUtil.GENESIS_HASH)) {
+					final Transaction tiTx = getTransactionWithHash(prevHashReversed);
+
+					if (tiTx == null) {
+						throw new RuntimeException("no transaction with prevHash:" + prevHashReversed);
+					}
+
+					final TransactionOutput ti = tiTx.outputs.get(cr.prevIndex.asInt());
+					final UInt160 input = ti.scriptHash;
+					if ((ti.assetId.equals(ModelUtil.NEO_HASH)) || (ti.assetId.equals(ModelUtil.GAS_HASH))) {
+						final Map<UInt256, Fixed8> accountAssetValueMap = ensureAccountExists(assetAndValueByAccountMap,
+								input);
+						final Fixed8 newValue = ModelUtil.add(accountAssetValueMap.get(ti.assetId), ti.value);
+						accountAssetValueMap.put(ti.assetId, newValue);
+						putAssetValueMap(assetAndValueByAccountMap, input.toByteArray(), accountAssetValueMap);
+					}
+				}
+			}
+
+			for (final TransactionOutput to : t.outputs) {
+				final UInt160 output = to.scriptHash;
+				if ((to.assetId.equals(ModelUtil.NEO_HASH)) || (to.assetId.equals(ModelUtil.GAS_HASH))) {
+					final Map<UInt256, Fixed8> accountAssetValueMap = ensureAccountExists(assetAndValueByAccountMap,
+							output);
+					final Fixed8 newValue = ModelUtil.subtract(accountAssetValueMap.get(to.assetId), to.value);
+					accountAssetValueMap.put(to.assetId, newValue);
+					putAssetValueMap(assetAndValueByAccountMap, output.toByteArray(), accountAssetValueMap);
+				}
+			}
+		}
+	}
+
+	/**
 	 * updates the block index, if the new block index is greater than the existing
 	 * block index.
 	 *
@@ -818,6 +955,8 @@ public final class BlockDbMapDbImpl implements BlockDb {
 				maxBlockCountStr = null;
 			}
 
+			getAssetAndValueByAccountMap().clear();
+
 			while (blockHeight < maxBlockCount) {
 				final String blockHeightStr;
 				if (LOG.isDebugEnabled() || LOG.isErrorEnabled()) {
@@ -827,7 +966,7 @@ public final class BlockDbMapDbImpl implements BlockDb {
 				}
 
 				LOG.debug("INTERIM DEBUG validate {} of {} STARTED ", blockHeightStr, maxBlockCountStr);
-				final Block block = getBlock(blockHeight, false);
+				final Block block = getBlock(blockHeight, true);
 				if (block == null) {
 					LOG.error("INTERIM validate {} of {} FAILURE, block not found in blockchain.", blockHeightStr,
 							maxBlockCountStr);
@@ -853,6 +992,19 @@ public final class BlockDbMapDbImpl implements BlockDb {
 					} else {
 						LOG.debug("INTERIM DEBUG validate {} of {} SUCCESS ", blockHeightStr, maxBlockCountStr);
 					}
+
+					final long blockIndex = block.getIndexAsLong();
+					int transactionIndex = 0;
+					final Map<ByteBuffer, byte[]> txKeyByTxHashMap = new TreeMap<>();
+					for (final Transaction transaction : block.getTransactionList()) {
+						final byte[] transactionKeyBa = getTransactionKey(blockIndex, transactionIndex);
+						txKeyByTxHashMap.put(ByteBuffer.wrap(transaction.getHash().toByteArray()), transactionKeyBa);
+						transactionIndex++;
+					}
+					putWithByteBufferKey(TRANSACTION_KEY_BY_HASH, txKeyByTxHashMap);
+
+					updateAssetAndValueByAccountMap(block);
+
 					lastGoodBlockIndex = block.getIndexAsLong();
 				}
 				blockHeight++;
