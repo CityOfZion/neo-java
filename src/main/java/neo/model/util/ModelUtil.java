@@ -16,6 +16,7 @@ import org.apache.commons.codec.DecoderException;
 import org.apache.commons.codec.binary.Hex;
 import org.apache.commons.lang3.ArrayUtils;
 import org.json.JSONArray;
+import org.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -85,12 +86,12 @@ public final class ModelUtil {
 	/**
 	 * the hash of the NEO registration transaction.
 	 */
-	public static final UInt256 NEO_HASH;
+	public static final UInt256 NEO_HASH_FORWARD;
 
 	/**
 	 * the hash of the GAS registration transaction.
 	 */
-	public static final UInt256 GAS_HASH;
+	public static final UInt256 GAS_HASH_FORWARD;
 
 	/**
 	 * the divisor to use to convert a Fixed8 value to a decimal.
@@ -101,12 +102,12 @@ public final class ModelUtil {
 
 		try {
 			final byte[] neoBa = Hex.decodeHex(NEO_HASH_HEX_STR.toCharArray());
-			ArrayUtils.reverse(neoBa);
-			NEO_HASH = new UInt256(neoBa);
+			// ArrayUtils.reverse(neoBa);
+			NEO_HASH_FORWARD = new UInt256(neoBa);
 
 			final byte[] gasBa = Hex.decodeHex(GAS_HASH_HEX_STR.toCharArray());
-			ArrayUtils.reverse(gasBa);
-			GAS_HASH = new UInt256(gasBa);
+			// ArrayUtils.reverse(gasBa);
+			GAS_HASH_FORWARD = new UInt256(gasBa);
 		} catch (final DecoderException e) {
 			throw new RuntimeException(e);
 		}
@@ -127,8 +128,8 @@ public final class ModelUtil {
 	 * @return the sum of the two values.
 	 */
 	public static Fixed8 add(final Fixed8 value1, final Fixed8 value2) {
-		final BigInteger oldBi = new BigInteger(1, value2.toByteArray());
-		final BigInteger valBi = new BigInteger(1, value1.toByteArray());
+		final BigInteger oldBi = value1.toPositiveBigInteger();
+		final BigInteger valBi = value2.toPositiveBigInteger();
 		final BigInteger newBi = oldBi.add(valBi);
 		final Fixed8 newValue = getFixed8(newBi);
 		return newValue;
@@ -239,8 +240,39 @@ public final class ModelUtil {
 	 * @return the new Fixed8.
 	 */
 	public static Fixed8 getFixed8(final BigInteger newBi) {
-		final Fixed8 newValue = new Fixed8(ByteBuffer.wrap(newBi.toByteArray()));
-		return newValue;
+		final byte[] ba = new byte[UInt64.SIZE];
+		final byte[] biBa = newBi.toByteArray();
+		final int destPos;
+		final int srcPos;
+		final int length;
+		if (biBa.length <= ba.length) {
+			destPos = UInt64.SIZE - biBa.length;
+			srcPos = 0;
+			length = biBa.length;
+		} else if (biBa[0] == 0) {
+			destPos = 0;
+			srcPos = 1;
+			length = biBa.length - 1;
+		} else {
+			destPos = UInt64.SIZE - biBa.length;
+			srcPos = 0;
+			length = biBa.length;
+		}
+		try {
+			System.arraycopy(biBa, srcPos, ba, destPos, length);
+			ArrayUtils.reverse(ba);
+			final Fixed8 newValue = new Fixed8(ByteBuffer.wrap(ba));
+			return newValue;
+		} catch (final ArrayIndexOutOfBoundsException e) {
+			final JSONObject msgJson = new JSONObject();
+			msgJson.put("ba", Hex.encodeHexString(ba));
+			msgJson.put("biBa", Hex.encodeHexString(biBa));
+			msgJson.put("destPos", destPos);
+			msgJson.put("srcPos", srcPos);
+			msgJson.put("length", length);
+			final String msg = msgJson.toString();
+			throw new RuntimeException(msg, e);
+		}
 	}
 
 	/**
@@ -463,16 +495,20 @@ public final class ModelUtil {
 	/**
 	 * subtracts two Fixed8 values.
 	 *
-	 * @param value1
-	 *            the first value
-	 * @param value2
-	 *            the second value.
-	 * @return the subtraction of the two values.
+	 * @param left
+	 *            the left value
+	 * @param right
+	 *            the right value.
+	 * @return left minus right
 	 */
-	public static Fixed8 subtract(final Fixed8 value1, final Fixed8 value2) {
-		final BigInteger oldBi = new BigInteger(1, value2.toByteArray());
-		final BigInteger valBi = new BigInteger(1, value1.toByteArray());
-		final BigInteger newBi = oldBi.subtract(valBi);
+	public static Fixed8 subtract(final Fixed8 left, final Fixed8 right) {
+		final BigInteger leftBi = left.toPositiveBigInteger();
+		final BigInteger rightBi = right.toPositiveBigInteger();
+		final BigInteger newBi = leftBi.subtract(rightBi);
+		if (newBi.signum() < 0) {
+			throw new RuntimeException("tried to subtract " + leftBi + "(Fixed8:" + left + ")  from " + rightBi
+					+ " (Fixed8:" + right + ")" + " cannot have a negative fixed8 with value " + newBi + ".");
+		}
 		final Fixed8 newValue = getFixed8(newBi);
 		return newValue;
 	}

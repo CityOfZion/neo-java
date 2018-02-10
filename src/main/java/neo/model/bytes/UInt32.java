@@ -2,6 +2,8 @@ package neo.model.bytes;
 
 import java.math.BigInteger;
 
+import org.apache.commons.lang3.ArrayUtils;
+
 /**
  * an unsigned 32 bit byte array.
  *
@@ -28,6 +30,7 @@ public final class UInt32 extends AbstractByteArray {
 		final byte[] biBa = BigInteger.valueOf(value).toByteArray();
 		final byte[] ba = new byte[UInt32.SIZE];
 		System.arraycopy(biBa, 0, ba, UInt32.SIZE - biBa.length, biBa.length);
+		ArrayUtils.reverse(ba);
 		return ba;
 	}
 

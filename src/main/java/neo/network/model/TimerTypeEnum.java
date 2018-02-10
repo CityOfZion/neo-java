@@ -23,7 +23,7 @@ public enum TimerTypeEnum {
 	 *            the name to use.
 	 * @return a timer type from a given name.
 	 */
-	public static final TimerTypeEnum fromName(final String name) {
+	public static TimerTypeEnum fromName(final String name) {
 		for (final TimerTypeEnum timerType : values()) {
 			if (timerType.name.equals(name)) {
 				return timerType;

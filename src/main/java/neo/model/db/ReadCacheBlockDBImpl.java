@@ -233,7 +233,17 @@ public final class ReadCacheBlockDBImpl implements BlockDb {
 				final List<Block> putList = new ArrayList<>();
 				// pull out all the blocks we are going to put into the database.
 				synchronized (blockSet) {
-					putList.addAll(blockSet);
+					final Block maxBlock = delegate.getHeaderOfBlockWithMaxIndex();
+					if (maxBlock == null) {
+						putList.addAll(blockSet);
+					} else {
+						final long maxIndex = maxBlock.getIndexAsLong();
+						for (final Block block : blockSet) {
+							if (block.getIndexAsLong() > maxIndex) {
+								putList.add(block);
+							}
+						}
+					}
 					blockSet.clear();
 				}
 				if (!putList.isEmpty()) {

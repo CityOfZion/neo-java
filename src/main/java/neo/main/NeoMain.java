@@ -19,6 +19,7 @@ import neo.main.ui.ApiCallModel;
 import neo.main.ui.RemotePeerDataModel;
 import neo.main.ui.StatsModel;
 import neo.model.util.ConfigurationUtil;
+import neo.model.util.GenesisBlockUtil;
 import neo.network.LocalControllerNode;
 
 /**
@@ -119,8 +120,14 @@ public final class NeoMain {
 		final JSONObject controllerNodeConfig = ConfigurationUtil.getConfiguration();
 		final LocalControllerNode controller = new LocalControllerNode(controllerNodeConfig);
 
-		// TODO: bootstrap the blockchain better.
-		// controller.getLocalNodeData().getBlockDb().put(GenesisBlockUtil.GENESIS_BLOCK);
+		if (controller.getLocalNodeData().getBlockDb().getBlockCount() == 0) {
+			LOG.info("DB is empty, addiing genesis block STARTED");
+			controller.getLocalNodeData().getBlockDb().put(GenesisBlockUtil.GENESIS_BLOCK);
+			LOG.info("DB is empty, addiing genesis block SUCCESS");
+		}
+
+		LOG.info("INTERIM main number of accounts:{};",
+				controller.getLocalNodeData().getBlockDb().getAccountAssetValueMap().size());
 
 		for (final String arg : args) {
 			if (arg.equals("/validate")) {

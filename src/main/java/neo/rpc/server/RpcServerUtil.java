@@ -221,7 +221,7 @@ public final class RpcServerUtil {
 
 			final Map<UInt160, Map<UInt256, Fixed8>> accountStateCache = controller.getLocalNodeData().getBlockDb()
 					.getAccountAssetValueMap();
-			LOG.error("getaccountlist 2 accountStateCache SUCCESS");
+			LOG.error("getaccountlist 2 accountStateCache SUCCESS, count:{}", accountStateCache.size());
 
 			final Map<UInt160, Long> neoTxByAccount = new TreeMap<>();
 			final Map<UInt160, Long> gasTxByAccount = new TreeMap<>();
@@ -251,14 +251,16 @@ public final class RpcServerUtil {
 
 						final TransactionOutput ti = tiTx.outputs.get(cr.prevIndex.asInt());
 						final UInt160 input = ti.scriptHash;
-						if ((ti.assetId.equals(ModelUtil.NEO_HASH)) || (ti.assetId.equals(ModelUtil.GAS_HASH))) {
+						if ((ti.assetId.equals(ModelUtil.NEO_HASH_FORWARD))
+								|| (ti.assetId.equals(ModelUtil.GAS_HASH_FORWARD))) {
 							MapUtil.increment(friendAssetMap, input, ti.assetId, ti.value.value, TreeMap.class);
 						}
 					}
 
 					for (final TransactionOutput to : t.outputs) {
 						final UInt160 output = to.scriptHash;
-						if ((to.assetId.equals(ModelUtil.NEO_HASH)) || (to.assetId.equals(ModelUtil.GAS_HASH))) {
+						if ((to.assetId.equals(ModelUtil.NEO_HASH_FORWARD))
+								|| (to.assetId.equals(ModelUtil.GAS_HASH_FORWARD))) {
 							MapUtil.increment(friendAssetMap, output, to.assetId, -to.value.value, TreeMap.class);
 						}
 					}
@@ -268,18 +270,18 @@ public final class RpcServerUtil {
 							firstTsByAccount.put(friend, block.timestamp.asLong());
 						}
 
-						if (friendAssetMap.get(friend).containsKey(ModelUtil.NEO_HASH)) {
+						if (friendAssetMap.get(friend).containsKey(ModelUtil.NEO_HASH_FORWARD)) {
 							MapUtil.increment(neoTxByAccount, friend);
-							final long value = friendAssetMap.get(friend).get(ModelUtil.NEO_HASH);
+							final long value = friendAssetMap.get(friend).get(ModelUtil.NEO_HASH_FORWARD);
 							if (value < 0) {
 								MapUtil.increment(neoInByAccount, friend, -value);
 							} else {
 								MapUtil.increment(neoOutByAccount, friend, value);
 							}
 						}
-						if (friendAssetMap.get(friend).containsKey(ModelUtil.GAS_HASH)) {
+						if (friendAssetMap.get(friend).containsKey(ModelUtil.GAS_HASH_FORWARD)) {
 							MapUtil.increment(gasTxByAccount, friend);
-							final long value = friendAssetMap.get(friend).get(ModelUtil.GAS_HASH);
+							final long value = friendAssetMap.get(friend).get(ModelUtil.GAS_HASH_FORWARD);
 							if (value < 0) {
 								MapUtil.increment(gasInByAccount, friend, -value);
 							} else {
@@ -290,7 +292,7 @@ public final class RpcServerUtil {
 				}
 			}
 
-			LOG.error("getaccountlist 4 addressByAccount");
+			LOG.error("getaccountlist 4 addressByAccount STARTED");
 
 			final Map<UInt160, String> addressByAccount = new TreeMap<>();
 
@@ -298,8 +300,9 @@ public final class RpcServerUtil {
 				final String address = ModelUtil.toAddress(key);
 				addressByAccount.put(key, address);
 			}
+			LOG.error("getaccountlist 4 addressByAccount SUCCESS, address count:{};", addressByAccount.size());
 
-			LOG.error("getaccountlist 5 returnList");
+			LOG.error("getaccountlist 5 returnList STARTED");
 			final JSONArray returnList = new JSONArray();
 
 			for (final UInt160 key : accountStateCache.keySet()) {
@@ -314,14 +317,14 @@ public final class RpcServerUtil {
 					final JSONObject entry = new JSONObject();
 					entry.put("account", address);
 
-					if (accountState.containsKey(ModelUtil.NEO_HASH)) {
-						entry.put(ModelUtil.NEO, accountState.containsKey(ModelUtil.NEO_HASH));
+					if (accountState.containsKey(ModelUtil.NEO_HASH_FORWARD)) {
+						entry.put(ModelUtil.NEO, accountState.get(ModelUtil.NEO_HASH_FORWARD).value);
 					} else {
 						entry.put(ModelUtil.NEO, 0);
 					}
 
-					if (accountState.containsKey(ModelUtil.GAS_HASH)) {
-						entry.put(ModelUtil.GAS, accountState.containsKey(ModelUtil.GAS_HASH));
+					if (accountState.containsKey(ModelUtil.GAS_HASH_FORWARD)) {
+						entry.put(ModelUtil.GAS, accountState.get(ModelUtil.GAS_HASH_FORWARD).value);
 					} else {
 						entry.put(ModelUtil.GAS, 0);
 					}
@@ -371,6 +374,8 @@ public final class RpcServerUtil {
 					returnList.put(entry);
 				}
 			}
+			LOG.error("getaccountlist 5 returnList SUCCESS, returnList.size:{};", returnList.length());
+
 			LOG.error("getaccountlist 6 return");
 
 			final JSONObject response = new JSONObject();

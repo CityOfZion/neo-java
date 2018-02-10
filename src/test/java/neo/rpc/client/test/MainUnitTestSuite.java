@@ -31,7 +31,7 @@ import org.junit.runners.Suite;
 		/** */
 		TestDBH2.class,
 		/** */
-})
+		TestDBMapDb.class, })
 
 public class MainUnitTestSuite {
 }

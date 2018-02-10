@@ -9,7 +9,7 @@
 			"first_ts": 0,
 			"gas": 0,
 			"neo_out": 0,
-			"neo": 0,
+			"neo": 10000000000000000,
 			"account": "AQVh2pG732YvtNaxEGkQUei3YA4cvo7d2i"
 		}
 	],

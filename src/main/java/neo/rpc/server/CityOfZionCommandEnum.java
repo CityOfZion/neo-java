@@ -35,7 +35,7 @@ public enum CityOfZionCommandEnum {
 	 *
 	 * @return the command with the given name, or null if no command exists.
 	 */
-	public static final CityOfZionCommandEnum getCommandStartingWith(final String name) {
+	public static CityOfZionCommandEnum getCommandStartingWith(final String name) {
 		for (final CityOfZionCommandEnum command : values()) {
 			if (command != UNKNOWN) {
 				if (name.startsWith(command.uriPrefix)) {

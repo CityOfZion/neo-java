@@ -12,8 +12,8 @@
 			"seconds": 5
 		},
 		"block-db": {
-			"file-size-dir": "java-chain/db",
-			"url": "jdbc:h2:retry:./java-chain/db/db",
+			"file-size-dir": "./java-chain/db-mapdb",
+			"url": "./java-chain/db-mapdb/db.mapdb",
 			"impl1": "neo.model.db.h2.BlockDbH2Impl",
 			"impl": "neo.model.db.PerformanceMonitoringBlockDb"
 		},
