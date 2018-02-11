@@ -1071,22 +1071,14 @@ public final class BlockDbMapDbImpl implements BlockDb {
 							maxBlockCountStr, block.getIndexAsLong());
 					deleteBlockAtHeight(blockHeight);
 				} else {
-
-					final String numberOfAccountsStr;
-					if (LOG.isDebugEnabled() || LOG.isErrorEnabled()) {
-						numberOfAccountsStr = NumberFormat.getIntegerInstance()
-								.format(assetAndValueByAccountMap.size());
-					} else {
-						numberOfAccountsStr = null;
-					}
-
 					if (System.currentTimeMillis() > (lastInfoMs + 1000)) {
+						final String numberOfAccountsStr = NumberFormat.getIntegerInstance()
+								.format(assetAndValueByAccountMap.size());
 						LOG.info("INTERIM INFO  validate {} of {} SUCCESS, number of accounts:{};", blockHeightStr,
 								maxBlockCountStr, numberOfAccountsStr);
 						lastInfoMs = System.currentTimeMillis();
 					} else {
-						LOG.debug("INTERIM DEBUG validate {} of {} SUCCESS, number of accounts:{};", blockHeightStr,
-								maxBlockCountStr, numberOfAccountsStr);
+						LOG.debug("INTERIM DEBUG validate {} of {} SUCCESS.", blockHeightStr, maxBlockCountStr);
 					}
 
 					final long blockIndex = block.getIndexAsLong();
