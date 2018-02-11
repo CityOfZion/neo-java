@@ -1071,7 +1071,7 @@ public final class BlockDbMapDbImpl implements BlockDb {
 							maxBlockCountStr, block.getIndexAsLong());
 					deleteBlockAtHeight(blockHeight);
 				} else {
-					if (System.currentTimeMillis() > (lastInfoMs + 1000)) {
+					if (System.currentTimeMillis() > (lastInfoMs + 30000)) {
 						final String numberOfAccountsStr = NumberFormat.getIntegerInstance()
 								.format(assetAndValueByAccountMap.size());
 						LOG.info("INTERIM INFO  validate {} of {} SUCCESS, number of accounts:{};", blockHeightStr,
