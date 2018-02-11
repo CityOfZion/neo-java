@@ -61,6 +61,11 @@ public final class PerformanceMonitoringBlockDb implements BlockDb {
 	}
 
 	@Override
+	public long getAccountCount() {
+		return delegate.getAccountCount();
+	}
+
+	@Override
 	public long getBlockCount() {
 		try (PerformanceMonitor m = new PerformanceMonitor("BlockDb.getBlockCount")) {
 			return delegate.getBlockCount();

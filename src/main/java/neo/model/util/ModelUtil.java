@@ -86,12 +86,12 @@ public final class ModelUtil {
 	/**
 	 * the hash of the NEO registration transaction.
 	 */
-	public static final UInt256 NEO_HASH_FORWARD;
+	public static final UInt256 NEO_HASH;
 
 	/**
 	 * the hash of the GAS registration transaction.
 	 */
-	public static final UInt256 GAS_HASH_FORWARD;
+	public static final UInt256 GAS_HASH;
 
 	/**
 	 * the divisor to use to convert a Fixed8 value to a decimal.
@@ -103,11 +103,11 @@ public final class ModelUtil {
 		try {
 			final byte[] neoBa = Hex.decodeHex(NEO_HASH_HEX_STR.toCharArray());
 			// ArrayUtils.reverse(neoBa);
-			NEO_HASH_FORWARD = new UInt256(neoBa);
+			NEO_HASH = new UInt256(neoBa);
 
 			final byte[] gasBa = Hex.decodeHex(GAS_HASH_HEX_STR.toCharArray());
 			// ArrayUtils.reverse(gasBa);
-			GAS_HASH_FORWARD = new UInt256(gasBa);
+			GAS_HASH = new UInt256(gasBa);
 		} catch (final DecoderException e) {
 			throw new RuntimeException(e);
 		}
@@ -681,6 +681,19 @@ public final class ModelUtil {
 	public static String toRoundedDoubleAsString(final long value) {
 		final double input = value / DECIMAL_DIVISOR;
 		return String.format("%.2f", input);
+	}
+
+	/**
+	 * converts the value to a double, by dividing by DECIMAL_DIVISOR. then formats
+	 * it to a string with two decimal places.
+	 *
+	 * @param value
+	 *            the long value to convert.
+	 * @return the converted value as a string.
+	 */
+	public static String toRoundedLongAsString(final long value) {
+		final long input = value / DECIMAL_DIVISOR;
+		return Long.toString(input);
 	}
 
 	/**

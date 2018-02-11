@@ -114,6 +114,11 @@ public final class ReadCacheBlockDBImpl implements BlockDb {
 	}
 
 	@Override
+	public long getAccountCount() {
+		return delegate.getAccountCount();
+	}
+
+	@Override
 	public long getBlockCount() {
 		final Long cachedBlockCount = getCachedBlockCount();
 		if (cachedBlockCount != null) {

@@ -271,6 +271,13 @@ public final class BlockDbH2Impl implements BlockDb {
 		return accountAssetValueMap;
 	}
 
+	@Override
+	public long getAccountCount() {
+		final JdbcTemplate jdbcOperations = new JdbcTemplate(ds);
+		final String sql = getSql("getAccountCount");
+		return jdbcOperations.queryForObject(sql, Long.class);
+	}
+
 	/**
 	 * return the block at the given height, with transactions attached.
 	 *

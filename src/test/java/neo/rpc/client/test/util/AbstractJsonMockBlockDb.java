@@ -111,6 +111,11 @@ public abstract class AbstractJsonMockBlockDb implements BlockDb {
 		return accountAssetValueMap;
 	}
 
+	@Override
+	public long getAccountCount() {
+		return getAccountAssetValueMap().size();
+	}
+
 	/**
 	 * return the block at the given height, with transactions attached.
 	 *

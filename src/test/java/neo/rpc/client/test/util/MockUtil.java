@@ -85,7 +85,7 @@ public final class MockUtil {
 	public static TransactionOutput getTransactionOutput001() {
 		final int minSize = UInt256.SIZE + UInt160.SIZE + Fixed8.SIZE;
 		final byte[] ba = new byte[minSize];
-		final UInt256 neoHash = ModelUtil.NEO_HASH_FORWARD;
+		final UInt256 neoHash = ModelUtil.NEO_HASH;
 		final byte[] neoBytes = neoHash.getBytesCopy();
 		ArrayUtils.reverse(neoBytes);
 		System.arraycopy(neoBytes, 0, ba, 0, neoBytes.length);

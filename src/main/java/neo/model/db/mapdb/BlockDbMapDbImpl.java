@@ -263,8 +263,8 @@ public final class BlockDbMapDbImpl implements BlockDb {
 		final byte[] accountBa = account.toByteArray();
 		if (!assetAndValueByAccountMap.containsKey(accountBa)) {
 			final Map<UInt256, Fixed8> friendAssetValueMap = new TreeMap<>();
-			friendAssetValueMap.put(ModelUtil.NEO_HASH_FORWARD, ModelUtil.getFixed8(BigInteger.ZERO));
-			friendAssetValueMap.put(ModelUtil.GAS_HASH_FORWARD, ModelUtil.getFixed8(BigInteger.ZERO));
+			friendAssetValueMap.put(ModelUtil.NEO_HASH, ModelUtil.getFixed8(BigInteger.ZERO));
+			friendAssetValueMap.put(ModelUtil.GAS_HASH, ModelUtil.getFixed8(BigInteger.ZERO));
 			putAssetValueMap(assetAndValueByAccountMap, accountBa, friendAssetValueMap);
 		}
 		return getAssetValueMapFromByteArray(assetAndValueByAccountMap.get(accountBa));
@@ -288,6 +288,11 @@ public final class BlockDbMapDbImpl implements BlockDb {
 
 		LOG.error("getAccountAssetValueMap SUCCESS, count:{}", accountAssetValueMap.size());
 		return accountAssetValueMap;
+	}
+
+	@Override
+	public long getAccountCount() {
+		return getAssetAndValueByAccountMap().size();
 	}
 
 	/**
@@ -927,8 +932,7 @@ public final class BlockDbMapDbImpl implements BlockDb {
 				}
 				final TransactionOutput ti = tiTx.outputs.get(prevIndex);
 				final UInt160 input = ti.scriptHash;
-				if ((ti.assetId.equals(ModelUtil.NEO_HASH_FORWARD))
-						|| (ti.assetId.equals(ModelUtil.GAS_HASH_FORWARD))) {
+				if ((ti.assetId.equals(ModelUtil.NEO_HASH)) || (ti.assetId.equals(ModelUtil.GAS_HASH))) {
 					final Map<UInt256, Fixed8> accountAssetValueMap = ensureAccountExists(assetAndValueByAccountMap,
 							input);
 					if (LOG.isDebugEnabled()) {
@@ -960,8 +964,7 @@ public final class BlockDbMapDbImpl implements BlockDb {
 					LOG.debug("updateAssetAndValueByAccountMap INTERIM to:{}", to.toJSONObject());
 				}
 				final UInt160 output = to.scriptHash;
-				if ((to.assetId.equals(ModelUtil.NEO_HASH_FORWARD))
-						|| (to.assetId.equals(ModelUtil.GAS_HASH_FORWARD))) {
+				if ((to.assetId.equals(ModelUtil.NEO_HASH)) || (to.assetId.equals(ModelUtil.GAS_HASH))) {
 					try {
 						final Map<UInt256, Fixed8> accountAssetValueMap = ensureAccountExists(assetAndValueByAccountMap,
 								output);

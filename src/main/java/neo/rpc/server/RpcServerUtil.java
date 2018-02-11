@@ -251,16 +251,14 @@ public final class RpcServerUtil {
 
 						final TransactionOutput ti = tiTx.outputs.get(cr.prevIndex.asInt());
 						final UInt160 input = ti.scriptHash;
-						if ((ti.assetId.equals(ModelUtil.NEO_HASH_FORWARD))
-								|| (ti.assetId.equals(ModelUtil.GAS_HASH_FORWARD))) {
+						if ((ti.assetId.equals(ModelUtil.NEO_HASH)) || (ti.assetId.equals(ModelUtil.GAS_HASH))) {
 							MapUtil.increment(friendAssetMap, input, ti.assetId, ti.value.value, TreeMap.class);
 						}
 					}
 
 					for (final TransactionOutput to : t.outputs) {
 						final UInt160 output = to.scriptHash;
-						if ((to.assetId.equals(ModelUtil.NEO_HASH_FORWARD))
-								|| (to.assetId.equals(ModelUtil.GAS_HASH_FORWARD))) {
+						if ((to.assetId.equals(ModelUtil.NEO_HASH)) || (to.assetId.equals(ModelUtil.GAS_HASH))) {
 							MapUtil.increment(friendAssetMap, output, to.assetId, -to.value.value, TreeMap.class);
 						}
 					}
@@ -270,18 +268,18 @@ public final class RpcServerUtil {
 							firstTsByAccount.put(friend, block.timestamp.asLong());
 						}
 
-						if (friendAssetMap.get(friend).containsKey(ModelUtil.NEO_HASH_FORWARD)) {
+						if (friendAssetMap.get(friend).containsKey(ModelUtil.NEO_HASH)) {
 							MapUtil.increment(neoTxByAccount, friend);
-							final long value = friendAssetMap.get(friend).get(ModelUtil.NEO_HASH_FORWARD);
+							final long value = friendAssetMap.get(friend).get(ModelUtil.NEO_HASH);
 							if (value < 0) {
 								MapUtil.increment(neoInByAccount, friend, -value);
 							} else {
 								MapUtil.increment(neoOutByAccount, friend, value);
 							}
 						}
-						if (friendAssetMap.get(friend).containsKey(ModelUtil.GAS_HASH_FORWARD)) {
+						if (friendAssetMap.get(friend).containsKey(ModelUtil.GAS_HASH)) {
 							MapUtil.increment(gasTxByAccount, friend);
-							final long value = friendAssetMap.get(friend).get(ModelUtil.GAS_HASH_FORWARD);
+							final long value = friendAssetMap.get(friend).get(ModelUtil.GAS_HASH);
 							if (value < 0) {
 								MapUtil.increment(gasInByAccount, friend, -value);
 							} else {
@@ -317,26 +315,28 @@ public final class RpcServerUtil {
 					final JSONObject entry = new JSONObject();
 					entry.put("account", address);
 
-					if (accountState.containsKey(ModelUtil.NEO_HASH_FORWARD)) {
-						entry.put(ModelUtil.NEO, accountState.get(ModelUtil.NEO_HASH_FORWARD).value);
+					if (accountState.containsKey(ModelUtil.NEO_HASH)) {
+						entry.put(ModelUtil.NEO,
+								ModelUtil.toRoundedLongAsString(accountState.get(ModelUtil.NEO_HASH).value));
 					} else {
 						entry.put(ModelUtil.NEO, 0);
 					}
 
-					if (accountState.containsKey(ModelUtil.GAS_HASH_FORWARD)) {
-						entry.put(ModelUtil.GAS, accountState.get(ModelUtil.GAS_HASH_FORWARD).value);
+					if (accountState.containsKey(ModelUtil.GAS_HASH)) {
+						entry.put(ModelUtil.GAS,
+								ModelUtil.toRoundedDoubleAsString(accountState.get(ModelUtil.GAS_HASH).value));
 					} else {
 						entry.put(ModelUtil.GAS, 0);
 					}
 
 					if (neoInByAccount.containsKey(key)) {
-						entry.put(NEO_IN, neoInByAccount.get(key));
+						entry.put(NEO_IN, ModelUtil.toRoundedLongAsString(neoInByAccount.get(key)));
 					} else {
 						entry.put(NEO_IN, 0);
 					}
 
 					if (neoOutByAccount.containsKey(key)) {
-						entry.put(NEO_OUT, neoOutByAccount.get(key));
+						entry.put(NEO_OUT, ModelUtil.toRoundedLongAsString(neoOutByAccount.get(key)));
 					} else {
 						entry.put(NEO_OUT, 0);
 					}

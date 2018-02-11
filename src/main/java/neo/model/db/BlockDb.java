@@ -43,6 +43,13 @@ public interface BlockDb {
 	Map<UInt160, Map<UInt256, Fixed8>> getAccountAssetValueMap();
 
 	/**
+	 * returns the number of accounts in the database.
+	 *
+	 * @return the number of accounts in the database.
+	 */
+	long getAccountCount();
+
+	/**
 	 * return the block count.
 	 *
 	 * @return the block count.

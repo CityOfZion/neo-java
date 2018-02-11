@@ -126,8 +126,7 @@ public final class NeoMain {
 			LOG.info("DB is empty, addiing genesis block SUCCESS");
 		}
 
-		LOG.info("INTERIM main number of accounts:{};",
-				controller.getLocalNodeData().getBlockDb().getAccountAssetValueMap().size());
+		LOG.info("INTERIM main number of accounts:{};", controller.getLocalNodeData().getBlockDb().getAccountCount());
 
 		for (final String arg : args) {
 			if (arg.equals("/validate")) {
