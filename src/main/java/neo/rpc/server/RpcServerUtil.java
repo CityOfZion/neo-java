@@ -177,6 +177,10 @@ public final class RpcServerUtil {
 			return minHeight;
 		}
 		final Block midBlock = controller.getLocalNodeData().getBlockDb().getHeaderOfBlockFromHeight(midHeight);
+		if (midBlock == null) {
+			LOG.error("getHeightOfTs[null]level:{};minHeight:{};midHeight:{};", level, minHeight, midHeight);
+			return getHeightOfTs(controller, level + 1, minHeight, maxHeight - 1, ts);
+		}
 		final long midBlockTs = midBlock.timestamp.asLong();
 		if (ts == midBlockTs) {
 			return midHeight;
