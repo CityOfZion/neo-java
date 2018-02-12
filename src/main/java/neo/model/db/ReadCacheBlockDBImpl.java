@@ -175,8 +175,11 @@ public final class ReadCacheBlockDBImpl implements BlockDb {
 	}
 
 	@Override
-	public void put(final Block... blocks) {
+	public void put(final boolean forceSynch, final Block... blocks) {
 		putRunnable.put(blocks);
+		if (forceSynch) {
+			putRunnable.processBlockSet();
+		}
 	}
 
 	/**
@@ -219,6 +222,54 @@ public final class ReadCacheBlockDBImpl implements BlockDb {
 		private int putCount = 0;
 
 		/**
+		 * process the set of blocks.
+		 */
+		public void processBlockSet() {
+			final List<Block> putList = new ArrayList<>();
+			// pull out all the blocks we are going to put into the database.
+			synchronized (blockSet) {
+				final Block maxBlock = delegate.getHeaderOfBlockWithMaxIndex();
+				if (maxBlock == null) {
+					putList.addAll(blockSet);
+				} else {
+					final long maxIndex = maxBlock.getIndexAsLong();
+					for (final Block block : blockSet) {
+						if (block.getIndexAsLong() > maxIndex) {
+							putList.add(block);
+						}
+					}
+				}
+				blockSet.clear();
+			}
+			if (!putList.isEmpty()) {
+				// pull out all the blocks into the database.
+				try (PerformanceMonitor m1 = new PerformanceMonitor("ReadCacheBlockDBImpl.put")) {
+					try (PerformanceMonitor m2 = new PerformanceMonitor("ReadCacheBlockDBImpl.put[PerBlock]",
+							putList.size())) {
+						LOG.debug("ReadCacheBlockDBImpl.delegate.put STARTED putList.size():{};putCount:{};",
+								putList.size(), putCount);
+						delegate.put(true, putList.toArray(new Block[0]));
+						putCount += putList.size();
+						LOG.debug("ReadCacheBlockDBImpl.delegate.put SUCCESS putList.size():{};putCount:{};",
+								putList.size(), putCount);
+					}
+				}
+				synchronized (blockSet) {
+					// if we put more than 500 blocks into the database, or no blocks came while we
+					// were comitting, clear cache (which refrehes the stats).
+					if (blockSet.isEmpty() || (putCount > 500)) {
+						try (PerformanceMonitor m1 = new PerformanceMonitor("ReadCacheBlockDBImpl.clearCache")) {
+							clearCache();
+							putCount = 0;
+						}
+					} else {
+						LOG.debug("ReadCacheBlockDBImpl.clearCache skipped, putCount is {}", putCount);
+					}
+				}
+			}
+		}
+
+		/**
 		 * puts the blocks into the putList.
 		 *
 		 * @param blocks
@@ -235,49 +286,7 @@ public final class ReadCacheBlockDBImpl implements BlockDb {
 		@Override
 		public void run() {
 			while (!stopped) {
-				final List<Block> putList = new ArrayList<>();
-				// pull out all the blocks we are going to put into the database.
-				synchronized (blockSet) {
-					final Block maxBlock = delegate.getHeaderOfBlockWithMaxIndex();
-					if (maxBlock == null) {
-						putList.addAll(blockSet);
-					} else {
-						final long maxIndex = maxBlock.getIndexAsLong();
-						for (final Block block : blockSet) {
-							if (block.getIndexAsLong() > maxIndex) {
-								putList.add(block);
-							}
-						}
-					}
-					blockSet.clear();
-				}
-				if (!putList.isEmpty()) {
-					// pull out all the blocks into the database.
-					try (PerformanceMonitor m1 = new PerformanceMonitor("ReadCacheBlockDBImpl.put")) {
-						try (PerformanceMonitor m2 = new PerformanceMonitor("ReadCacheBlockDBImpl.put[PerBlock]",
-								putList.size())) {
-							LOG.debug("ReadCacheBlockDBImpl.delegate.put STARTED putList.size():{};putCount:{};",
-									putList.size(), putCount);
-							delegate.put(putList.toArray(new Block[0]));
-							putCount += putList.size();
-							LOG.debug("ReadCacheBlockDBImpl.delegate.put SUCCESS putList.size():{};putCount:{};",
-									putList.size(), putCount);
-						}
-					}
-					synchronized (blockSet) {
-						// if we put more than 500 blocks into the database, or no blocks came while we
-						// were comitting, clear cache (which refrehes the stats).
-						if (blockSet.isEmpty() || (putCount > 500)) {
-							try (PerformanceMonitor m1 = new PerformanceMonitor("ReadCacheBlockDBImpl.clearCache")) {
-								clearCache();
-								putCount = 0;
-							}
-						} else {
-							LOG.debug("ReadCacheBlockDBImpl.clearCache skipped, putCount is {}", putCount);
-						}
-					}
-				}
-
+				processBlockSet();
 				try {
 					Thread.sleep(1000);
 				} catch (final InterruptedException e) {

@@ -178,18 +178,18 @@ public final class RpcServerUtil {
 		}
 		final Block midBlock = controller.getLocalNodeData().getBlockDb().getHeaderOfBlockFromHeight(midHeight);
 		if (midBlock == null) {
-			LOG.error("getHeightOfTs[null]level:{};minHeight:{};midHeight:{};", level, minHeight, midHeight);
+			LOG.trace("getHeightOfTs[null]level:{};minHeight:{};midHeight:{};", level, minHeight, midHeight);
 			return getHeightOfTs(controller, level + 1, minHeight, maxHeight - 1, ts);
 		}
 		final long midBlockTs = midBlock.timestamp.asLong();
 		if (ts == midBlockTs) {
 			return midHeight;
 		} else if (ts < midBlockTs) {
-			LOG.error("getHeightOfTs[upper]level:{};minHeight:{};midHeight:{};midBlock.Timestamp:{};", level, minHeight,
+			LOG.trace("getHeightOfTs[upper]level:{};minHeight:{};midHeight:{};midBlock.Timestamp:{};", level, minHeight,
 					midHeight, midBlock.timestamp);
 			return getHeightOfTs(controller, level + 1, minHeight, midHeight, ts);
 		} else {
-			LOG.error("getHeightOfTs[lower]level:{};minHeight:{};midHeight:{};midBlock.Timestamp:{};", level, midHeight,
+			LOG.trace("getHeightOfTs[lower]level:{};minHeight:{};midHeight:{};midBlock.Timestamp:{};", level, midHeight,
 					maxHeight, midBlock.timestamp);
 			return getHeightOfTs(controller, level + 1, midHeight, maxHeight, ts);
 		}
@@ -210,7 +210,7 @@ public final class RpcServerUtil {
 	private static JSONObject onGetAccountList(final LocalControllerNode controller, final int id,
 			final JSONArray params) {
 		try {
-			LOG.error("getaccountlist 0");
+			LOG.trace("getaccountlist 0");
 
 			final long fromTs = params.getLong(0);
 			final long toTs = params.getLong(1);
@@ -219,13 +219,13 @@ public final class RpcServerUtil {
 			final long fromHeight = getHeightOfTs(controller, 0, minHeight, maxHeight, fromTs);
 			final long toHeight = getHeightOfTs(controller, 0, fromHeight, maxHeight, toTs);
 
-			LOG.error("getaccountlist 1 fromHeight:{};toHeight:{};", fromHeight, toHeight);
+			LOG.trace("getaccountlist 1 fromHeight:{};toHeight:{};", fromHeight, toHeight);
 
-			LOG.error("getaccountlist 2 accountStateCache STARTED");
+			LOG.trace("getaccountlist 2 accountStateCache STARTED");
 
 			final Map<UInt160, Map<UInt256, Fixed8>> accountStateCache = controller.getLocalNodeData().getBlockDb()
 					.getAccountAssetValueMap();
-			LOG.error("getaccountlist 2 accountStateCache SUCCESS, count:{}", accountStateCache.size());
+			LOG.trace("getaccountlist 2 accountStateCache SUCCESS, count:{}", accountStateCache.size());
 
 			final Map<UInt160, Long> neoTxByAccount = new TreeMap<>();
 			final Map<UInt160, Long> gasTxByAccount = new TreeMap<>();
@@ -238,7 +238,7 @@ public final class RpcServerUtil {
 			final Map<UInt160, Long> firstTsByAccount = new TreeMap<>();
 
 			for (long index = fromHeight; index < toHeight; index++) {
-				LOG.error("getaccountlist 3 fromHeight:{};toHeight:{};index:{};", fromHeight, toHeight, index);
+				LOG.trace("getaccountlist 3 fromHeight:{};toHeight:{};index:{};", fromHeight, toHeight, index);
 				final Block block = controller.getLocalNodeData().getBlockDb().getFullBlockFromHeight(index);
 
 				for (final Transaction t : block.getTransactionList()) {
@@ -294,7 +294,7 @@ public final class RpcServerUtil {
 				}
 			}
 
-			LOG.error("getaccountlist 4 addressByAccount STARTED");
+			LOG.trace("getaccountlist 4 addressByAccount STARTED");
 
 			final Map<UInt160, String> addressByAccount = new TreeMap<>();
 
@@ -302,57 +302,54 @@ public final class RpcServerUtil {
 				final String address = ModelUtil.toAddress(key);
 				addressByAccount.put(key, address);
 			}
-			LOG.error("getaccountlist 4 addressByAccount SUCCESS, address count:{};", addressByAccount.size());
+			LOG.trace("getaccountlist 4 addressByAccount SUCCESS, address count:{};", addressByAccount.size());
 
-			LOG.error("getaccountlist 5 returnList STARTED");
+			LOG.trace("getaccountlist 5 returnList STARTED");
 			final JSONArray returnList = new JSONArray();
 
 			for (final UInt160 key : accountStateCache.keySet()) {
-				LOG.error("getaccountlist 6 key:{};", key);
+				LOG.trace("getaccountlist 6 key:{};", key);
 				if (addressByAccount.containsKey(key)) {
 					final Map<UInt256, Fixed8> accountState = accountStateCache.get(key);
 					final String address = addressByAccount.get(key);
 
-					LOG.error("getaccountlist 7 key:{}; address:{};", key, address);
+					LOG.trace("getaccountlist 7 key:{}; address:{};", key, address);
 
-					// Console.WriteLine($"getaccountlist 7 key:{key}; address:{address};");
 					final JSONObject entry = new JSONObject();
 					entry.put("account", address);
 
 					if (accountState.containsKey(ModelUtil.NEO_HASH)) {
-						entry.put(ModelUtil.NEO,
-								ModelUtil.toRoundedLongAsString(accountState.get(ModelUtil.NEO_HASH).value));
+						entry.put(ModelUtil.NEO, ModelUtil.toRoundedLong(accountState.get(ModelUtil.NEO_HASH).value));
 					} else {
 						entry.put(ModelUtil.NEO, 0);
 					}
 
 					if (accountState.containsKey(ModelUtil.GAS_HASH)) {
-						entry.put(ModelUtil.GAS,
-								ModelUtil.toRoundedDoubleAsString(accountState.get(ModelUtil.GAS_HASH).value));
+						entry.put(ModelUtil.GAS, ModelUtil.toRoundedDouble(accountState.get(ModelUtil.GAS_HASH).value));
 					} else {
 						entry.put(ModelUtil.GAS, 0);
 					}
 
 					if (neoInByAccount.containsKey(key)) {
-						entry.put(NEO_IN, ModelUtil.toRoundedLongAsString(neoInByAccount.get(key)));
+						entry.put(NEO_IN, ModelUtil.toRoundedLong(neoInByAccount.get(key)));
 					} else {
 						entry.put(NEO_IN, 0);
 					}
 
 					if (neoOutByAccount.containsKey(key)) {
-						entry.put(NEO_OUT, ModelUtil.toRoundedLongAsString(neoOutByAccount.get(key)));
+						entry.put(NEO_OUT, ModelUtil.toRoundedLong(neoOutByAccount.get(key)));
 					} else {
 						entry.put(NEO_OUT, 0);
 					}
 
 					if (gasInByAccount.containsKey(key)) {
-						entry.put(GAS_IN, ModelUtil.toRoundedDoubleAsString(gasInByAccount.get(key)));
+						entry.put(GAS_IN, ModelUtil.toRoundedDouble(gasInByAccount.get(key)));
 					} else {
 						entry.put(GAS_IN, 0);
 					}
 
 					if (gasOutByAccount.containsKey(key)) {
-						entry.put(GAS_OUT, ModelUtil.toRoundedDoubleAsString(gasOutByAccount.get(key)));
+						entry.put(GAS_OUT, ModelUtil.toRoundedDouble(gasOutByAccount.get(key)));
 					} else {
 						entry.put(GAS_OUT, 0);
 					}
@@ -378,9 +375,9 @@ public final class RpcServerUtil {
 					returnList.put(entry);
 				}
 			}
-			LOG.error("getaccountlist 5 returnList SUCCESS, returnList.size:{};", returnList.length());
+			LOG.trace("getaccountlist 5 returnList SUCCESS, returnList.size:{};", returnList.length());
 
-			LOG.error("getaccountlist 6 return");
+			LOG.trace("getaccountlist 6 return");
 
 			final JSONObject response = new JSONObject();
 			response.put(ID, id);
@@ -867,7 +864,7 @@ public final class RpcServerUtil {
 			final String hex = params.getString(0);
 			final byte[] ba = ModelUtil.decodeHex(hex);
 			final Block block = new Block(ByteBuffer.wrap(ba));
-			controller.getLocalNodeData().getBlockDb().put(block);
+			controller.getLocalNodeData().getBlockDb().put(false, block);
 		} catch (final RuntimeException e) {
 			final JSONObject response = new JSONObject();
 			response.put(ERROR, e.getMessage());

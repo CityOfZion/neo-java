@@ -122,7 +122,7 @@ public class TestDBH2 {
 	public void test005putAndGetFullBlockFromHeight() {
 		try (TestLocalControllerNode controller = getTestLocalControllerNode()) {
 			final Block expectedBlock = MockUtil.getMockBlock001();
-			controller.getBlockDb().put(expectedBlock);
+			controller.getBlockDb().put(true, expectedBlock);
 			final Block actualBlock = controller.getBlockDb().getFullBlockFromHeight(0);
 			Assert.assertEquals("blocks should match.", expectedBlock.toString(), actualBlock.toString());
 		}
@@ -135,7 +135,7 @@ public class TestDBH2 {
 	public void test006putAndGetTransactionWithHash() {
 		try (TestLocalControllerNode controller = getTestLocalControllerNode()) {
 			final Block block = MockUtil.getMockBlock001();
-			controller.getBlockDb().put(block);
+			controller.getBlockDb().put(true, block);
 			final Transaction expectedTransaction = block.getTransactionList().get(0);
 			final Transaction actualTransaction = controller.getBlockDb()
 					.getTransactionWithHash(expectedTransaction.getHash());
@@ -151,7 +151,7 @@ public class TestDBH2 {
 	public void test007putAndGetFullBlockFromHash() {
 		try (TestLocalControllerNode controller = getTestLocalControllerNode()) {
 			final Block expectedBlock = MockUtil.getMockBlock001();
-			controller.getBlockDb().put(expectedBlock);
+			controller.getBlockDb().put(true, expectedBlock);
 			final Block actualBlock = controller.getBlockDb().getFullBlockFromHash(expectedBlock.hash);
 			Assert.assertEquals("blocks should match.", expectedBlock.toString(), actualBlock.toString());
 		}
@@ -175,7 +175,7 @@ public class TestDBH2 {
 	public void test009putAndGetHeaderOfBlockWithMaxIndex() {
 		try (TestLocalControllerNode controller = getTestLocalControllerNode()) {
 			final Block expectedBlock = MockUtil.getMockBlock001();
-			controller.getBlockDb().put(expectedBlock);
+			controller.getBlockDb().put(true, expectedBlock);
 			expectedBlock.getTransactionList().clear();
 			final Block actualBlock = controller.getBlockDb().getHeaderOfBlockWithMaxIndex();
 			Assert.assertEquals("blocks should match.", expectedBlock.toString(), actualBlock.toString());
@@ -189,7 +189,7 @@ public class TestDBH2 {
 	public void test010putAndGetHeaderOfBlockFromHeight() {
 		try (TestLocalControllerNode controller = getTestLocalControllerNode()) {
 			final Block expectedBlock = MockUtil.getMockBlock001();
-			controller.getBlockDb().put(expectedBlock);
+			controller.getBlockDb().put(true, expectedBlock);
 			expectedBlock.getTransactionList().clear();
 			final Block actualBlock = controller.getBlockDb().getHeaderOfBlockFromHeight(0);
 			Assert.assertEquals("blocks should match.", expectedBlock.toString(), actualBlock.toString());
@@ -203,7 +203,7 @@ public class TestDBH2 {
 	public void test011putAndGetHeaderOfBlockFromHash() {
 		try (TestLocalControllerNode controller = getTestLocalControllerNode()) {
 			final Block expectedBlock = MockUtil.getMockBlock001();
-			controller.getBlockDb().put(expectedBlock);
+			controller.getBlockDb().put(true, expectedBlock);
 			expectedBlock.getTransactionList().clear();
 			final Block actualBlock = controller.getBlockDb().getHeaderOfBlockFromHash(expectedBlock.hash);
 			Assert.assertEquals("blocks should match.", expectedBlock.toString(), actualBlock.toString());

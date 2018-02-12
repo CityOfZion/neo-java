@@ -118,10 +118,12 @@ public interface BlockDb {
 	/**
 	 * puts the given block into the database.
 	 *
+	 * @param forceSynch
+	 *            if true, force all blocks to be written to disk.
 	 * @param blocks
 	 *            the blocks to use.
 	 */
-	void put(Block... blocks);
+	void put(boolean forceSynch, Block... blocks);
 
 	/**
 	 * validates the database.

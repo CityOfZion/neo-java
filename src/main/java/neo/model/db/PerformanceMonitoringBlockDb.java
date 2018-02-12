@@ -122,10 +122,10 @@ public final class PerformanceMonitoringBlockDb implements BlockDb {
 	}
 
 	@Override
-	public void put(final Block... blocks) {
+	public void put(final boolean forceSynch, final Block... blocks) {
 		try (PerformanceMonitor m1 = new PerformanceMonitor("BlockDb.put")) {
 			try (PerformanceMonitor m2 = new PerformanceMonitor("BlockDb.put[PerBlock]", blocks.length)) {
-				delegate.put(blocks);
+				delegate.put(forceSynch, blocks);
 			}
 		}
 	}

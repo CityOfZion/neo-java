@@ -122,7 +122,7 @@ public final class NeoMain {
 
 		if (controller.getLocalNodeData().getBlockDb().getBlockCount() == 0) {
 			LOG.info("DB is empty, addiing genesis block STARTED");
-			controller.getLocalNodeData().getBlockDb().put(GenesisBlockUtil.GENESIS_BLOCK);
+			controller.getLocalNodeData().getBlockDb().put(true, GenesisBlockUtil.GENESIS_BLOCK);
 			LOG.info("DB is empty, addiing genesis block SUCCESS");
 		}
 

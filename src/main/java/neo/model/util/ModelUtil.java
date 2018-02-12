@@ -671,16 +671,15 @@ public final class ModelUtil {
 	}
 
 	/**
-	 * converts the value to a double, by dividing by DECIMAL_DIVISOR. then formats
-	 * it to a string with two decimal places.
+	 * converts the value to a double, by dividing by DECIMAL_DIVISOR.
 	 *
 	 * @param value
 	 *            the long value to convert.
-	 * @return the converted value as a string.
+	 * @return the converted value
 	 */
-	public static String toRoundedDoubleAsString(final long value) {
+	public static double toRoundedDouble(final long value) {
 		final double input = value / DECIMAL_DIVISOR;
-		return String.format("%.2f", input);
+		return input;
 	}
 
 	/**
@@ -691,8 +690,33 @@ public final class ModelUtil {
 	 *            the long value to convert.
 	 * @return the converted value as a string.
 	 */
-	public static String toRoundedLongAsString(final long value) {
+	public static String toRoundedDoubleAsString(final long value) {
+		final double input = toRoundedDouble(value);
+		return String.format("%.2f", input);
+	}
+
+	/**
+	 * converts the value to a long, by dividing by DECIMAL_DIVISOR.
+	 *
+	 * @param value
+	 *            the long value to convert.
+	 * @return the converted value as a string.
+	 */
+	public static long toRoundedLong(final long value) {
 		final long input = value / DECIMAL_DIVISOR;
+		return input;
+	}
+
+	/**
+	 * converts the value to a long, by dividing by DECIMAL_DIVISOR. then formats it
+	 * to a string.
+	 *
+	 * @param value
+	 *            the long value to convert.
+	 * @return the converted value as a string.
+	 */
+	public static String toRoundedLongAsString(final long value) {
+		final long input = toRoundedLong(value);
 		return Long.toString(input);
 	}
 

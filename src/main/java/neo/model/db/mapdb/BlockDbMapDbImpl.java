@@ -673,14 +673,8 @@ public final class BlockDbMapDbImpl implements BlockDb {
 		return transaction;
 	}
 
-	/**
-	 * puts the block into the database.
-	 *
-	 * @param blocks
-	 *            the blocks to use.
-	 */
 	@Override
-	public void put(final Block... blocks) {
+	public void put(final boolean forceSynch, final Block... blocks) {
 		synchronized (this) {
 			if (closed) {
 				return;

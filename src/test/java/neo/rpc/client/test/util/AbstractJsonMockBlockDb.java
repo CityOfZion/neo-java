@@ -240,7 +240,7 @@ public abstract class AbstractJsonMockBlockDb implements BlockDb {
 	}
 
 	@Override
-	public final void put(final Block... blocks) {
+	public final void put(final boolean forceSynch, final Block... blocks) {
 		for (final Block block : blocks) {
 			if (!containsBlockWithHash(block.hash)) {
 				final JSONObject mockBlock = new JSONObject();
