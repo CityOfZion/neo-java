@@ -328,9 +328,15 @@ public final class StatsModel extends AbstractRefreshingModel {
 				if (statsNameList.isEmpty()) {
 					return "";
 				}
+				if (rowIndex >= statsNameList.size()) {
+					return "";
+				}
 				return statsNameList.get(rowIndex);
 			case 1:
 				if (statsValueList.isEmpty()) {
+					return "";
+				}
+				if (rowIndex >= statsValueList.size()) {
 					return "";
 				}
 				return statsValueList.get(rowIndex);

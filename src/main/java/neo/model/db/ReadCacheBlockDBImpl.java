@@ -241,31 +241,36 @@ public final class ReadCacheBlockDBImpl implements BlockDb {
 				}
 				blockSet.clear();
 			}
-			if (!putList.isEmpty()) {
-				// pull out all the blocks into the database.
-				try (PerformanceMonitor m1 = new PerformanceMonitor("ReadCacheBlockDBImpl.put")) {
-					try (PerformanceMonitor m2 = new PerformanceMonitor("ReadCacheBlockDBImpl.put[PerBlock]",
-							putList.size())) {
-						LOG.debug("ReadCacheBlockDBImpl.delegate.put STARTED putList.size():{};putCount:{};",
-								putList.size(), putCount);
-						delegate.put(true, putList.toArray(new Block[0]));
-						putCount += putList.size();
-						LOG.debug("ReadCacheBlockDBImpl.delegate.put SUCCESS putList.size():{};putCount:{};",
-								putList.size(), putCount);
-					}
-				}
-				synchronized (blockSet) {
-					// if we put more than 500 blocks into the database, or no blocks came while we
-					// were comitting, clear cache (which refrehes the stats).
-					if (blockSet.isEmpty() || (putCount > 500)) {
-						try (PerformanceMonitor m1 = new PerformanceMonitor("ReadCacheBlockDBImpl.clearCache")) {
-							clearCache();
-							putCount = 0;
+			try {
+				if (!putList.isEmpty()) {
+					// pull out all the blocks into the database.
+					try (PerformanceMonitor m1 = new PerformanceMonitor("ReadCacheBlockDBImpl.put")) {
+						try (PerformanceMonitor m2 = new PerformanceMonitor("ReadCacheBlockDBImpl.put[PerBlock]",
+								putList.size())) {
+							LOG.debug("ReadCacheBlockDBImpl.delegate.put STARTED putList.size():{};putCount:{};",
+									putList.size(), putCount);
+							delegate.put(true, putList.toArray(new Block[0]));
+							putCount += putList.size();
+							LOG.debug("ReadCacheBlockDBImpl.delegate.put SUCCESS putList.size():{};putCount:{};",
+									putList.size(), putCount);
 						}
-					} else {
-						LOG.debug("ReadCacheBlockDBImpl.clearCache skipped, putCount is {}", putCount);
+					}
+					synchronized (blockSet) {
+						// if we put more than 500 blocks into the database, or no blocks came while we
+						// were comitting, clear cache (which refrehes the stats).
+						if (blockSet.isEmpty() || (putCount > 500)) {
+							try (PerformanceMonitor m1 = new PerformanceMonitor("ReadCacheBlockDBImpl.clearCache")) {
+								clearCache();
+								putCount = 0;
+							}
+						} else {
+							LOG.debug("ReadCacheBlockDBImpl.clearCache skipped, putCount is {}", putCount);
+						}
 					}
 				}
+			} catch (final Exception e) {
+				LOG.error("ReadCacheBlockDBImpl.processBlockSet.put FAILURE", e);
+				clearCache();
 			}
 		}
 

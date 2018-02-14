@@ -16,3 +16,9 @@ if the blockchain appears to be corrupt, run the following command:
 ```
 java -jar target/neo-java-0.0.1-SNAPSHOT-jar-with-dependencies.jar /validate
 ```
+
+todo:
+1) check message checksum
+2) use VM to check scripts
+3) check signer hash
+4) check that bulk insert stops on the first bad block in a list.

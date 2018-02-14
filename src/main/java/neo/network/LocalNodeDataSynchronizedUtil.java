@@ -328,11 +328,13 @@ public final class LocalNodeDataSynchronizedUtil {
 				final long blockchainBlockCount = localNodeData.getBlockchainBlockCount();
 				final long localBlockCountLowerBy = blockchainBlockCount - localBlockCount;
 				if (localBlockCountLowerBy < 10) {
-					final String msg = "INTERIM put forceSynch=true;localBlockCount:{};blockchainBlockCount:{};localBlockCountLowerBy:{};";
-					LOG.debug(msg, localBlockCount, blockchainBlockCount, localBlockCountLowerBy);
 					forceSynch = true;
 				} else {
 					forceSynch = false;
+				}
+				if (LOG.isDebugEnabled()) {
+					final String msg = "INTERIM put forceSynch={};localBlockCount:{};blockchainBlockCount:{};localBlockCountLowerBy:{};";
+					LOG.debug(msg, forceSynch, localBlockCount, blockchainBlockCount, localBlockCountLowerBy);
 				}
 
 				localNodeData.getBlockDb().put(forceSynch, putBlockList.toArray(new Block[0]));

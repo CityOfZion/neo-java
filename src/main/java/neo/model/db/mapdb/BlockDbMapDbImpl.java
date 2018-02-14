@@ -225,6 +225,7 @@ public final class BlockDbMapDbImpl implements BlockDb {
 	private void deleteBlockAtHeight(final long blockHeight) {
 		final HTreeMap<Long, byte[]> map = getBlockHeaderByIndexMap();
 		map.remove(blockHeight);
+		// TODO: rollback the account information.
 	}
 
 	@Override
@@ -776,7 +777,11 @@ public final class BlockDbMapDbImpl implements BlockDb {
 					putWithByteBufferKey(TRANSACTION_OUTPUTS_BY_HASH, toByteBufferValue(txOutputByTxKeyAndIndexMap));
 					putWithByteBufferKey(TRANSACTION_SCRIPTS_BY_HASH, toByteBufferValue(txScriptByTxKeyAndIndexMap));
 
-					updateAssetAndValueByAccountMap(block);
+					try {
+						updateAssetAndValueByAccountMap(block);
+					} catch (final Exception e) {
+						throw new RuntimeException("error updating assets for block " + block.hash, e);
+					}
 				}
 			}
 
