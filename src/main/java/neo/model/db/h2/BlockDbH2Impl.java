@@ -203,6 +203,12 @@ public final class BlockDbH2Impl implements BlockDb {
 		}
 	}
 
+	@Override
+	public void deleteHighestBlock() {
+		final long blockHeight = getHeaderOfBlockWithMaxIndex().getIndexAsLong();
+		deleteBlockAtHeight(blockHeight);
+	}
+
 	/**
 	 * executes the group of SQL in the SQL Cache.
 	 *
@@ -263,6 +269,13 @@ public final class BlockDbH2Impl implements BlockDb {
 		}
 
 		return accountAssetValueMap;
+	}
+
+	@Override
+	public long getAccountCount() {
+		final JdbcTemplate jdbcOperations = new JdbcTemplate(ds);
+		final String sql = getSql("getAccountCount");
+		return jdbcOperations.queryForObject(sql, Long.class);
 	}
 
 	/**
@@ -584,14 +597,8 @@ public final class BlockDbH2Impl implements BlockDb {
 		return transaction;
 	}
 
-	/**
-	 * puts the block into the database.
-	 *
-	 * @param blocks
-	 *            the blocks to use.
-	 */
 	@Override
-	public void put(final Block... blocks) {
+	public void put(final boolean forceSynch, final Block... blocks) {
 		synchronized (this) {
 			if (closed) {
 				return;
@@ -709,7 +716,8 @@ public final class BlockDbH2Impl implements BlockDb {
 				for (final Transaction transaction : block.getTransactionList()) {
 					final byte[] txIxByte = new UInt16(transactionIndex).toByteArray();
 					final byte[] transactionBaseBa = transaction.toBaseByteArray();
-					add(putTransactionList, blockIndexBa, txIxByte, transaction.hash.toByteArray(), transactionBaseBa);
+					add(putTransactionList, blockIndexBa, txIxByte, transaction.getHash().toByteArray(),
+							transactionBaseBa);
 
 					for (int inputIx = 0; inputIx < transaction.inputs.size(); inputIx++) {
 						final byte[] txInputIxByte = new UInt32(inputIx).toByteArray();

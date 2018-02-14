@@ -1,6 +1,8 @@
 package neo.model.bytes;
 
+import java.math.BigInteger;
 import java.nio.ByteBuffer;
+import java.text.NumberFormat;
 
 import neo.model.ByteArraySerializable;
 import neo.model.util.ModelUtil;
@@ -42,7 +44,22 @@ public final class Fixed8 implements ByteArraySerializable {
 
 	@Override
 	public byte[] toByteArray() {
-		return valueObj.toByteArray();
+		final byte[] ba = valueObj.toByteArray();
+		return ba;
 	}
 
+	/**
+	 * returns a positive BigInteger.
+	 *
+	 * @return this array as a BigInteger, assuming the bytes represent a signed
+	 *         int.
+	 */
+	public BigInteger toPositiveBigInteger() {
+		return valueObj.toPositiveBigInteger();
+	}
+
+	@Override
+	public String toString() {
+		return NumberFormat.getIntegerInstance().format(value);
+	}
 }

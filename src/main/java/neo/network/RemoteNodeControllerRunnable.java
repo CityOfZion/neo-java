@@ -161,7 +161,7 @@ public final class RemoteNodeControllerRunnable implements StopRunnable {
 		final LocalNodeData localNodeData = localControllerNode.getLocalNodeData();
 		final long readTimeOut = localNodeData.getRpcServerTimeoutMillis();
 		final long magic = localNodeData.getMagic();
-		final int localPort = localNodeData.getPort();
+		final int localPort = localNodeData.getTcpPort();
 		final int nonce = localNodeData.getNonce();
 		final Block maxStartHeightBlock = localNodeData.getBlockDb().getHeaderOfBlockWithMaxIndex();
 		final long startHeight;

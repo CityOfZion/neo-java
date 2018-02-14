@@ -1,0 +1,5 @@
+{
+  "actual": "submitblock disabled",
+  "expected": "submitblock enabled",
+  "error": "method disabled"
+}

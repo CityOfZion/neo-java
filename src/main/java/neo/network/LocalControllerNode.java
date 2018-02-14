@@ -8,6 +8,8 @@ import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.TreeSet;
 
 import org.apache.commons.codec.binary.Hex;
 import org.apache.commons.io.FileUtils;
@@ -150,12 +152,22 @@ public class LocalControllerNode {
 		final Class<SocketFactory> socketFactoryClass = getSocketFactoryClass(socketFactoryImplStr);
 
 		final int nonce = config.getInt(ConfigurationUtil.NONCE);
-		final int port = localJson.getInt(ConfigurationUtil.PORT);
+		final int tcpPort = localJson.getInt(ConfigurationUtil.TCP_PORT);
+		final int rpcPort = localJson.getInt(ConfigurationUtil.RPC_PORT);
+
+		final JSONObject rpcJson = localJson.getJSONObject(ConfigurationUtil.RPC);
+		final JSONArray rpcDisabledCallArray = rpcJson.getJSONArray(ConfigurationUtil.DISABLE);
+		final Set<String> rpcDisabledCalls = new TreeSet<>();
+		for (int ix = 0; ix < rpcDisabledCallArray.length(); ix++) {
+			rpcDisabledCalls.add(rpcDisabledCallArray.getString(ix));
+		}
+
 		final File seedNodeFile = new File(localJson.getString(ConfigurationUtil.SEED_NODE_FILE));
 		final File goodNodeFile = new File(localJson.getString(ConfigurationUtil.GOOD_NODE_FILE));
 
 		localNodeData = new LocalNodeData(magic, activeThreadCount, rpcClientTimeoutMillis, rpcServerTimeoutMillis,
-				blockDbImplClass, timersMap, nonce, port, seedNodeFile, goodNodeFile, socketFactoryClass, blockDbJson);
+				blockDbImplClass, timersMap, nonce, tcpPort, seedNodeFile, goodNodeFile, socketFactoryClass,
+				blockDbJson, rpcDisabledCalls, rpcPort);
 		LocalNodeDataSynchronizedUtil.refreshCityOfZionBlockHeight(localNodeData);
 
 		threadPool = new ThreadPool(localJson.getInt(ConfigurationUtil.THREAD_POOL_COUNT));

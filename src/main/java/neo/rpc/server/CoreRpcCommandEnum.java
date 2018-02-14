@@ -49,7 +49,7 @@ public enum CoreRpcCommandEnum {
 	 *
 	 * @return the command with the given name, or null if no command exists.
 	 */
-	public static final CoreRpcCommandEnum fromName(final String name) {
+	public static CoreRpcCommandEnum fromName(final String name) {
 		for (final CoreRpcCommandEnum command : values()) {
 			if (command != UNKNOWN) {
 				if (command.name.equals(name)) {

@@ -28,6 +28,8 @@ import neo.rpc.client.test.util.TestUtil;
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
 public class TestPayload {
 
+	private static final String TEST_PACKAGE = "test";
+
 	/**
 	 * the logger.
 	 */
@@ -54,7 +56,7 @@ public class TestPayload {
 	 */
 	@Test
 	public void test001AddrPayload() {
-		final String payloadJsonStrRaw = TestUtil.getJsonTestResourceAsString(getClass().getSimpleName(),
+		final String payloadJsonStrRaw = TestUtil.getJsonTestResourceAsString(TEST_PACKAGE, getClass().getSimpleName(),
 				"test001AddrPayloadHex");
 
 		final String payloadJsonStr = TestUtil.fromHexJsonObject(new JSONObject(payloadJsonStrRaw));
@@ -67,7 +69,8 @@ public class TestPayload {
 				payload.getAddressList().get(0).toString());
 
 		final String expectedStr = new JSONObject(
-				TestUtil.getJsonTestResourceAsString(getClass().getSimpleName(), "test001AddrPayload")).toString();
+				TestUtil.getJsonTestResourceAsString(TEST_PACKAGE, getClass().getSimpleName(), "test001AddrPayload"))
+						.toString();
 
 		final String actualStr = payload.toString();
 		Assert.assertEquals(TestUtil.RESPONSES_MUST_MATCH, expectedStr, actualStr);
@@ -83,7 +86,7 @@ public class TestPayload {
 	 */
 	@Test
 	public void test002HeadersPayload() {
-		final String payloadJsonStrRaw = TestUtil.getJsonTestResourceAsString(getClass().getSimpleName(),
+		final String payloadJsonStrRaw = TestUtil.getJsonTestResourceAsString(TEST_PACKAGE, getClass().getSimpleName(),
 				"test002HeadersPayloadHex");
 
 		final String payloadJsonStr = TestUtil.fromHexJsonObject(new JSONObject(payloadJsonStrRaw));
@@ -94,7 +97,8 @@ public class TestPayload {
 		Assert.assertEquals("HeadersPayload size", 2, payload.getHeaderList().size());
 
 		final String expectedStr = new JSONObject(
-				TestUtil.getJsonTestResourceAsString(getClass().getSimpleName(), "test002HeadersPayload")).toString();
+				TestUtil.getJsonTestResourceAsString(TEST_PACKAGE, getClass().getSimpleName(), "test002HeadersPayload"))
+						.toString();
 
 		final String actualStr = payload.toString();
 		Assert.assertEquals(TestUtil.RESPONSES_MUST_MATCH, expectedStr, actualStr);
@@ -110,7 +114,7 @@ public class TestPayload {
 	 */
 	@Test
 	public void test003GetBlocksPayload() {
-		final String payloadJsonStrRaw = TestUtil.getJsonTestResourceAsString(getClass().getSimpleName(),
+		final String payloadJsonStrRaw = TestUtil.getJsonTestResourceAsString(TEST_PACKAGE, getClass().getSimpleName(),
 				"test003GetBlocksPayloadHex");
 
 		final String payloadJsonStr = TestUtil.fromHexJsonObject(new JSONObject(payloadJsonStrRaw));
@@ -119,8 +123,8 @@ public class TestPayload {
 		final GetBlocksPayload payload = new GetBlocksPayload(ByteBuffer.wrap(payloadBa));
 		Assert.assertNotNull("GetBlocksPayload should not be null", payload);
 
-		final String expectedStr = new JSONObject(
-				TestUtil.getJsonTestResourceAsString(getClass().getSimpleName(), "test003GetBlocksPayload")).toString();
+		final String expectedStr = new JSONObject(TestUtil.getJsonTestResourceAsString(TEST_PACKAGE,
+				getClass().getSimpleName(), "test003GetBlocksPayload")).toString();
 
 		final String actualStr = payload.toString();
 		Assert.assertEquals(TestUtil.RESPONSES_MUST_MATCH, expectedStr, actualStr);
@@ -138,9 +142,8 @@ public class TestPayload {
 	public void test004GetBlocksPayloadGenesis() {
 		final GetBlocksPayload payload = new GetBlocksPayload(GenesisBlockUtil.GENESIS_HASH, null);
 
-		final String expectedStr = new JSONObject(
-				TestUtil.getJsonTestResourceAsString(getClass().getSimpleName(), "test004GetBlocksPayloadGenesis"))
-						.toString();
+		final String expectedStr = new JSONObject(TestUtil.getJsonTestResourceAsString(TEST_PACKAGE,
+				getClass().getSimpleName(), "test004GetBlocksPayloadGenesis")).toString();
 
 		final String actualStr = payload.toString();
 		Assert.assertEquals(TestUtil.RESPONSES_MUST_MATCH, expectedStr, actualStr);
@@ -154,8 +157,8 @@ public class TestPayload {
 		final GetBlocksPayload payload = new GetBlocksPayload(GenesisBlockUtil.GENESIS_HASH,
 				GenesisBlockUtil.GENESIS_HASH);
 
-		final String expectedStr = new JSONObject(TestUtil.getJsonTestResourceAsString(getClass().getSimpleName(),
-				"test005GetBlocksPayloadGenesisToGenesis")).toString();
+		final String expectedStr = new JSONObject(TestUtil.getJsonTestResourceAsString(TEST_PACKAGE,
+				getClass().getSimpleName(), "test005GetBlocksPayloadGenesisToGenesis")).toString();
 
 		final String actualStr = payload.toString();
 		Assert.assertEquals(TestUtil.RESPONSES_MUST_MATCH, expectedStr, actualStr);

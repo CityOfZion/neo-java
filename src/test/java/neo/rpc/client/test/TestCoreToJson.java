@@ -42,6 +42,7 @@ import neo.rpc.client.test.util.TestUtil;
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
 public class TestCoreToJson {
 
+	private static final String TEST_PACKAGE = "test";
 	/**
 	 * the logger.
 	 */
@@ -129,7 +130,8 @@ public class TestCoreToJson {
 	 */
 	@Test
 	public void test006Block() {
-		final String expectedStrRaw = TestUtil.getJsonTestResourceAsString(getClass().getSimpleName(), "test006Block");
+		final String expectedStrRaw = TestUtil.getJsonTestResourceAsString(TEST_PACKAGE, getClass().getSimpleName(),
+				"test006Block");
 		final String expectedStr = new JSONObject(expectedStrRaw).toString();
 		final String actualStr = MockUtil.getMockBlock000().toString();
 		Assert.assertEquals(TestUtil.RESPONSES_MUST_MATCH, expectedStr, actualStr);
@@ -152,7 +154,8 @@ public class TestCoreToJson {
 	@Test
 	public void test008Header() {
 		final int minSize = (UInt32.SIZE * 3) + (UInt256.SIZE * 2) + (UInt64.SIZE) + (UInt160.SIZE) + 4;
-		final String expectedStrRaw = TestUtil.getJsonTestResourceAsString(getClass().getSimpleName(), "test008Header");
+		final String expectedStrRaw = TestUtil.getJsonTestResourceAsString(TEST_PACKAGE, getClass().getSimpleName(),
+				"test008Header");
 		final String expectedStr = new JSONObject(expectedStrRaw).toString();
 		final String actualStr = new Header(ByteBuffer.wrap(new byte[minSize])).toString();
 		Assert.assertEquals(TestUtil.RESPONSES_MUST_MATCH, expectedStr, actualStr);
@@ -164,7 +167,7 @@ public class TestCoreToJson {
 	@Test
 	public void test009CoinReference() {
 		final CoinReference coinReference = MockUtil.getCoinReference000();
-		final String expectedStrRaw = TestUtil.getJsonTestResourceAsString(getClass().getSimpleName(),
+		final String expectedStrRaw = TestUtil.getJsonTestResourceAsString(TEST_PACKAGE, getClass().getSimpleName(),
 				"test009CoinReference");
 		final String expectedStr = new JSONObject(expectedStrRaw).toString();
 		final String actualStr = coinReference.toString();
@@ -177,7 +180,7 @@ public class TestCoreToJson {
 	@Test
 	public void test010TransactionOutput() {
 		final TransactionOutput transactionOutput = MockUtil.getTransactionOutput000();
-		final String expectedStrRaw = TestUtil.getJsonTestResourceAsString(getClass().getSimpleName(),
+		final String expectedStrRaw = TestUtil.getJsonTestResourceAsString(TEST_PACKAGE, getClass().getSimpleName(),
 				"test010TransactionOutput");
 		final String expectedStr = new JSONObject(expectedStrRaw).toString();
 		final String actualStr = transactionOutput.toString();
@@ -190,13 +193,13 @@ public class TestCoreToJson {
 	@Test
 	public void test011Transaction() {
 		final Transaction transaction = MockUtil.getMockTransaction000();
-		final String expectedStrRaw = TestUtil.getJsonTestResourceAsString(getClass().getSimpleName(),
+		final String expectedStrRaw = TestUtil.getJsonTestResourceAsString(TEST_PACKAGE, getClass().getSimpleName(),
 				"test011Transaction");
 		final String expectedStr = new JSONObject(expectedStrRaw).toString();
 		final String actualStr = transaction.toString();
 		Assert.assertEquals(TestUtil.RESPONSES_MUST_MATCH, expectedStr, actualStr);
 
-		final String expectedHexStrRaw = TestUtil.getJsonTestResourceAsString(getClass().getSimpleName(),
+		final String expectedHexStrRaw = TestUtil.getJsonTestResourceAsString(TEST_PACKAGE, getClass().getSimpleName(),
 				"test011TransactionHex");
 		final String expectedHexStr = new JSONObject(expectedHexStrRaw).toString();
 		final String actualHexStr = TestUtil.toHexJsonObject(ModelUtil.toHexString(transaction.toByteArray()))
@@ -210,7 +213,7 @@ public class TestCoreToJson {
 	@Test
 	public void test012RegisterExclusiveData() {
 		final int minSize = Fixed8.SIZE + UInt160.SIZE + 4;
-		final String expectedStrRaw = TestUtil.getJsonTestResourceAsString(getClass().getSimpleName(),
+		final String expectedStrRaw = TestUtil.getJsonTestResourceAsString(TEST_PACKAGE, getClass().getSimpleName(),
 				"test012RegisterExclusiveData");
 		final String expectedStr = new JSONObject(expectedStrRaw).toString();
 		final String actualStr = new RegisterExclusiveData(ByteBuffer.wrap(new byte[minSize])).toString();
@@ -225,7 +228,7 @@ public class TestCoreToJson {
 		final int minSize = 9;
 		final byte[] ba = new byte[minSize];
 		ba[3] = (byte) 1;
-		final String expectedStrRaw = TestUtil.getJsonTestResourceAsString(getClass().getSimpleName(),
+		final String expectedStrRaw = TestUtil.getJsonTestResourceAsString(TEST_PACKAGE, getClass().getSimpleName(),
 				"test013PublishExclusiveDataNoStorage");
 		final String expectedStr = new JSONObject(expectedStrRaw).toString();
 		final PublishExclusiveData publishExclusiveData = new PublishExclusiveData((byte) 1, ByteBuffer.wrap(ba));
@@ -246,7 +249,7 @@ public class TestCoreToJson {
 		final int minSize = 10;
 		final byte[] ba = new byte[minSize];
 		ba[1] = (byte) 1;
-		final String expectedStrRaw = TestUtil.getJsonTestResourceAsString(getClass().getSimpleName(),
+		final String expectedStrRaw = TestUtil.getJsonTestResourceAsString(TEST_PACKAGE, getClass().getSimpleName(),
 				"test014PublishExclusiveDataWithStorage");
 		final String expectedStr = new JSONObject(expectedStrRaw).toString();
 		final PublishExclusiveData publishExclusiveData = new PublishExclusiveData((byte) 1, ByteBuffer.wrap(ba));

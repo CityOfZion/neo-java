@@ -25,6 +25,8 @@ import neo.rpc.client.test.util.TestUtil;
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
 public class TestNEP5 {
 
+	private static final String TEST_PACKAGE = "test";
+
 	/**
 	 * the logger.
 	 */
@@ -58,14 +60,15 @@ public class TestNEP5 {
 	 */
 	@Test
 	public void test001Error6d07() {
-		final String expectedHexStrRaw = TestUtil.getJsonTestResourceAsString(getClass().getSimpleName(),
+		final String expectedHexStrRaw = TestUtil.getJsonTestResourceAsString(TEST_PACKAGE, getClass().getSimpleName(),
 				"test001Error6d07Hex");
 		final String transactionHex = TestUtil.fromHexJsonObject(new JSONObject(expectedHexStrRaw));
 
 		final Transaction transaction = new Transaction(ByteBuffer.wrap(ModelUtil.decodeHex(transactionHex)));
 
 		final String expectedStr = new JSONObject(
-				TestUtil.getJsonTestResourceAsString(getClass().getSimpleName(), "test001Error6d07")).toString();
+				TestUtil.getJsonTestResourceAsString(TEST_PACKAGE, getClass().getSimpleName(), "test001Error6d07"))
+						.toString();
 		final String actualStr = transaction.toString();
 
 		Assert.assertEquals(TestUtil.RESPONSES_MUST_MATCH, expectedStr, actualStr);

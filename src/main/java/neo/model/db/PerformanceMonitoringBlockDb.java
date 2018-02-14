@@ -47,10 +47,22 @@ public final class PerformanceMonitoringBlockDb implements BlockDb {
 	}
 
 	@Override
+	public void deleteHighestBlock() {
+		try (PerformanceMonitor m = new PerformanceMonitor("BlockDb.deleteHighestBlock")) {
+			delegate.deleteHighestBlock();
+		}
+	}
+
+	@Override
 	public Map<UInt160, Map<UInt256, Fixed8>> getAccountAssetValueMap() {
 		try (PerformanceMonitor m = new PerformanceMonitor("BlockDb.getAccountAssetValueMap")) {
 			return delegate.getAccountAssetValueMap();
 		}
+	}
+
+	@Override
+	public long getAccountCount() {
+		return delegate.getAccountCount();
 	}
 
 	@Override
@@ -110,10 +122,10 @@ public final class PerformanceMonitoringBlockDb implements BlockDb {
 	}
 
 	@Override
-	public void put(final Block... blocks) {
+	public void put(final boolean forceSynch, final Block... blocks) {
 		try (PerformanceMonitor m1 = new PerformanceMonitor("BlockDb.put")) {
 			try (PerformanceMonitor m2 = new PerformanceMonitor("BlockDb.put[PerBlock]", blocks.length)) {
-				delegate.put(blocks);
+				delegate.put(forceSynch, blocks);
 			}
 		}
 	}

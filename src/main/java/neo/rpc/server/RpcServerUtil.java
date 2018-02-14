@@ -4,6 +4,7 @@ import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.TreeMap;
 
 import org.apache.commons.codec.binary.Hex;
@@ -155,8 +156,7 @@ public final class RpcServerUtil {
 	public static final String METHOD = "method";
 
 	/**
-	 * finds a block with a given timestamp. TODO: make "finds a block with a given
-	 * timestamp" a SQL query.
+	 * finds a block with a given timestamp.
 	 *
 	 * @param controller
 	 *            the controller to use.
@@ -177,18 +177,20 @@ public final class RpcServerUtil {
 			return minHeight;
 		}
 		final Block midBlock = controller.getLocalNodeData().getBlockDb().getHeaderOfBlockFromHeight(midHeight);
+		if (midBlock == null) {
+			LOG.trace("getHeightOfTs[null]level:{};minHeight:{};midHeight:{};", level, minHeight, midHeight);
+			return getHeightOfTs(controller, level + 1, minHeight, maxHeight - 1, ts);
+		}
 		final long midBlockTs = midBlock.timestamp.asLong();
 		if (ts == midBlockTs) {
 			return midHeight;
 		} else if (ts < midBlockTs) {
-			// #if DEBUG
-			// Console.WriteLine($"level:{level};minHeight:{minHeight};midHeight:{midHeight};midBlock.Timestamp:{midBlock.Timestamp};");
-			// #endif
+			LOG.trace("getHeightOfTs[upper]level:{};minHeight:{};midHeight:{};midBlock.Timestamp:{};", level, minHeight,
+					midHeight, midBlock.timestamp);
 			return getHeightOfTs(controller, level + 1, minHeight, midHeight, ts);
 		} else {
-			// #if DEBUG
-			// Console.WriteLine($"level:{level};midHeight:{midHeight};maxHeight:{maxHeight};midBlock.Timestamp:{midBlock.Timestamp};");
-			// #endif
+			LOG.trace("getHeightOfTs[lower]level:{};minHeight:{};midHeight:{};midBlock.Timestamp:{};", level, midHeight,
+					maxHeight, midBlock.timestamp);
 			return getHeightOfTs(controller, level + 1, midHeight, maxHeight, ts);
 		}
 	}
@@ -207,174 +209,190 @@ public final class RpcServerUtil {
 	 */
 	private static JSONObject onGetAccountList(final LocalControllerNode controller, final int id,
 			final JSONArray params) {
-		// Console.WriteLine("getaccountlist 0");
+		try {
+			LOG.trace("getaccountlist 0");
 
-		final long fromTs = params.getLong(0);
-		final long toTs = params.getLong(1);
-		final long minHeight = 0;
-		final long maxHeight = controller.getLocalNodeData().getBlockDb().getBlockCount();
-		final long fromHeight = getHeightOfTs(controller, 0, minHeight, maxHeight, fromTs);
-		final long toHeight = getHeightOfTs(controller, 0, fromHeight, maxHeight, toTs);
+			final long fromTs = params.getLong(0);
+			final long toTs = params.getLong(1);
+			final long minHeight = 0;
+			final long maxHeight = controller.getLocalNodeData().getBlockDb().getBlockCount();
+			final long fromHeight = getHeightOfTs(controller, 0, minHeight, maxHeight, fromTs);
+			final long toHeight = getHeightOfTs(controller, 0, fromHeight, maxHeight, toTs);
 
-		// Console.WriteLine($"getaccountlist 1 fromHeight:{fromHeight};
-		// toHeight:{toHeight};");
-		// errorTrace["2"] = $"fromHeight:{fromHeight}; toHeight:{toHeight};";
+			LOG.trace("getaccountlist 1 fromHeight:{};toHeight:{};", fromHeight, toHeight);
 
-		final Map<UInt160, Long> neoTxByAccount = new TreeMap<>();
-		final Map<UInt160, Long> gasTxByAccount = new TreeMap<>();
+			LOG.trace("getaccountlist 2 accountStateCache STARTED");
 
-		final Map<UInt160, Long> neoInByAccount = new TreeMap<>();
-		final Map<UInt160, Long> gasInByAccount = new TreeMap<>();
+			final Map<UInt160, Map<UInt256, Fixed8>> accountStateCache = controller.getLocalNodeData().getBlockDb()
+					.getAccountAssetValueMap();
+			LOG.trace("getaccountlist 2 accountStateCache SUCCESS, count:{}", accountStateCache.size());
 
-		final Map<UInt160, Long> neoOutByAccount = new TreeMap<>();
-		final Map<UInt160, Long> gasOutByAccount = new TreeMap<>();
-		final Map<UInt160, Long> firstTsByAccount = new TreeMap<>();
+			final Map<UInt160, Long> neoTxByAccount = new TreeMap<>();
+			final Map<UInt160, Long> gasTxByAccount = new TreeMap<>();
 
-		for (long index = fromHeight; index < toHeight; index++) {
-			// Console.WriteLine($"getaccountlist 2 fromHeight:{fromHeight};
-			// toHeight:{toHeight}; index:{index};");
-			final Block block = controller.getLocalNodeData().getBlockDb().getFullBlockFromHeight(index);
+			final Map<UInt160, Long> neoInByAccount = new TreeMap<>();
+			final Map<UInt160, Long> gasInByAccount = new TreeMap<>();
 
-			// Console.WriteLine("getaccountlist 2.1");
-			for (final Transaction t : block.getTransactionList()) {
-				// Console.WriteLine("getaccountlist 3");
+			final Map<UInt160, Long> neoOutByAccount = new TreeMap<>();
+			final Map<UInt160, Long> gasOutByAccount = new TreeMap<>();
+			final Map<UInt160, Long> firstTsByAccount = new TreeMap<>();
 
-				final Map<UInt160, Map<UInt256, Long>> friendAssetMap = new TreeMap<>();
+			for (long index = fromHeight; index < toHeight; index++) {
+				LOG.trace("getaccountlist 3 fromHeight:{};toHeight:{};index:{};", fromHeight, toHeight, index);
+				final Block block = controller.getLocalNodeData().getBlockDb().getFullBlockFromHeight(index);
 
-				for (final CoinReference cr : t.inputs) {
-					final Transaction tiTx = controller.getLocalNodeData().getBlockDb()
-							.getTransactionWithHash(cr.prevHash);
-					final TransactionOutput ti = tiTx.outputs.get(cr.prevIndex.asInt());
-					final UInt160 input = ti.scriptHash;
-					if ((ti.assetId.equals(ModelUtil.NEO_HASH)) || (ti.assetId.equals(ModelUtil.GAS_HASH))) {
-						MapUtil.increment(friendAssetMap, input, ti.assetId, ti.value.value, TreeMap.class);
-					}
-				}
+				for (final Transaction t : block.getTransactionList()) {
+					final Map<UInt160, Map<UInt256, Long>> friendAssetMap = new TreeMap<>();
 
-				for (final TransactionOutput to : t.outputs) {
-					final UInt160 output = to.scriptHash;
-					if ((to.assetId.equals(ModelUtil.NEO_HASH)) || (to.assetId.equals(ModelUtil.GAS_HASH))) {
-						MapUtil.increment(friendAssetMap, output, to.assetId, -to.value.value, TreeMap.class);
-					}
-				}
+					for (final CoinReference cr : t.inputs) {
+						final UInt256 prevHashReversed = cr.prevHash.reverse();
+						final Transaction tiTx = controller.getLocalNodeData().getBlockDb()
+								.getTransactionWithHash(prevHashReversed);
 
-				for (final UInt160 friend : friendAssetMap.keySet()) {
-					if (!firstTsByAccount.containsKey(friend)) {
-						firstTsByAccount.put(friend, block.timestamp.asLong());
-					}
+						if (tiTx == null) {
+							throw new RuntimeException("no transaction with prevHash:" + prevHashReversed);
+						}
 
-					if (friendAssetMap.get(friend).containsKey(ModelUtil.NEO_HASH)) {
-						MapUtil.increment(neoTxByAccount, friend);
-						final long value = friendAssetMap.get(friend).get(ModelUtil.NEO_HASH);
-						if (value < 0) {
-							MapUtil.increment(neoInByAccount, friend, -value);
-						} else {
-							MapUtil.increment(neoOutByAccount, friend, value);
+						final TransactionOutput ti = tiTx.outputs.get(cr.prevIndex.asInt());
+						final UInt160 input = ti.scriptHash;
+						if ((ti.assetId.equals(ModelUtil.NEO_HASH)) || (ti.assetId.equals(ModelUtil.GAS_HASH))) {
+							MapUtil.increment(friendAssetMap, input, ti.assetId, ti.value.value, TreeMap.class);
 						}
 					}
-					if (friendAssetMap.get(friend).containsKey(ModelUtil.GAS_HASH)) {
-						MapUtil.increment(gasTxByAccount, friend);
-						final long value = friendAssetMap.get(friend).get(ModelUtil.GAS_HASH);
-						if (value < 0) {
-							MapUtil.increment(gasInByAccount, friend, -value);
-						} else {
-							MapUtil.increment(gasOutByAccount, friend, value);
+
+					for (final TransactionOutput to : t.outputs) {
+						final UInt160 output = to.scriptHash;
+						if ((to.assetId.equals(ModelUtil.NEO_HASH)) || (to.assetId.equals(ModelUtil.GAS_HASH))) {
+							MapUtil.increment(friendAssetMap, output, to.assetId, -to.value.value, TreeMap.class);
+						}
+					}
+
+					for (final UInt160 friend : friendAssetMap.keySet()) {
+						if (!firstTsByAccount.containsKey(friend)) {
+							firstTsByAccount.put(friend, block.timestamp.asLong());
+						}
+
+						if (friendAssetMap.get(friend).containsKey(ModelUtil.NEO_HASH)) {
+							MapUtil.increment(neoTxByAccount, friend);
+							final long value = friendAssetMap.get(friend).get(ModelUtil.NEO_HASH);
+							if (value < 0) {
+								MapUtil.increment(neoInByAccount, friend, -value);
+							} else {
+								MapUtil.increment(neoOutByAccount, friend, value);
+							}
+						}
+						if (friendAssetMap.get(friend).containsKey(ModelUtil.GAS_HASH)) {
+							MapUtil.increment(gasTxByAccount, friend);
+							final long value = friendAssetMap.get(friend).get(ModelUtil.GAS_HASH);
+							if (value < 0) {
+								MapUtil.increment(gasInByAccount, friend, -value);
+							} else {
+								MapUtil.increment(gasOutByAccount, friend, value);
+							}
 						}
 					}
 				}
 			}
-		}
-		// errorTrace["3"] = $"accountStateCache";
 
-		// TODO: get cache from the blockchain db.
-		final Map<UInt160, Map<UInt256, Fixed8>> accountStateCache = controller.getLocalNodeData().getBlockDb()
-				.getAccountAssetValueMap();
+			LOG.trace("getaccountlist 4 addressByAccount STARTED");
 
-		// errorTrace["4"] = $"addressByAccount";
-		final Map<UInt160, String> addressByAccount = new TreeMap<>();
+			final Map<UInt160, String> addressByAccount = new TreeMap<>();
 
-		for (final UInt160 key : accountStateCache.keySet()) {
-			final String address = ModelUtil.toAddress(key);
-			addressByAccount.put(key, address);
-		}
-
-		// errorTrace["5"] = $"returnList";
-		final JSONArray returnList = new JSONArray();
-
-		for (final UInt160 key : accountStateCache.keySet()) {
-			if (addressByAccount.containsKey(key)) {
-				final Map<UInt256, Fixed8> accountState = accountStateCache.get(key);
-				final String address = addressByAccount.get(key);
-				// Console.WriteLine($"getaccountlist 7 key:{key}; address:{address};");
-				final JSONObject entry = new JSONObject();
-				entry.put("account", address);
-
-				if (accountState.containsKey(ModelUtil.NEO_HASH)) {
-					entry.put(ModelUtil.NEO, accountState.containsKey(ModelUtil.NEO_HASH));
-				} else {
-					entry.put(ModelUtil.NEO, 0);
-				}
-
-				if (accountState.containsKey(ModelUtil.GAS_HASH)) {
-					entry.put(ModelUtil.GAS, accountState.containsKey(ModelUtil.GAS_HASH));
-				} else {
-					entry.put(ModelUtil.GAS, 0);
-				}
-
-				if (neoInByAccount.containsKey(key)) {
-					entry.put(NEO_IN, neoInByAccount.get(key));
-				} else {
-					entry.put(NEO_IN, 0);
-				}
-
-				if (neoOutByAccount.containsKey(key)) {
-					entry.put(NEO_OUT, neoOutByAccount.get(key));
-				} else {
-					entry.put(NEO_OUT, 0);
-				}
-
-				if (gasInByAccount.containsKey(key)) {
-					entry.put(GAS_IN, ModelUtil.toRoundedDoubleAsString(gasInByAccount.get(key)));
-				} else {
-					entry.put(GAS_IN, 0);
-				}
-
-				if (gasOutByAccount.containsKey(key)) {
-					entry.put(GAS_OUT, ModelUtil.toRoundedDoubleAsString(gasOutByAccount.get(key)));
-				} else {
-					entry.put(GAS_OUT, 0);
-				}
-
-				if (neoTxByAccount.containsKey(key)) {
-					entry.put(NEO_TX, neoTxByAccount.get(key));
-				} else {
-					entry.put(NEO_TX, 0);
-				}
-
-				if (gasTxByAccount.containsKey(key)) {
-					entry.put(GAS_TX, gasTxByAccount.get(key));
-				} else {
-					entry.put(GAS_TX, 0);
-				}
-
-				if (firstTsByAccount.containsKey(key)) {
-					entry.put(FIRST_TS, firstTsByAccount.get(key));
-				} else {
-					entry.put(FIRST_TS, 0);
-				}
-
-				returnList.put(entry);
+			for (final UInt160 key : accountStateCache.keySet()) {
+				final String address = ModelUtil.toAddress(key);
+				addressByAccount.put(key, address);
 			}
+			LOG.trace("getaccountlist 4 addressByAccount SUCCESS, address count:{};", addressByAccount.size());
+
+			LOG.trace("getaccountlist 5 returnList STARTED");
+			final JSONArray returnList = new JSONArray();
+
+			for (final UInt160 key : accountStateCache.keySet()) {
+				LOG.trace("getaccountlist 6 key:{};", key);
+				if (addressByAccount.containsKey(key)) {
+					final Map<UInt256, Fixed8> accountState = accountStateCache.get(key);
+					final String address = addressByAccount.get(key);
+
+					LOG.trace("getaccountlist 7 key:{}; address:{};", key, address);
+
+					final JSONObject entry = new JSONObject();
+					entry.put("account", address);
+
+					if (accountState.containsKey(ModelUtil.NEO_HASH)) {
+						entry.put(ModelUtil.NEO, ModelUtil.toRoundedLong(accountState.get(ModelUtil.NEO_HASH).value));
+					} else {
+						entry.put(ModelUtil.NEO, 0);
+					}
+
+					if (accountState.containsKey(ModelUtil.GAS_HASH)) {
+						entry.put(ModelUtil.GAS, ModelUtil.toRoundedDouble(accountState.get(ModelUtil.GAS_HASH).value));
+					} else {
+						entry.put(ModelUtil.GAS, 0);
+					}
+
+					if (neoInByAccount.containsKey(key)) {
+						entry.put(NEO_IN, ModelUtil.toRoundedLong(neoInByAccount.get(key)));
+					} else {
+						entry.put(NEO_IN, 0);
+					}
+
+					if (neoOutByAccount.containsKey(key)) {
+						entry.put(NEO_OUT, ModelUtil.toRoundedLong(neoOutByAccount.get(key)));
+					} else {
+						entry.put(NEO_OUT, 0);
+					}
+
+					if (gasInByAccount.containsKey(key)) {
+						entry.put(GAS_IN, ModelUtil.toRoundedDouble(gasInByAccount.get(key)));
+					} else {
+						entry.put(GAS_IN, 0);
+					}
+
+					if (gasOutByAccount.containsKey(key)) {
+						entry.put(GAS_OUT, ModelUtil.toRoundedDouble(gasOutByAccount.get(key)));
+					} else {
+						entry.put(GAS_OUT, 0);
+					}
+
+					if (neoTxByAccount.containsKey(key)) {
+						entry.put(NEO_TX, neoTxByAccount.get(key));
+					} else {
+						entry.put(NEO_TX, 0);
+					}
+
+					if (gasTxByAccount.containsKey(key)) {
+						entry.put(GAS_TX, gasTxByAccount.get(key));
+					} else {
+						entry.put(GAS_TX, 0);
+					}
+
+					if (firstTsByAccount.containsKey(key)) {
+						entry.put(FIRST_TS, firstTsByAccount.get(key));
+					} else {
+						entry.put(FIRST_TS, 0);
+					}
+
+					returnList.put(entry);
+				}
+			}
+			LOG.trace("getaccountlist 5 returnList SUCCESS, returnList.size:{};", returnList.length());
+
+			LOG.trace("getaccountlist 6 return");
+
+			final JSONObject response = new JSONObject();
+			response.put(ID, id);
+			response.put(JSONRPC, VERSION_2_0);
+			response.put(RESULT, returnList);
+
+			return response;
+		} catch (final RuntimeException e) {
+			LOG.error("error in onGetAccountList:", e);
+			final JSONObject response = new JSONObject();
+			response.put(ERROR, e.getMessage());
+			response.put(EXPECTED, new JSONArray());
+			response.put(ACTUAL, new JSONArray());
+			return response;
 		}
-		// errorTrace["6"] = $"return";
-		// Console.WriteLine($"getaccountlist 8 {returnList.Count()}");
-
-		final JSONObject response = new JSONObject();
-		response.put(ID, id);
-		response.put(JSONRPC, VERSION_2_0);
-		response.put(RESULT, returnList);
-
-		return response;
 	}
 
 	/**
@@ -609,6 +627,38 @@ public final class RpcServerUtil {
 	}
 
 	/**
+	 * return the transactions in the unverified transaction pool.
+	 *
+	 * @param controller
+	 *            the controllers to use
+	 * @param id
+	 *            the id to use.
+	 * @return the transactions in the unverified transaction pool.
+	 */
+	private static JSONObject onGetRawMempool(final LocalControllerNode controller, final int id) {
+		try {
+			final JSONArray resultArray = new JSONArray();
+			for (final Transaction transaction : controller.getLocalNodeData().getUnverifiedTransactionSet()) {
+				final String hex = ModelUtil.toHexString(transaction.toByteArray());
+				resultArray.put(hex);
+			}
+			final JSONObject response = new JSONObject();
+			response.put(RESULT, resultArray);
+			response.put(ID, id);
+			response.put(JSONRPC, VERSION_2_0);
+			return response;
+		} catch (final RuntimeException e) {
+			final JSONObject response = new JSONObject();
+			response.put(ERROR, e.getMessage());
+			final JSONArray expectedArray = new JSONArray();
+			expectedArray.put(EXPECTED_GENERIC_HEX);
+			response.put(EXPECTED, expectedArray);
+			response.put(ACTUAL, expectedArray);
+			return response;
+		}
+	}
+
+	/**
 	 * responds to a "getrawtransaction" command.
 	 *
 	 * @param controller
@@ -749,6 +799,87 @@ public final class RpcServerUtil {
 	}
 
 	/**
+	 * sends a raw transaction to the blockchain.
+	 *
+	 * @param controller
+	 *            the controller to use.
+	 * @param id
+	 *            the id to use.
+	 * @param params
+	 *            the parameters to use.
+	 * @return true if successful
+	 */
+	private static JSONObject onSendRawTransaction(final LocalControllerNode controller, final int id,
+			final JSONArray params) {
+		if (params.length() == 0) {
+			final JSONObject response = new JSONObject();
+			response.put(ERROR, "no parameters, expected a hex encoded transaction");
+			final JSONArray expectedParams = new JSONArray();
+			expectedParams.put(EXPECTED_GENERIC_HEX);
+			expectedParams.put(0);
+			response.put(EXPECTED, expectedParams);
+			response.put(ACTUAL, new JSONArray());
+			return response;
+		}
+		try {
+			final String hex = params.getString(0);
+			final byte[] ba = ModelUtil.decodeHex(hex);
+			final Transaction tx = new Transaction(ByteBuffer.wrap(ba));
+			controller.getLocalNodeData().getUnverifiedTransactionSet().add(tx);
+		} catch (final RuntimeException e) {
+			final JSONObject response = new JSONObject();
+			response.put(ERROR, e.getMessage());
+			response.put(EXPECTED, true);
+			response.put(ACTUAL, params.get(0));
+			return response;
+		}
+		final JSONObject response = new JSONObject();
+		response.put(RESULT, true);
+		response.put(ID, id);
+		response.put(JSONRPC, VERSION_2_0);
+		return response;
+	}
+
+	/**
+	 * submit a block.
+	 *
+	 * @param controller
+	 *            the controller to use.
+	 * @param id
+	 *            the id to use.
+	 * @param params
+	 *            the parameters to use.
+	 * @return true if the block validated, false if it did not.
+	 */
+	private static JSONObject onSubmitBlock(final LocalControllerNode controller, final int id,
+			final JSONArray params) {
+		if (params.length() == 0) {
+			final JSONObject response = new JSONObject();
+			response.put(ERROR, "no parameters, expected a hashed block");
+			response.put(EXPECTED, EXPECTED_GENERIC_HEX);
+			response.put(ACTUAL, NULL);
+			return response;
+		}
+		try {
+			final String hex = params.getString(0);
+			final byte[] ba = ModelUtil.decodeHex(hex);
+			final Block block = new Block(ByteBuffer.wrap(ba));
+			controller.getLocalNodeData().getBlockDb().put(false, block);
+		} catch (final RuntimeException e) {
+			final JSONObject response = new JSONObject();
+			response.put(ERROR, e.getMessage());
+			response.put(EXPECTED, true);
+			response.put(ACTUAL, params.get(0));
+			return response;
+		}
+		final JSONObject response = new JSONObject();
+		response.put(RESULT, true);
+		response.put(ID, id);
+		response.put(JSONRPC, VERSION_2_0);
+		return response;
+	}
+
+	/**
 	 * process the request.
 	 *
 	 * @param controller
@@ -774,6 +905,15 @@ public final class RpcServerUtil {
 				return response;
 			}
 			final String methodStr = request.getString(METHOD);
+			final Set<String> disabledMethods = controller.getLocalNodeData().getRpcDisabledCalls();
+			if (disabledMethods.contains(methodStr)) {
+				final JSONObject response = new JSONObject();
+				response.put(ERROR, "method disabled");
+				response.put(EXPECTED, methodStr + " enabled");
+				response.put(ACTUAL, methodStr + " disabled");
+				return response;
+			}
+
 			final int id = request.getInt(ID);
 			final CoreRpcCommandEnum coreRpcCommand = CoreRpcCommandEnum.fromName(methodStr);
 
@@ -796,8 +936,7 @@ public final class RpcServerUtil {
 				return onGetConnectionCount(controller, id);
 			}
 			case GETRAWMEMPOOL: {
-				// TODO : implement.
-				throw new NotImplementedException(coreRpcCommand.getName());
+				return onGetRawMempool(controller, id);
 			}
 			case GETRAWTRANSACTION: {
 				final JSONArray params = request.getJSONArray(PARAMS);
@@ -808,12 +947,12 @@ public final class RpcServerUtil {
 				return onGetTransactionOutput(controller, id, params);
 			}
 			case SENDRAWTRANSACTION: {
-				// TODO : implement.
-				throw new NotImplementedException(coreRpcCommand.getName());
+				final JSONArray params = request.getJSONArray(PARAMS);
+				return onSendRawTransaction(controller, id, params);
 			}
 			case SUBMITBLOCK: {
-				// TODO : implement.
-				throw new NotImplementedException(coreRpcCommand.getName());
+				final JSONArray params = request.getJSONArray(PARAMS);
+				return onSubmitBlock(controller, id, params);
 			}
 			case GETACCOUNTLIST: {
 				final JSONArray params = request.getJSONArray(PARAMS);

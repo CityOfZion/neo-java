@@ -2,6 +2,8 @@ package neo.model.bytes;
 
 import java.nio.ByteBuffer;
 
+import org.apache.commons.lang3.ArrayUtils;
+
 /**
  * an unsigned 256 bit byte array.
  *
@@ -40,6 +42,17 @@ public final class UInt256 extends AbstractByteArray {
 	@Override
 	public int getByteSize() {
 		return SIZE;
+	}
+
+	/**
+	 * return the reverse of the byte array.
+	 *
+	 * @return the reverse of the byte array.
+	 */
+	public UInt256 reverse() {
+		final byte[] ba = getBytesCopy();
+		ArrayUtils.reverse(ba);
+		return new UInt256(ba);
 	}
 
 }

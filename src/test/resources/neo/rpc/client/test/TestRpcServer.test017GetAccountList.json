@@ -1,0 +1,18 @@
+{
+	"result": [
+		{
+			"gas_out": 0,
+			"neo_tx": 0,
+			"neo_in": 0,
+			"gas_in": 0,
+			"gas_tx": 0,
+			"first_ts": 0,
+			"gas": 0,
+			"neo_out": 0,
+			"neo": 100000000,
+			"account": "AQVh2pG732YvtNaxEGkQUei3YA4cvo7d2i"
+		}
+	],
+	"id": 1,
+	"jsonrpc": "2.0"
+}

@@ -31,11 +31,23 @@ public interface BlockDb {
 	boolean containsBlockWithHash(UInt256 hash);
 
 	/**
+	 * deletes the highest block in the database.
+	 */
+	void deleteHighestBlock();
+
+	/**
 	 * return a map of account, assetid, and value for all accounts.
 	 *
 	 * @return a map of account, assetid, and value for all accounts.
 	 */
 	Map<UInt160, Map<UInt256, Fixed8>> getAccountAssetValueMap();
+
+	/**
+	 * returns the number of accounts in the database.
+	 *
+	 * @return the number of accounts in the database.
+	 */
+	long getAccountCount();
 
 	/**
 	 * return the block count.
@@ -106,10 +118,12 @@ public interface BlockDb {
 	/**
 	 * puts the given block into the database.
 	 *
+	 * @param forceSynch
+	 *            if true, force all blocks to be written to disk.
 	 * @param blocks
 	 *            the blocks to use.
 	 */
-	void put(Block... blocks);
+	void put(boolean forceSynch, Block... blocks);
 
 	/**
 	 * validates the database.

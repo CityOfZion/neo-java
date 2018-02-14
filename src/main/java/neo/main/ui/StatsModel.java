@@ -325,8 +325,14 @@ public final class StatsModel extends AbstractRefreshingModel {
 		synchronized (StatsModel.this) {
 			switch (columnIndex) {
 			case 0:
+				if (statsNameList.isEmpty()) {
+					return "";
+				}
 				return statsNameList.get(rowIndex);
 			case 1:
+				if (statsValueList.isEmpty()) {
+					return "";
+				}
 				return statsValueList.get(rowIndex);
 			}
 		}

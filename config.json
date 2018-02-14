@@ -3,7 +3,8 @@
 		"seed-node-file": "seedNodes.json",
 		"good-node-file": "goodNodes.json",
 		"magic": 7630401,
-		"port": 10333,
+		"tcp-port": 10333,
+		"rpc-port": 10332,
 		"rpc-client-timout": {
 			"seconds": 5
 		},
@@ -11,10 +12,15 @@
 			"seconds": 5
 		},
 		"block-db": {
-			"file-size-dir":"java-chain/db",
-			"url": "jdbc:h2:retry:./java-chain/db/db",
+			"file-size-dir": "./java-chain/db-mapdb",
+			"url": "./java-chain/db-mapdb/db.mapdb",
 			"impl1": "neo.model.db.h2.BlockDbH2Impl",
 			"impl": "neo.model.db.PerformanceMonitoringBlockDb"
+		},
+		"rpc": {
+			"disable": [
+				"submitblock"
+			]
 		},
 		"socket-factory-impl": "neo.network.model.socket.SocketFactoryImpl",
 		"thread-pool-count": 8,

@@ -19,6 +19,7 @@ import neo.main.ui.ApiCallModel;
 import neo.main.ui.RemotePeerDataModel;
 import neo.main.ui.StatsModel;
 import neo.model.util.ConfigurationUtil;
+import neo.model.util.GenesisBlockUtil;
 import neo.network.LocalControllerNode;
 
 /**
@@ -119,6 +120,32 @@ public final class NeoMain {
 		final JSONObject controllerNodeConfig = ConfigurationUtil.getConfiguration();
 		final LocalControllerNode controller = new LocalControllerNode(controllerNodeConfig);
 
+		if (controller.getLocalNodeData().getBlockDb().getBlockCount() == 0) {
+			LOG.info("DB is empty, addiing genesis block STARTED");
+			controller.getLocalNodeData().getBlockDb().put(true, GenesisBlockUtil.GENESIS_BLOCK);
+			LOG.info("DB is empty, addiing genesis block SUCCESS");
+		}
+
+		LOG.info("INTERIM main number of accounts:{};", controller.getLocalNodeData().getBlockDb().getAccountCount());
+
+		for (final String arg : args) {
+			if (arg.equals("/validate")) {
+				LOG.info("STARTED validate");
+				controller.getLocalNodeData().getBlockDb().validate();
+				LOG.info("SUCCESS validate");
+			}
+			if (arg.equals("/decapitate")) {
+				LOG.info("STARTED decapitate");
+				controller.getLocalNodeData().getBlockDb().deleteHighestBlock();
+				LOG.info("SUCCESS decapitate");
+			}
+			if (arg.equals("/rpc")) {
+				LOG.info("STARTED rpc");
+				controller.startCoreRpcServer();
+				LOG.info("SUCCESS rpc");
+			}
+		}
+
 		final StatsModel statsModel = new StatsModel();
 		final ApiCallModel apiCallModel = new ApiCallModel();
 		final RemotePeerDataModel remotePeerDataModel = new RemotePeerDataModel();
@@ -132,14 +159,6 @@ public final class NeoMain {
 		final JTabbedPane tabbedPane = new JTabbedPane();
 		mainPanel.setLayout(new BoxLayout(mainPanel, BoxLayout.X_AXIS));
 		mainPanel.add(tabbedPane);
-
-		for (final String arg : args) {
-			if (arg.equals("/validate")) {
-				LOG.info("STARTED validate");
-				controller.getLocalNodeData().getBlockDb().validate();
-				LOG.info("SUCCESS validate");
-			}
-		}
 
 		addBlockchainStatsPanel(controller, statsModel, tabbedPane);
 		addRemotePeerDetailsPanel(controller, remotePeerDataModel, tabbedPane);

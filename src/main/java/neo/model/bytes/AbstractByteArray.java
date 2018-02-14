@@ -233,4 +233,5 @@ public abstract class AbstractByteArray implements ByteArraySerializable, Compar
 		out.writeInt(ba.length);
 		out.write(ba);
 	}
+
 }

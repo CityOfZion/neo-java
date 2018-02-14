@@ -197,7 +197,7 @@ public final class NetworkUtil {
 	 *            the integer. (up to a long may be passed in, only the lower bytes
 	 *            are written).
 	 */
-	public static void writeInt(final OutputStream out, final long x) {
+	private static void writeInt(final OutputStream out, final long x) {
 		final byte[] ba = getIntByteArray(x);
 		write(out, ba);
 	}
@@ -224,7 +224,7 @@ public final class NetworkUtil {
 	 *            the short to write. (the short can be any integer even a long,
 	 *            only the lower bytes will be written).
 	 */
-	public static void writeShort(final OutputStream out, final long x) {
+	private static void writeShort(final OutputStream out, final long x) {
 		final byte[] ba = getShortByteArray(x);
 		ArrayUtils.reverse(ba);
 		write(out, ba);

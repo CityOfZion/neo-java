@@ -95,8 +95,10 @@ public final class TestUtil {
 	 * @return a string with the contents of "/neo/rpc/client/test/" + testClassName
 	 *         + "." + testFunctionName + ".json"
 	 */
-	public static String getJsonTestResourceAsString(final String testClassName, final String testFunctionName) {
-		final String resourceName = "/neo/rpc/client/test/" + testClassName + "." + testFunctionName + ".json";
+	public static String getJsonTestResourceAsString(final String testPackageName, final String testClassName,
+			final String testFunctionName) {
+		final String resourceName = "/neo/rpc/client/" + testPackageName + "/" + testClassName + "." + testFunctionName
+				+ ".json";
 		try (InputStream resourceAsStream = TestUtil.class.getResourceAsStream(resourceName);) {
 			final String jsonStr = IOUtils.toString(resourceAsStream, "UTF-8");
 			return jsonStr;

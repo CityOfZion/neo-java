@@ -1,8 +1,14 @@
 package neo.rpc.client.test;
 
+import java.io.File;
+import java.io.IOException;
+
+import org.apache.commons.io.FileUtils;
 import org.json.JSONObject;
+import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Assert;
+import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.FixMethodOrder;
 import org.junit.Test;
@@ -26,12 +32,14 @@ import neo.rpc.client.test.util.MockUtil;
  *
  */
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
-public class TestDBH2 {
+public class TestDBMapDb {
 
 	/**
 	 * the logger.
 	 */
-	private static final Logger LOG = LoggerFactory.getLogger(TestDBH2.class);
+	private static final Logger LOG = LoggerFactory.getLogger(TestDBMapDb.class);
+
+	private static final File TEMP_BLOCKCHAIN_DIR = new File("./test-java-chain");
 
 	/**
 	 * method for after class disposal.
@@ -53,9 +61,10 @@ public class TestDBH2 {
 		final JSONObject controllerNodeConfig = ConfigurationUtil.getConfiguration();
 		final JSONObject localJson = controllerNodeConfig.getJSONObject(ConfigurationUtil.LOCAL);
 		final JSONObject blockDbJson = localJson.getJSONObject(ConfigurationUtil.BLOCK_DB);
-		blockDbJson.put(ConfigurationUtil.URL, "jdbc:h2:mem:db");
+		final File tempDbFile = new File(TEMP_BLOCKCHAIN_DIR, "db-mapdb/db.mapdb");
+		blockDbJson.put(ConfigurationUtil.URL, tempDbFile.getPath());
 		blockDbJson.put(ConfigurationUtil.FILE_SIZE_DIR, "src/test/resources");
-		blockDbJson.put(ConfigurationUtil.IMPL, "neo.model.db.h2.BlockDbH2Impl");
+		blockDbJson.put(ConfigurationUtil.IMPL, "neo.model.db.mapdb.BlockDbMapDbImpl");
 		localJson.put(ConfigurationUtil.TCP_PORT, 30333);
 		final JSONObject remoteJson = controllerNodeConfig.getJSONObject(ConfigurationUtil.REMOTE);
 		final JSONObject recycleIntervalJson = new JSONObject();
@@ -69,6 +78,24 @@ public class TestDBH2 {
 	 */
 	@Test
 	public void aaaFirstTest() {
+	}
+
+	@After
+	public void after() {
+		try {
+			FileUtils.deleteDirectory(TEMP_BLOCKCHAIN_DIR);
+		} catch (final IOException e) {
+			throw new RuntimeException(e);
+		}
+	}
+
+	@Before
+	public void before() {
+		try {
+			FileUtils.deleteDirectory(TEMP_BLOCKCHAIN_DIR);
+		} catch (final IOException e) {
+			throw new RuntimeException(e);
+		}
 	}
 
 	/**
@@ -121,10 +148,12 @@ public class TestDBH2 {
 	@Test
 	public void test005putAndGetFullBlockFromHeight() {
 		try (TestLocalControllerNode controller = getTestLocalControllerNode()) {
-			final Block expectedBlock = MockUtil.getMockBlock001();
+			final Block expectedBlock = MockUtil.getMockBlock003();
+			controller.getBlockDb().put(true, GenesisBlockUtil.GENESIS_BLOCK);
 			controller.getBlockDb().put(true, expectedBlock);
-			final Block actualBlock = controller.getBlockDb().getFullBlockFromHeight(0);
-			Assert.assertEquals("blocks should match.", expectedBlock.toString(), actualBlock.toString());
+			final Block actualBlock = controller.getBlockDb().getFullBlockFromHeight(1);
+			Assert.assertEquals("blocks should match.", expectedBlock.toJSONObject().toString(2),
+					actualBlock.toJSONObject().toString(2));
 		}
 	}
 
@@ -134,7 +163,8 @@ public class TestDBH2 {
 	@Test
 	public void test006putAndGetTransactionWithHash() {
 		try (TestLocalControllerNode controller = getTestLocalControllerNode()) {
-			final Block block = MockUtil.getMockBlock001();
+			final Block block = MockUtil.getMockBlock003();
+			controller.getBlockDb().put(true, GenesisBlockUtil.GENESIS_BLOCK);
 			controller.getBlockDb().put(true, block);
 			final Transaction expectedTransaction = block.getTransactionList().get(0);
 			final Transaction actualTransaction = controller.getBlockDb()
@@ -150,7 +180,8 @@ public class TestDBH2 {
 	@Test
 	public void test007putAndGetFullBlockFromHash() {
 		try (TestLocalControllerNode controller = getTestLocalControllerNode()) {
-			final Block expectedBlock = MockUtil.getMockBlock001();
+			final Block expectedBlock = MockUtil.getMockBlock003();
+			controller.getBlockDb().put(true, GenesisBlockUtil.GENESIS_BLOCK);
 			controller.getBlockDb().put(true, expectedBlock);
 			final Block actualBlock = controller.getBlockDb().getFullBlockFromHash(expectedBlock.hash);
 			Assert.assertEquals("blocks should match.", expectedBlock.toString(), actualBlock.toString());
@@ -174,7 +205,8 @@ public class TestDBH2 {
 	@Test
 	public void test009putAndGetHeaderOfBlockWithMaxIndex() {
 		try (TestLocalControllerNode controller = getTestLocalControllerNode()) {
-			final Block expectedBlock = MockUtil.getMockBlock001();
+			final Block expectedBlock = MockUtil.getMockBlock003();
+			controller.getBlockDb().put(true, GenesisBlockUtil.GENESIS_BLOCK);
 			controller.getBlockDb().put(true, expectedBlock);
 			expectedBlock.getTransactionList().clear();
 			final Block actualBlock = controller.getBlockDb().getHeaderOfBlockWithMaxIndex();
@@ -188,10 +220,11 @@ public class TestDBH2 {
 	@Test
 	public void test010putAndGetHeaderOfBlockFromHeight() {
 		try (TestLocalControllerNode controller = getTestLocalControllerNode()) {
-			final Block expectedBlock = MockUtil.getMockBlock001();
+			final Block expectedBlock = MockUtil.getMockBlock003();
+			controller.getBlockDb().put(true, GenesisBlockUtil.GENESIS_BLOCK);
 			controller.getBlockDb().put(true, expectedBlock);
 			expectedBlock.getTransactionList().clear();
-			final Block actualBlock = controller.getBlockDb().getHeaderOfBlockFromHeight(0);
+			final Block actualBlock = controller.getBlockDb().getHeaderOfBlockFromHeight(1);
 			Assert.assertEquals("blocks should match.", expectedBlock.toString(), actualBlock.toString());
 		}
 	}
@@ -202,7 +235,8 @@ public class TestDBH2 {
 	@Test
 	public void test011putAndGetHeaderOfBlockFromHash() {
 		try (TestLocalControllerNode controller = getTestLocalControllerNode()) {
-			final Block expectedBlock = MockUtil.getMockBlock001();
+			final Block expectedBlock = MockUtil.getMockBlock003();
+			controller.getBlockDb().put(true, GenesisBlockUtil.GENESIS_BLOCK);
 			controller.getBlockDb().put(true, expectedBlock);
 			expectedBlock.getTransactionList().clear();
 			final Block actualBlock = controller.getBlockDb().getHeaderOfBlockFromHash(expectedBlock.hash);

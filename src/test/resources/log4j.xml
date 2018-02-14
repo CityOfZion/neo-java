@@ -19,6 +19,10 @@
     </layout>
   </appender>
 
+  <logger name="com.btchip.comm.hid">
+    <level value="trace" />
+  </logger>
+
   <logger name="neo.model.db.h2.BlockDbH2Impl">
     <level value="error" />
   </logger>

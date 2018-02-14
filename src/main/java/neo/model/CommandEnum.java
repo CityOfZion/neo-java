@@ -41,7 +41,7 @@ public enum CommandEnum {
 	 *
 	 * @return the command with the given name, or null if no command exists.
 	 */
-	public static final CommandEnum fromName(final String name) {
+	public static CommandEnum fromName(final String name) {
 		for (final CommandEnum command : values()) {
 			if (command.name.equals(name)) {
 				return command;

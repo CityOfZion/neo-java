@@ -40,7 +40,7 @@ public final class TestRpcServerUtil {
 	/**
 	 * the connection timeout, in milliseconds.
 	 */
-	private static final int TIMEOUT_MILLIS = 2000;
+	private static final int TIMEOUT_MILLIS = 2000000;
 
 	/**
 	 * the logger.
@@ -58,7 +58,7 @@ public final class TestRpcServerUtil {
 	 *            the parameters to use.
 	 * @return the input JSON.
 	 */
-	private static JSONObject createInputJson(final String rpcVersion, final String method, final JSONArray params) {
+	public static JSONObject createInputJson(final String rpcVersion, final String method, final JSONArray params) {
 		final JSONObject inputJson = new JSONObject();
 		inputJson.put(RpcServerUtil.JSONRPC, rpcVersion);
 		inputJson.put(RpcServerUtil.METHOD, method);
@@ -127,7 +127,7 @@ public final class TestRpcServerUtil {
 		final String actualStrRaw;
 		try {
 			final JSONObject inputJson = createInputJson(rpcVersion, method, params);
-			final String coreRpcNode = "http://localhost:" + controller.getLocalNodeData().getPort() + uri;
+			final String coreRpcNode = "http://localhost:" + controller.getLocalNodeData().getRpcPort() + uri;
 			final StringEntity input = new StringEntity(inputJson.toString(), ContentType.APPLICATION_JSON);
 			final HttpPost post = new HttpPost(coreRpcNode);
 			final RequestConfig requestConfig = RequestConfig.custom().setSocketTimeout(TIMEOUT_MILLIS)
