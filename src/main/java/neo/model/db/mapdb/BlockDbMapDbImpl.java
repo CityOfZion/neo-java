@@ -780,7 +780,7 @@ public final class BlockDbMapDbImpl implements BlockDb {
 					try {
 						updateAssetAndValueByAccountMap(block);
 					} catch (final Exception e) {
-						throw new RuntimeException("error updating assets for block " + block.hash, e);
+						throw new RuntimeException("put: error updating assets for block " + block.hash, e);
 					}
 				}
 			}
@@ -938,7 +938,7 @@ public final class BlockDbMapDbImpl implements BlockDb {
 						LOG.debug("TI beforeMap {}", accountAssetValueMap);
 					}
 					final Fixed8 oldValue = accountAssetValueMap.get(ti.assetId);
-					final Fixed8 newValue = ModelUtil.subtract(oldValue, ti.value);
+					final Fixed8 newValue = ModelUtil.subtract(ti.value, oldValue);
 					if (LOG.isDebugEnabled()) {
 						LOG.debug("updateAssetAndValueByAccountMap INTERIM input;{};", ModelUtil.toAddress(input));
 						LOG.debug("updateAssetAndValueByAccountMap INTERIM ti.assetId:{} oldValue:{};", ti.assetId,
@@ -1093,7 +1093,11 @@ public final class BlockDbMapDbImpl implements BlockDb {
 					}
 					putWithByteBufferKey(TRANSACTION_KEY_BY_HASH, txKeyByTxHashMap);
 
-					updateAssetAndValueByAccountMap(block);
+					try {
+						updateAssetAndValueByAccountMap(block);
+					} catch (final Exception e) {
+						throw new RuntimeException("validate: error updating assets for block " + block.hash, e);
+					}
 
 					lastGoodBlockIndex = block.getIndexAsLong();
 				}
@@ -1107,6 +1111,7 @@ public final class BlockDbMapDbImpl implements BlockDb {
 		} catch (final Exception e) {
 			LOG.error("FAILURE validate", e);
 			db.rollback();
+			throw new RuntimeException(e);
 		}
 	}
 

@@ -504,7 +504,7 @@ public final class ModelUtil {
 	public static Fixed8 subtract(final Fixed8 left, final Fixed8 right) {
 		final BigInteger leftBi = left.toPositiveBigInteger();
 		final BigInteger rightBi = right.toPositiveBigInteger();
-		final BigInteger newBi = leftBi.subtract(rightBi);
+		final BigInteger newBi = rightBi.subtract(leftBi);
 		if (newBi.signum() < 0) {
 			throw new RuntimeException("tried to subtract " + leftBi + "(Fixed8:" + left + ")  from " + rightBi
 					+ " (Fixed8:" + right + ")" + " cannot have a negative fixed8 with value " + newBi + ".");
