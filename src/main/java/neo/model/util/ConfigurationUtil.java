@@ -137,6 +137,11 @@ public final class ConfigurationUtil {
 	private static final File CONFIG_FILE = new File("config.json");
 
 	/**
+	 * the JSON key, "network-name".
+	 */
+	public static final String NETWORK_NAME = "network-name";
+
+	/**
 	 * return the configuration JSON object.
 	 *
 	 * @return the configuration JSON object.

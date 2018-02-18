@@ -1,6 +1,8 @@
 package neo.rpc.client.test.util;
 
 import java.nio.ByteBuffer;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 
@@ -114,6 +116,11 @@ public abstract class AbstractJsonMockBlockDb implements BlockDb {
 	@Override
 	public long getAccountCount() {
 		return getAccountAssetValueMap().size();
+	}
+
+	@Override
+	public Map<UInt256, Fixed8> getAssetValueMap(final UInt160 account) {
+		return getAccountAssetValueMap().get(account);
 	}
 
 	/**
@@ -237,6 +244,28 @@ public abstract class AbstractJsonMockBlockDb implements BlockDb {
 			}
 		}
 		throw new RuntimeException("no transaction with hash:" + hash);
+	}
+
+	@Override
+	public Map<UInt256, List<TransactionOutput>> getUnspentTransactionOutputListMap(final UInt160 account) {
+		final Map<UInt256, List<TransactionOutput>> assetIdTxoMapList = new TreeMap<>();
+
+		final JSONArray mockBlockDb = getMockBlockDb();
+		for (int ix = 0; ix < mockBlockDb.length(); ix++) {
+			final JSONObject mockBlock = mockBlockDb.getJSONObject(ix);
+			final Block block = getBlock(mockBlock, true);
+			for (final Transaction transaction : block.getTransactionList()) {
+				for (final TransactionOutput output : transaction.outputs) {
+					if (output.scriptHash.equals(account)) {
+						if (!assetIdTxoMapList.containsKey(output.assetId)) {
+							assetIdTxoMapList.put(output.assetId, new ArrayList<>());
+						}
+						assetIdTxoMapList.get(output.assetId).add(output);
+					}
+				}
+			}
+		}
+		return assetIdTxoMapList;
 	}
 
 	@Override

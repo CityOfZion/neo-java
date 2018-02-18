@@ -135,7 +135,7 @@ public abstract class AbstractBlockBase implements ToJsonObject, ByteArraySerial
 		json.put("merkleroot", HEX_PREFIX + merkleRoot.toHexString());
 		json.put("time", timestamp.toPositiveBigInteger());
 		json.put("index", index.toPositiveBigInteger());
-		final String nextConsensusAddress = ModelUtil.toAddress(nextConsensus);
+		final String nextConsensusAddress = ModelUtil.scriptHashToAddress(nextConsensus);
 		json.put("nextconsensus", nextConsensusAddress);
 		final byte[] nextconsensusHash = Base58Util.decode(nextConsensusAddress);
 		json.put("nextconsensusHash", ModelUtil.toHexString(nextconsensusHash));

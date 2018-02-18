@@ -1,5 +1,6 @@
 package neo.model.db;
 
+import java.util.List;
 import java.util.Map;
 
 import org.json.JSONObject;
@@ -9,6 +10,7 @@ import neo.model.bytes.UInt160;
 import neo.model.bytes.UInt256;
 import neo.model.core.Block;
 import neo.model.core.Transaction;
+import neo.model.core.TransactionOutput;
 import neo.perfmon.PerformanceMonitor;
 
 /**
@@ -63,6 +65,13 @@ public final class PerformanceMonitoringBlockDb implements BlockDb {
 	@Override
 	public long getAccountCount() {
 		return delegate.getAccountCount();
+	}
+
+	@Override
+	public Map<UInt256, Fixed8> getAssetValueMap(final UInt160 account) {
+		try (PerformanceMonitor m = new PerformanceMonitor("BlockDb.getAssetValueMap")) {
+			return delegate.getAssetValueMap(account);
+		}
 	}
 
 	@Override
@@ -122,6 +131,13 @@ public final class PerformanceMonitoringBlockDb implements BlockDb {
 	}
 
 	@Override
+	public Map<UInt256, List<TransactionOutput>> getUnspentTransactionOutputListMap(final UInt160 account) {
+		try (PerformanceMonitor m = new PerformanceMonitor("BlockDb.getUnspentTransactionOutputListMap")) {
+			return delegate.getUnspentTransactionOutputListMap(account);
+		}
+	}
+
+	@Override
 	public void put(final boolean forceSynch, final Block... blocks) {
 		try (PerformanceMonitor m1 = new PerformanceMonitor("BlockDb.put")) {
 			try (PerformanceMonitor m2 = new PerformanceMonitor("BlockDb.put[PerBlock]", blocks.length)) {
@@ -136,5 +152,4 @@ public final class PerformanceMonitoringBlockDb implements BlockDb {
 			delegate.validate();
 		}
 	}
-
 }

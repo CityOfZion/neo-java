@@ -17,6 +17,7 @@ import neo.model.bytes.UInt256;
 import neo.model.core.AbstractBlockBase;
 import neo.model.core.Block;
 import neo.model.core.Transaction;
+import neo.model.core.TransactionOutput;
 import neo.model.db.mapdb.BlockDbMapDbImpl;
 import neo.perfmon.PerformanceMonitor;
 
@@ -119,6 +120,11 @@ public final class ReadCacheBlockDBImpl implements BlockDb {
 	}
 
 	@Override
+	public Map<UInt256, Fixed8> getAssetValueMap(final UInt160 account) {
+		return delegate.getAssetValueMap(account);
+	}
+
+	@Override
 	public long getBlockCount() {
 		final Long cachedBlockCount = getCachedBlockCount();
 		if (cachedBlockCount != null) {
@@ -175,6 +181,11 @@ public final class ReadCacheBlockDBImpl implements BlockDb {
 	}
 
 	@Override
+	public Map<UInt256, List<TransactionOutput>> getUnspentTransactionOutputListMap(final UInt160 account) {
+		return delegate.getUnspentTransactionOutputListMap(account);
+	}
+
+	@Override
 	public void put(final boolean forceSynch, final Block... blocks) {
 		putRunnable.put(blocks);
 		if (forceSynch) {
@@ -224,7 +235,7 @@ public final class ReadCacheBlockDBImpl implements BlockDb {
 		/**
 		 * process the set of blocks.
 		 */
-		public void processBlockSet() {
+		public synchronized void processBlockSet() {
 			final List<Block> putList = new ArrayList<>();
 			// pull out all the blocks we are going to put into the database.
 			synchronized (blockSet) {

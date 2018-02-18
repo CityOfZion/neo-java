@@ -136,6 +136,29 @@ public final class ModelUtil {
 	}
 
 	/**
+	 * return the scripthash of the address.
+	 *
+	 * @param address
+	 *            the address to use.
+	 * @return the scripthash of the address.
+	 */
+	public static UInt160 addressToScriptHash(final String address) {
+		if (LOG.isTraceEnabled()) {
+			LOG.trace("addressToScriptHash.address:{}", address);
+		}
+		final byte[] dataAndChecksum = Base58Util.decode(address);
+		if (LOG.isTraceEnabled()) {
+			LOG.trace("addressToScriptHash.dataAndChecksum:{}", Hex.encodeHexString(dataAndChecksum));
+		}
+		final byte[] data = new byte[20];
+		System.arraycopy(dataAndChecksum, 4, data, 0, data.length);
+		if (LOG.isTraceEnabled()) {
+			LOG.trace("addressToScriptHash.data:{}", Hex.encodeHexString(data));
+		}
+		return new UInt160(data);
+	}
+
+	/**
 	 * copies and reverses a byte array.
 	 *
 	 * @param input
@@ -493,6 +516,45 @@ public final class ModelUtil {
 	}
 
 	/**
+	 * coverts a scriptHash to an address.
+	 *
+	 * @param scriptHash
+	 *            the scriptHash to use.
+	 * @return the address.
+	 */
+	public static String scriptHashToAddress(final UInt160 scriptHash) {
+		final byte[] data = new byte[21];
+
+		if (LOG.isTraceEnabled()) {
+			LOG.trace("toAddress ADDRESS_VERSION {}", ModelUtil.toHexString(ADDRESS_VERSION));
+		}
+
+		final byte[] scriptHashBa = scriptHash.toByteArray();
+		System.arraycopy(scriptHashBa, 0, data, 0, scriptHashBa.length);
+
+		data[data.length - 1] = ADDRESS_VERSION;
+		if (LOG.isTraceEnabled()) {
+			LOG.trace("toAddress data {}", ModelUtil.toHexString(data));
+		}
+
+		final byte[] dataAndChecksum = new byte[25];
+		System.arraycopy(data, 0, dataAndChecksum, 4, data.length);
+
+		ArrayUtils.reverse(data);
+		final byte[] hash = SHA256HashUtil.getDoubleSHA256Hash(data);
+		final byte[] hash4 = new byte[4];
+		System.arraycopy(hash, 0, hash4, 0, 4);
+		ArrayUtils.reverse(hash4);
+		System.arraycopy(hash4, 0, dataAndChecksum, 0, 4);
+		if (LOG.isTraceEnabled()) {
+			LOG.trace("toAddress dataAndChecksum {}", ModelUtil.toHexString(dataAndChecksum));
+		}
+
+		final String address = toBase58String(dataAndChecksum);
+		return address;
+	}
+
+	/**
 	 * subtracts two Fixed8 values.
 	 *
 	 * @param left
@@ -511,45 +573,6 @@ public final class ModelUtil {
 		}
 		final Fixed8 newValue = getFixed8(newBi);
 		return newValue;
-	}
-
-	/**
-	 * coverts a scriptHash to an address.
-	 *
-	 * @param scriptHash
-	 *            the scriptHash to use.
-	 * @return the address.
-	 */
-	public static String toAddress(final UInt160 scriptHash) {
-		final byte[] data = new byte[21];
-
-		if (LOG.isTraceEnabled()) {
-			LOG.trace("toAddress ADDRESS_VERSION {}", ModelUtil.toHexString(ADDRESS_VERSION));
-		}
-
-		final byte[] scriptHashBa = scriptHash.toByteArray();
-		System.arraycopy(scriptHashBa, 0, data, 0, scriptHashBa.length);
-
-		data[data.length - 1] = ADDRESS_VERSION;
-		if (LOG.isTraceEnabled()) {
-			LOG.info("toAddress data {}", ModelUtil.toHexString(data));
-		}
-
-		final byte[] dataAndChecksum = new byte[25];
-		System.arraycopy(data, 0, dataAndChecksum, 4, data.length);
-
-		ArrayUtils.reverse(data);
-		final byte[] hash = SHA256HashUtil.getDoubleSHA256Hash(data);
-		final byte[] hash4 = new byte[4];
-		System.arraycopy(hash, 0, hash4, 0, 4);
-		ArrayUtils.reverse(hash4);
-		System.arraycopy(hash4, 0, dataAndChecksum, 0, 4);
-		if (LOG.isTraceEnabled()) {
-			LOG.info("toAddress dataAndChecksum {}", ModelUtil.toHexString(dataAndChecksum));
-		}
-
-		final String address = toBase58String(dataAndChecksum);
-		return address;
 	}
 
 	/**
@@ -639,13 +662,23 @@ public final class ModelUtil {
 	 * converts a list of objects that implement the ToJsonObject interface into a
 	 * JSONArray of JSONObjects.
 	 *
+	 * @param ifNullReturnEmpty
+	 *            if the list is null, return an empty list. If this value is false,
+	 *            return null for a null list.
 	 * @param list
 	 *            the list of objects to use.
 	 * @param <T>
 	 *            the type of the objects that implements ToJsonObject .
 	 * @return the JSONArray of JSONObjects.
 	 */
-	public static <T extends ToJsonObject> JSONArray toJSONArray(final List<T> list) {
+	public static <T extends ToJsonObject> JSONArray toJSONArray(final boolean ifNullReturnEmpty, final List<T> list) {
+		if (list == null) {
+			if (ifNullReturnEmpty) {
+				return new JSONArray();
+			} else {
+				return null;
+			}
+		}
 		final JSONArray jsonArray = new JSONArray();
 
 		for (final T t : list) {

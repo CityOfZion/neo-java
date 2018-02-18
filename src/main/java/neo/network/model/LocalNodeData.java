@@ -64,6 +64,11 @@ public class LocalNodeData {
 	private final long startBlockCount;
 
 	/**
+	 * the network name.
+	 */
+	private final String networkName;
+
+	/**
 	 * the blockchain block count.
 	 */
 	private long blockchainBlockCount;
@@ -183,12 +188,14 @@ public class LocalNodeData {
 	 *            the RPC calls taht are disabled.
 	 * @param rpcPort
 	 *            the rpc port for the local server.
+	 * @param networkName
+	 *            the network name.
 	 */
 	public LocalNodeData(final long magic, final int activeThreadCount, final long rpcClientTimeoutMillis,
 			final long rpcServerTimeoutMillis, final Class<BlockDb> blockDbClass,
 			final Map<String, TimerData> timersMap, final int nonce, final int tcpPort, final File seedNodeFile,
 			final File goodNodeFile, final Class<SocketFactory> socketFactoryClass, final JSONObject blockDbConfig,
-			final Set<String> rpcDisabledCalls, final int rpcPort) {
+			final Set<String> rpcDisabledCalls, final int rpcPort, final String networkName) {
 		startTime = System.currentTimeMillis();
 		this.magic = magic;
 		this.activeThreadCount = activeThreadCount;
@@ -198,6 +205,7 @@ public class LocalNodeData {
 		this.nonce = nonce;
 		this.tcpPort = tcpPort;
 		this.rpcPort = rpcPort;
+		this.networkName = networkName;
 		this.seedNodeFile = seedNodeFile;
 		this.goodNodeFile = goodNodeFile;
 		this.rpcDisabledCalls = Collections.unmodifiableSet(rpcDisabledCalls);
@@ -285,6 +293,15 @@ public class LocalNodeData {
 	 */
 	public long getMagic() {
 		return magic;
+	}
+
+	/**
+	 * return the network name.
+	 *
+	 * @return the network name.
+	 */
+	public String getNetworkName() {
+		return networkName;
 	}
 
 	/**

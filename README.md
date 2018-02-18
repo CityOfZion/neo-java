@@ -22,3 +22,5 @@ todo:
 2) use VM to check scripts
 3) check signer hash
 4) check that bulk insert stops on the first bad block in a list.
+
+Image should be 100,000,000 NEO in 10,000 pixels. 10,000 NEO in a pixel.

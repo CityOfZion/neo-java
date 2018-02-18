@@ -278,6 +278,25 @@ public final class BlockDbH2Impl implements BlockDb {
 		return jdbcOperations.queryForObject(sql, Long.class);
 	}
 
+	@Override
+	public Map<UInt256, Fixed8> getAssetValueMap(final UInt160 account) {
+		final JdbcTemplate jdbcOperations = new JdbcTemplate(ds);
+		final String sql = getSql("getAssetValueMap");
+
+		final List<Map<String, Object>> mapList = jdbcOperations.queryForList(sql, account);
+
+		final Map<UInt256, Fixed8> assetValueMap = new TreeMap<>();
+
+		final TransactionOutputMapToObject mapToObject = new TransactionOutputMapToObject();
+
+		for (final Map<String, Object> map : mapList) {
+			final TransactionOutput output = mapToObject.toObject(map);
+			assetValueMap.put(output.assetId, output.value);
+		}
+
+		return assetValueMap;
+	}
+
 	/**
 	 * return the block at the given height, with transactions attached.
 	 *
@@ -595,6 +614,30 @@ public final class BlockDbH2Impl implements BlockDb {
 		transaction.scripts.addAll(scriptsMap.get(transactionIndex));
 
 		return transaction;
+	}
+
+	@Override
+	public Map<UInt256, List<TransactionOutput>> getUnspentTransactionOutputListMap(final UInt160 account) {
+		synchronized (this) {
+			if (closed) {
+				return null;
+			}
+		}
+		final JdbcTemplate t = new JdbcTemplate(ds);
+		final String sql = getSql("getUnspentTransactionOutputListMap");
+		final List<Map<String, Object>> mapList = t.queryForList(sql, account.toByteArray());
+
+		final AbstractMapToObject<TransactionOutput> mapToObject = new TransactionOutputMapToObject();
+		final Map<UInt256, List<TransactionOutput>> assetIdTxoMapList = new TreeMap<>();
+		for (final Map<String, Object> map : mapList) {
+			final TransactionOutput to = mapToObject.toObject(map);
+			if (!assetIdTxoMapList.containsKey(to.assetId)) {
+				assetIdTxoMapList.put(to.assetId, new ArrayList<>());
+			}
+			assetIdTxoMapList.get(to.assetId).add(to);
+		}
+
+		return assetIdTxoMapList;
 	}
 
 	@Override

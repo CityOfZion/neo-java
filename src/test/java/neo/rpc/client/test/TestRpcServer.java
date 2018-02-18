@@ -19,6 +19,7 @@ import org.slf4j.LoggerFactory;
 
 import neo.model.core.Block;
 import neo.model.core.Transaction;
+import neo.model.core.TransactionOutput;
 import neo.model.util.ConfigurationUtil;
 import neo.model.util.GenesisBlockUtil;
 import neo.model.util.ModelUtil;
@@ -505,6 +506,32 @@ public class TestRpcServer {
 		Assert.assertTrue(Modifier.isPrivate(constructor.getModifiers()));
 		constructor.setAccessible(true);
 		constructor.newInstance();
+	}
+
+	/**
+	 * test CoZ getbalance.
+	 */
+	@Test
+	public void test020CityOfZionGetBalance() {
+		final JSONArray params = new JSONArray();
+		final Block block = CONTROLLER.getLocalNodeData().getBlockDb().getFullBlockFromHeight(0);
+		final Transaction transaction = block.getTransactionList().get(block.getTransactionList().size() - 1);
+		final TransactionOutput to = transaction.outputs.get(0);
+		final String address = ModelUtil.scriptHashToAddress(to.scriptHash);
+		final String uri = CityOfZionCommandEnum.BALANCE.getUriPrefix() + address;
+		final String method = CoreRpcCommandEnum.UNKNOWN.getName();
+		final String expectedStrRaw = TestUtil.getJsonTestResourceAsString(TEST_PACKAGE, getClass().getSimpleName(),
+				"test020CityOfZionGetBalance");
+
+		CityOfZionCommandEnum.getCommandStartingWith(uri);
+
+		final String actualStrRaw = TestRpcServerUtil.getResponse(CONTROLLER, uri, RpcServerUtil.VERSION_2_0, params,
+				method);
+
+		final String expectedStr = new JSONObject(expectedStrRaw).toString(2);
+		final String actualStr = new JSONObject(actualStrRaw).toString(2);
+
+		Assert.assertEquals(TestUtil.RESPONSES_MUST_MATCH, expectedStr, actualStr);
 	}
 
 	/**

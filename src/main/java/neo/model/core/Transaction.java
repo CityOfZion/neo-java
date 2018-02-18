@@ -163,12 +163,13 @@ public final class Transaction implements ToJsonObject, ByteArraySerializable, S
 	public JSONObject toJSONObject() {
 		final JSONObject json = new JSONObject();
 		final int versionInt = version & 0xff;
+		final boolean ifNullReturnEmpty = false;
 		json.put("type", type);
 		json.put("version", versionInt);
-		json.put("attributes", ModelUtil.toJSONArray(attributes));
-		json.put("inputs", ModelUtil.toJSONArray(inputs));
-		json.put("outputs", ModelUtil.toJSONArray(outputs));
-		json.put("scripts", ModelUtil.toJSONArray(scripts));
+		json.put("attributes", ModelUtil.toJSONArray(ifNullReturnEmpty, attributes));
+		json.put("inputs", ModelUtil.toJSONArray(ifNullReturnEmpty, inputs));
+		json.put("outputs", ModelUtil.toJSONArray(ifNullReturnEmpty, outputs));
+		json.put("scripts", ModelUtil.toJSONArray(ifNullReturnEmpty, scripts));
 		json.put("exclusiveData", exclusiveData.toJSONObject());
 		json.put("exclusiveDataType", exclusiveData.getClass().getSimpleName());
 

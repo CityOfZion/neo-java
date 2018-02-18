@@ -154,6 +154,7 @@ public class LocalControllerNode {
 		final int nonce = config.getInt(ConfigurationUtil.NONCE);
 		final int tcpPort = localJson.getInt(ConfigurationUtil.TCP_PORT);
 		final int rpcPort = localJson.getInt(ConfigurationUtil.RPC_PORT);
+		final String networkName = localJson.getString(ConfigurationUtil.NETWORK_NAME);
 
 		final JSONObject rpcJson = localJson.getJSONObject(ConfigurationUtil.RPC);
 		final JSONArray rpcDisabledCallArray = rpcJson.getJSONArray(ConfigurationUtil.DISABLE);
@@ -167,7 +168,7 @@ public class LocalControllerNode {
 
 		localNodeData = new LocalNodeData(magic, activeThreadCount, rpcClientTimeoutMillis, rpcServerTimeoutMillis,
 				blockDbImplClass, timersMap, nonce, tcpPort, seedNodeFile, goodNodeFile, socketFactoryClass,
-				blockDbJson, rpcDisabledCalls, rpcPort);
+				blockDbJson, rpcDisabledCalls, rpcPort, networkName);
 		LocalNodeDataSynchronizedUtil.refreshCityOfZionBlockHeight(localNodeData);
 
 		threadPool = new ThreadPool(localJson.getInt(ConfigurationUtil.THREAD_POOL_COUNT));

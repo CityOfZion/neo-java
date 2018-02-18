@@ -1,5 +1,6 @@
 package neo.model.db;
 
+import java.util.List;
 import java.util.Map;
 
 import neo.model.bytes.Fixed8;
@@ -7,6 +8,7 @@ import neo.model.bytes.UInt160;
 import neo.model.bytes.UInt256;
 import neo.model.core.Block;
 import neo.model.core.Transaction;
+import neo.model.core.TransactionOutput;
 
 /**
  * the block database interface.
@@ -48,6 +50,16 @@ public interface BlockDb {
 	 * @return the number of accounts in the database.
 	 */
 	long getAccountCount();
+
+	/**
+	 * return a map of assetid and value for the given account.
+	 *
+	 * @param account
+	 *            the account to use.
+	 *
+	 * @return a map of assetid and value for the given account.
+	 */
+	Map<UInt256, Fixed8> getAssetValueMap(UInt160 account);
 
 	/**
 	 * return the block count.
@@ -114,6 +126,18 @@ public interface BlockDb {
 	 * @return the transaction with the given hash.
 	 */
 	Transaction getTransactionWithHash(UInt256 hash);
+
+	/**
+	 * return a list of TransactionOutputs for the given account that have not been
+	 * spent, by assetid.
+	 *
+	 * @param account
+	 *            the account to use.
+	 *
+	 * @return a list of TransactionOutputs for the given account that have not been
+	 *         spent, by assetid.
+	 */
+	Map<UInt256, List<TransactionOutput>> getUnspentTransactionOutputListMap(UInt160 account);
 
 	/**
 	 * puts the given block into the database.

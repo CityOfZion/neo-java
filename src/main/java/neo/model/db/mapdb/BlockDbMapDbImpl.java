@@ -16,14 +16,17 @@ import java.util.TreeMap;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang.ArrayUtils;
 import org.json.JSONObject;
+import org.mapdb.BTreeMap;
 import org.mapdb.DB;
 import org.mapdb.DBMaker;
 import org.mapdb.HTreeMap;
+import org.mapdb.HTreeMap.KeySet;
 import org.mapdb.Serializer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import neo.model.bytes.Fixed8;
+import neo.model.bytes.UInt16;
 import neo.model.bytes.UInt160;
 import neo.model.bytes.UInt256;
 import neo.model.core.Block;
@@ -99,6 +102,16 @@ public final class BlockDbMapDbImpl implements BlockDb {
 	 * the max block index.
 	 */
 	private static final String ASSET_AND_VALUE_BY_ACCOUNT = "assetAndValueByAccount";
+
+	/**
+	 * the unspent transaction outputs.
+	 */
+	private static final String UNSPENT_TRANSACTION_OUTPUT = "unspentTransactionOutput";
+
+	/**
+	 * the transaction outputs by account.
+	 */
+	private static final String TRANSACTION_OUTPUTS_BY_ACCOUNT = "transactionOutputsByAccount";
 
 	/**
 	 * the max block index.
@@ -255,13 +268,12 @@ public final class BlockDbMapDbImpl implements BlockDb {
 	 *
 	 * @param assetAndValueByAccountMap
 	 *            the account asset value map.
-	 * @param account
-	 *            the account to use.account
+	 * @param accountBa
+	 *            the account to use. as a byte array.
 	 * @return the account map.
 	 */
 	private Map<UInt256, Fixed8> ensureAccountExists(final HTreeMap<byte[], byte[]> assetAndValueByAccountMap,
-			final UInt160 account) {
-		final byte[] accountBa = account.toByteArray();
+			final byte[] accountBa) {
 		if (!assetAndValueByAccountMap.containsKey(accountBa)) {
 			final Map<UInt256, Fixed8> friendAssetValueMap = new TreeMap<>();
 			friendAssetValueMap.put(ModelUtil.NEO_HASH, ModelUtil.getFixed8(BigInteger.ZERO));
@@ -305,6 +317,14 @@ public final class BlockDbMapDbImpl implements BlockDb {
 		final HTreeMap<byte[], byte[]> map = db
 				.hashMap(ASSET_AND_VALUE_BY_ACCOUNT, Serializer.BYTE_ARRAY, Serializer.BYTE_ARRAY).counterEnable()
 				.createOrOpen();
+		return map;
+	}
+
+	@Override
+	public Map<UInt256, Fixed8> getAssetValueMap(final UInt160 account) {
+		final HTreeMap<byte[], byte[]> assetAndValueByAccountMap = getAssetAndValueByAccountMap();
+		final byte[] value = assetAndValueByAccountMap.get(account.toByteArray());
+		final Map<UInt256, Fixed8> map = getAssetValueMapFromByteArray(value);
 		return map;
 	}
 
@@ -610,6 +630,18 @@ public final class BlockDbMapDbImpl implements BlockDb {
 	 *
 	 * @return the map of transactions by key.
 	 */
+	private BTreeMap<byte[], byte[]> getTransactionOutputsByAccountMap() {
+		final BTreeMap<byte[], byte[]> map = db
+				.treeMap(TRANSACTION_OUTPUTS_BY_ACCOUNT, Serializer.BYTE_ARRAY, Serializer.BYTE_ARRAY).createOrOpen();
+		// TODO: try all BTreeMap instead of HTreeMap.
+		return map;
+	}
+
+	/**
+	 * return the map of transactions by key.
+	 *
+	 * @return the map of transactions by key.
+	 */
 	private HTreeMap<byte[], byte[]> getTransactionsByKeyMap() {
 		final HTreeMap<byte[], byte[]> map = db
 				.hashMap(TRANSACTION_BY_KEY, Serializer.BYTE_ARRAY, Serializer.BYTE_ARRAY).counterEnable()
@@ -672,6 +704,41 @@ public final class BlockDbMapDbImpl implements BlockDb {
 		getTransactionScripts(txKey, transaction);
 		transaction.recalculateHash();
 		return transaction;
+	}
+
+	@Override
+	public Map<UInt256, List<TransactionOutput>> getUnspentTransactionOutputListMap(final UInt160 account) {
+		final BTreeMap<byte[], byte[]> transactionOutputsByAccountMap = getTransactionOutputsByAccountMap();
+		final byte[] listBa = transactionOutputsByAccountMap.get(account.toByteArray());
+		if (listBa == null) {
+			return null;
+		}
+
+		final AbstractByteBufferFactory<TransactionOutput> factory = new TransactionOutputFactory();
+		final Map<UInt256, List<TransactionOutput>> assetIdTxoMapList = new TreeMap<>();
+
+		final List<byte[]> baList = ModelUtil.toByteArrayList(listBa);
+		for (final byte[] ba : baList) {
+			final ByteBuffer bb = ByteBuffer.wrap(ba);
+			final TransactionOutput to = factory.toObject(bb);
+			if (!assetIdTxoMapList.containsKey(to.assetId)) {
+				assetIdTxoMapList.put(to.assetId, new ArrayList<>());
+			}
+			assetIdTxoMapList.get(to.assetId).add(to);
+		}
+		return assetIdTxoMapList;
+	}
+
+	/**
+	 * return the set of unspent transaction outputs.
+	 *
+	 * @return the set of unspent transaction outputs.
+	 */
+	private KeySet<byte[]> getUnspentTransactionOutputSet() {
+		final KeySet<byte[]> set = db.hashSet(UNSPENT_TRANSACTION_OUTPUT, Serializer.BYTE_ARRAY).createOrOpen();
+		// TODO: replace with "transaction output spent?" and store the state for all
+		// txo's forever.
+		return set;
 	}
 
 	@Override
@@ -905,6 +972,9 @@ public final class BlockDbMapDbImpl implements BlockDb {
 	 */
 	private void updateAssetAndValueByAccountMap(final Block block) {
 		final HTreeMap<byte[], byte[]> assetAndValueByAccountMap = getAssetAndValueByAccountMap();
+		final KeySet<byte[]> uTxOutSet = getUnspentTransactionOutputSet();
+		final BTreeMap<byte[], byte[]> transactionOutputsByAccountMap = getTransactionOutputsByAccountMap();
+
 		LOG.debug("updateAssetAndValueByAccountMap STARTED block;{};numberOfAccounts:{}", block.getIndexAsLong(),
 				assetAndValueByAccountMap.size());
 
@@ -916,31 +986,43 @@ public final class BlockDbMapDbImpl implements BlockDb {
 				if (LOG.isDebugEnabled()) {
 					LOG.debug("updateAssetAndValueByAccountMap INTERIM cr:{}", cr.toJSONObject());
 				}
-				final UInt256 prevHashReversed = cr.prevHash.reverse();
-				final Transaction tiTx = getTransactionWithHash(prevHashReversed);
 
-				if (tiTx == null) {
-					throw new RuntimeException("no transaction with prevHash:" + prevHashReversed + " in block[1] "
-							+ block.hash + " index[1] " + block.getIndexAsLong());
-				}
+				final byte[] crBa = cr.toByteArray();
+				if (uTxOutSet.contains(crBa)) {
+					uTxOutSet.remove(crBa);
 
-				final int prevIndex = cr.prevIndex.asInt();
-				if (prevIndex >= tiTx.outputs.size()) {
-					throw new RuntimeException("prevIndex:" + prevIndex + " exceeds output size:" + tiTx.outputs.size()
-							+ "; in block[2] " + block.hash + " index[2] " + block.getIndexAsLong());
-				}
-				final TransactionOutput ti = tiTx.outputs.get(prevIndex);
-				final UInt160 input = ti.scriptHash;
-				if ((ti.assetId.equals(ModelUtil.NEO_HASH)) || (ti.assetId.equals(ModelUtil.GAS_HASH))) {
+					final UInt256 prevHashReversed = cr.prevHash.reverse();
+					final Transaction tiTx = getTransactionWithHash(prevHashReversed);
+
+					if (tiTx == null) {
+						throw new RuntimeException("no transaction with prevHash:" + prevHashReversed + " in block[1] "
+								+ block.hash + " index[1] " + block.getIndexAsLong());
+					}
+
+					final int prevIndex = cr.prevIndex.asInt();
+					if (prevIndex >= tiTx.outputs.size()) {
+						throw new RuntimeException(
+								"prevIndex:" + prevIndex + " exceeds output size:" + tiTx.outputs.size()
+										+ "; in block[2] " + block.hash + " index[2] " + block.getIndexAsLong());
+					}
+					final TransactionOutput ti = tiTx.outputs.get(prevIndex);
+					final UInt160 input = ti.scriptHash;
+					final byte[] inputBa = input.toByteArray();
 					final Map<UInt256, Fixed8> accountAssetValueMap = ensureAccountExists(assetAndValueByAccountMap,
-							input);
+							inputBa);
 					if (LOG.isDebugEnabled()) {
 						LOG.debug("TI beforeMap {}", accountAssetValueMap);
 					}
+
+					if (!accountAssetValueMap.containsKey(ti.assetId)) {
+						accountAssetValueMap.put(ti.assetId, ModelUtil.getFixed8(BigInteger.ZERO));
+					}
+
 					final Fixed8 oldValue = accountAssetValueMap.get(ti.assetId);
 					final Fixed8 newValue = ModelUtil.subtract(ti.value, oldValue);
 					if (LOG.isDebugEnabled()) {
-						LOG.debug("updateAssetAndValueByAccountMap INTERIM input;{};", ModelUtil.toAddress(input));
+						LOG.debug("updateAssetAndValueByAccountMap INTERIM input;{};",
+								ModelUtil.scriptHashToAddress(input));
 						LOG.debug("updateAssetAndValueByAccountMap INTERIM ti.assetId:{} oldValue:{};", ti.assetId,
 								oldValue);
 						LOG.debug("updateAssetAndValueByAccountMap INTERIM ti.assetId:{} to.value:{};", ti.assetId,
@@ -949,50 +1031,70 @@ public final class BlockDbMapDbImpl implements BlockDb {
 								newValue);
 					}
 					accountAssetValueMap.put(ti.assetId, newValue);
-					putAssetValueMap(assetAndValueByAccountMap, input.toByteArray(), accountAssetValueMap);
+					putAssetValueMap(assetAndValueByAccountMap, inputBa, accountAssetValueMap);
+
 					if (LOG.isDebugEnabled()) {
-						LOG.debug("TI afterMap {}", ensureAccountExists(assetAndValueByAccountMap, input));
+						LOG.debug("TI afterMap {}", ensureAccountExists(assetAndValueByAccountMap, inputBa));
 					}
 				} else {
-					LOG.error("updateAssetAndValueByAccountMap INTERIM NON NEO ti.assetId:{}", ti.assetId);
+					throw new RuntimeException("referenced transaction output is already spent:" + cr);
 				}
+
 			}
 
-			for (final TransactionOutput to : t.outputs) {
+			for (int outputIx = 0; outputIx < t.outputs.size(); outputIx++) {
+				final TransactionOutput to = t.outputs.get(outputIx);
 				if (LOG.isDebugEnabled()) {
 					LOG.debug("updateAssetAndValueByAccountMap INTERIM to:{}", to.toJSONObject());
 				}
 				final UInt160 output = to.scriptHash;
-				if ((to.assetId.equals(ModelUtil.NEO_HASH)) || (to.assetId.equals(ModelUtil.GAS_HASH))) {
-					try {
-						final Map<UInt256, Fixed8> accountAssetValueMap = ensureAccountExists(assetAndValueByAccountMap,
-								output);
-						if (LOG.isDebugEnabled()) {
-							LOG.debug("TO beforeMap {}", accountAssetValueMap);
-						}
-						final Fixed8 oldValue = accountAssetValueMap.get(to.assetId);
-						if (LOG.isDebugEnabled()) {
-							LOG.debug("updateAssetAndValueByAccountMap INTERIM output;{};",
-									ModelUtil.toAddress(output));
-							LOG.debug("updateAssetAndValueByAccountMap INTERIM to.assetId:{} oldValue:{};", to.assetId,
-									oldValue);
-							LOG.debug("updateAssetAndValueByAccountMap INTERIM to.assetId:{} to.value:{};", to.assetId,
-									to.value);
-						}
-						final Fixed8 newValue = ModelUtil.add(oldValue, to.value);
-						accountAssetValueMap.put(to.assetId, newValue);
-						putAssetValueMap(assetAndValueByAccountMap, output.toByteArray(), accountAssetValueMap);
-						if (LOG.isDebugEnabled()) {
-							LOG.debug("updateAssetAndValueByAccountMap INTERIM to.assetId:{} newValue:{};", to.assetId,
-									newValue);
-							LOG.debug("TO afterMap {}", ensureAccountExists(assetAndValueByAccountMap, output));
-						}
-					} catch (final RuntimeException e) {
-						final String msg = "error processing transaction type " + t.type + " hash " + t.getHash();
-						throw new RuntimeException(msg, e);
+				final byte[] outputBa = output.toByteArray();
+				try {
+					final Map<UInt256, Fixed8> accountAssetValueMap = ensureAccountExists(assetAndValueByAccountMap,
+							outputBa);
+					if (LOG.isDebugEnabled()) {
+						LOG.debug("TO beforeMap {}", accountAssetValueMap);
 					}
-				} else {
-					LOG.error("updateAssetAndValueByAccountMap INTERIM NON NEO to.assetId:{}", to.assetId);
+
+					if (!accountAssetValueMap.containsKey(to.assetId)) {
+						accountAssetValueMap.put(to.assetId, ModelUtil.getFixed8(BigInteger.ZERO));
+					}
+
+					final Fixed8 oldValue = accountAssetValueMap.get(to.assetId);
+					if (LOG.isDebugEnabled()) {
+						LOG.debug("updateAssetAndValueByAccountMap INTERIM output;{};",
+								ModelUtil.scriptHashToAddress(output));
+						LOG.debug("updateAssetAndValueByAccountMap INTERIM to.assetId:{} oldValue:{};", to.assetId,
+								oldValue);
+						LOG.debug("updateAssetAndValueByAccountMap INTERIM to.assetId:{} to.value:{};", to.assetId,
+								to.value);
+					}
+					final Fixed8 newValue = ModelUtil.add(oldValue, to.value);
+					accountAssetValueMap.put(to.assetId, newValue);
+					putAssetValueMap(assetAndValueByAccountMap, outputBa, accountAssetValueMap);
+
+					if (LOG.isDebugEnabled()) {
+						LOG.debug("updateAssetAndValueByAccountMap INTERIM to.assetId:{} newValue:{};", to.assetId,
+								newValue);
+						LOG.debug("TO afterMap {}", ensureAccountExists(assetAndValueByAccountMap, outputBa));
+					}
+
+					final CoinReference cr = new CoinReference(t.getHash().reverse(), new UInt16(outputIx));
+					uTxOutSet.add(cr.toByteArray());
+
+					final List<byte[]> baList;
+					if (transactionOutputsByAccountMap.containsKey(outputBa)) {
+						final byte[] listBa = transactionOutputsByAccountMap.get(outputBa);
+						baList = ModelUtil.toByteArrayList(listBa);
+					} else {
+						baList = new ArrayList<>();
+					}
+					baList.add(to.toByteArray());
+					transactionOutputsByAccountMap.put(outputBa, ModelUtil.toByteArray(baList));
+
+				} catch (final RuntimeException e) {
+					final String msg = "error processing transaction type " + t.type + " hash " + t.getHash();
+					throw new RuntimeException(msg, e);
 				}
 			}
 		}
@@ -1044,6 +1146,11 @@ public final class BlockDbMapDbImpl implements BlockDb {
 			assetAndValueByAccountMap.clear();
 			LOG.info("INTERIM validate, clear account list SUCCESS");
 
+			LOG.info("INTERIM validate, clear unspent transaction output STARTED");
+			final KeySet<byte[]> uTxOutSet = getUnspentTransactionOutputSet();
+			uTxOutSet.clear();
+			LOG.info("INTERIM validate, clear unspent transaction output SUCCESS");
+
 			while (blockHeight < maxBlockCount) {
 				final String blockHeightStr;
 				if (LOG.isDebugEnabled() || LOG.isErrorEnabled()) {
@@ -1076,8 +1183,8 @@ public final class BlockDbMapDbImpl implements BlockDb {
 					if (System.currentTimeMillis() > (lastInfoMs + 30000)) {
 						final String numberOfAccountsStr = NumberFormat.getIntegerInstance()
 								.format(assetAndValueByAccountMap.size());
-						LOG.info("INTERIM INFO  validate {} of {} SUCCESS, number of accounts:{};", blockHeightStr,
-								maxBlockCountStr, numberOfAccountsStr);
+						LOG.info("INTERIM INFO  validate {} of {} SUCCESS, number of accounts:{}; date:{}",
+								blockHeightStr, maxBlockCountStr, numberOfAccountsStr, block.getTimestamp());
 						lastInfoMs = System.currentTimeMillis();
 					} else {
 						LOG.debug("INTERIM DEBUG validate {} of {} SUCCESS.", blockHeightStr, maxBlockCountStr);
@@ -1096,7 +1203,8 @@ public final class BlockDbMapDbImpl implements BlockDb {
 					try {
 						updateAssetAndValueByAccountMap(block);
 					} catch (final Exception e) {
-						throw new RuntimeException("validate: error updating assets for block " + block.hash, e);
+						throw new RuntimeException("validate: error updating assets for block ["
+								+ block.getIndexAsLong() + "]" + block.hash, e);
 					}
 
 					lastGoodBlockIndex = block.getIndexAsLong();
@@ -1105,7 +1213,9 @@ public final class BlockDbMapDbImpl implements BlockDb {
 			}
 			setBlockIndex(lastGoodBlockIndex);
 
+			LOG.info("INTERIM validate, commit STARTED");
 			db.commit();
+			LOG.info("INTERIM validate, commit SUCCESS");
 
 			LOG.info("SUCCESS validate");
 		} catch (final Exception e) {
@@ -1114,5 +1224,4 @@ public final class BlockDbMapDbImpl implements BlockDb {
 			throw new RuntimeException(e);
 		}
 	}
-
 }

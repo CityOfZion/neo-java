@@ -56,6 +56,31 @@ import neo.network.model.RemoteNodeData;
 public final class RpcServerUtil {
 
 	/**
+	 * the JSON key, "unspent".
+	 */
+	private static final String UNSPENT = "unspent";
+
+	/**
+	 * the JSON key, "net".
+	 */
+	private static final String NET = "net";
+
+	/**
+	 * the JSON key, "NEO".
+	 */
+	private static final String NEO = "NEO";
+
+	/**
+	 * the JSON key, "GAS".
+	 */
+	private static final String GAS = "GAS";
+
+	/**
+	 * the JSON key, "balance".
+	 */
+	private static final String BALANCE = "balance";
+
+	/**
 	 * first timestamp.
 	 */
 	private static final String FIRST_TS = "first_ts";
@@ -299,7 +324,7 @@ public final class RpcServerUtil {
 			final Map<UInt160, String> addressByAccount = new TreeMap<>();
 
 			for (final UInt160 key : accountStateCache.keySet()) {
-				final String address = ModelUtil.toAddress(key);
+				final String address = ModelUtil.scriptHashToAddress(key);
 				addressByAccount.put(key, address);
 			}
 			LOG.trace("getaccountlist 4 addressByAccount SUCCESS, address count:{};", addressByAccount.size());
@@ -560,6 +585,71 @@ public final class RpcServerUtil {
 				response.put(ACTUAL, NULL);
 				return response;
 			}
+		}
+	}
+
+	/**
+	 * return the balance of the address.
+	 *
+	 * @param controller
+	 *            the controller to use.
+	 * @param address
+	 *            the address to use.
+	 * @return the balance of the address.
+	 */
+	private static JSONObject onGetCityOfZionBalance(final LocalControllerNode controller, final String address) {
+		final UInt160 scriptHash = ModelUtil.addressToScriptHash(address);
+		if (LOG.isTraceEnabled()) {
+			LOG.trace("onGetCityOfZionBalance.scriptHash:{}", scriptHash);
+		}
+
+		try {
+			final Map<UInt256, Fixed8> assetValueMap = controller.getLocalNodeData().getBlockDb()
+					.getAssetValueMap(scriptHash);
+
+			final Map<UInt256, List<TransactionOutput>> transactionOutputListMap = controller.getLocalNodeData()
+					.getBlockDb().getUnspentTransactionOutputListMap(scriptHash);
+
+			if (assetValueMap == null) {
+				final JSONObject response = new JSONObject();
+				response.put(GAS, new JSONObject());
+				response.put(NEO, new JSONObject());
+				response.put(NET, controller.getLocalNodeData().getNetworkName());
+				return response;
+			}
+
+			final boolean ifNullReturnEmpty = true;
+
+			final Fixed8 neo = assetValueMap.get(ModelUtil.NEO_HASH);
+			final Fixed8 gas = assetValueMap.get(ModelUtil.GAS_HASH);
+
+			final JSONObject response = new JSONObject();
+			final JSONObject neoJo = new JSONObject();
+
+			neoJo.put(UNSPENT,
+					ModelUtil.toJSONArray(ifNullReturnEmpty, transactionOutputListMap.get(ModelUtil.NEO_HASH)));
+			neoJo.put(BALANCE, neo);
+
+			final JSONObject gasJo = new JSONObject();
+			neoJo.put(UNSPENT,
+					ModelUtil.toJSONArray(ifNullReturnEmpty, transactionOutputListMap.get(ModelUtil.GAS_HASH)));
+			gasJo.put(BALANCE, gas);
+
+			response.put(GAS, gasJo);
+			response.put(NEO, neoJo);
+			response.put(NET, controller.getLocalNodeData().getNetworkName());
+			return response;
+		} catch (final RuntimeException e) {
+			LOG.error("onGetCityOfZionBalance", e);
+			final JSONObject response = new JSONObject();
+			if (e.getMessage() == null) {
+				response.put(ERROR, e.getClass().getName());
+			} else {
+				response.put(ERROR, e.getMessage());
+			}
+			response.put(EXPECTED, EXPECTED_GENERIC_HEX);
+			response.put(ACTUAL, address);
+			return response;
 		}
 	}
 
@@ -971,8 +1061,7 @@ public final class RpcServerUtil {
 			final String remainder = uri.substring(cityOfZionCommand.getUriPrefix().length());
 			switch (cityOfZionCommand) {
 			case BALANCE: {
-				// TODO : implement.
-				throw new NotImplementedException(cityOfZionCommand.getUriPrefix());
+				return onGetCityOfZionBalance(controller, remainder);
 			}
 			case CLAIMS: {
 				// TODO : implement.
