@@ -43,6 +43,21 @@ public final class Fixed8 implements ByteArraySerializable {
 	}
 
 	@Override
+	public boolean equals(final Object obj) {
+		if (obj instanceof Fixed8) {
+			final Fixed8 that = (Fixed8) obj;
+			return value == that.value;
+		} else {
+			return false;
+		}
+	}
+
+	@Override
+	public int hashCode() {
+		return Long.hashCode(value);
+	}
+
+	@Override
 	public byte[] toByteArray() {
 		final byte[] ba = valueObj.toByteArray();
 		return ba;
