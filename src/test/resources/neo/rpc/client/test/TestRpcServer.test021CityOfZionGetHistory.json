@@ -1,0 +1,12 @@
+{
+	"address": "AQVh2pG732YvtNaxEGkQUei3YA4cvo7d2i",
+	"history": [
+		{
+			"GAS": 0,
+			"NEO": 100000000,
+			"txid": "3631f66024ca6f5b033d7e0809eb993443374830025af904fb51b0334f127cda",
+			"block_index": 0
+		}
+	],
+	"net": "MainNet"
+}

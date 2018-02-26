@@ -39,6 +39,11 @@ import neo.model.bytes.UInt64;
 public final class ModelUtil {
 
 	/**
+	 * a fixed8 representation of zero.
+	 */
+	public static final Fixed8 FIXED8_ZERO = ModelUtil.getFixed8(BigInteger.ZERO);
+
+	/**
 	 * the UTF-8 charset.
 	 */
 	private static final String UTF_8 = "UTF-8";

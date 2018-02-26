@@ -16,6 +16,7 @@ import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
 import org.apache.http.util.EntityUtils;
 import org.json.JSONArray;
+import org.json.JSONException;
 import org.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -145,9 +146,12 @@ public final class TestRpcServerUtil {
 					| SocketException e) {
 				throw new RuntimeException(CONNECTION_EXCEPTION, e);
 			}
-			final JSONObject responseJson = new JSONObject(responseStr);
-
-			actualStrRaw = responseJson.toString(2);
+			try {
+				final JSONObject responseJson = new JSONObject(responseStr);
+				actualStrRaw = responseJson.toString(2);
+			} catch (final JSONException e) {
+				throw new RuntimeException("cannot parse text \"" + responseStr + "\"", e);
+			}
 		} catch (final Exception e) {
 			throw new RuntimeException(e);
 		}

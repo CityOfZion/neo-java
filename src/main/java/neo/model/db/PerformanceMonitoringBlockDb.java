@@ -9,6 +9,7 @@ import neo.model.bytes.Fixed8;
 import neo.model.bytes.UInt160;
 import neo.model.bytes.UInt256;
 import neo.model.core.Block;
+import neo.model.core.CoinReference;
 import neo.model.core.Transaction;
 import neo.model.core.TransactionOutput;
 import neo.perfmon.PerformanceMonitor;
@@ -82,6 +83,13 @@ public final class PerformanceMonitoringBlockDb implements BlockDb {
 	}
 
 	@Override
+	public Long getBlockIndexFromTransactionHash(final UInt256 hash) {
+		try (PerformanceMonitor m = new PerformanceMonitor("BlockDb.getBlockIndexFromTransactionHash")) {
+			return delegate.getBlockIndexFromTransactionHash(hash);
+		}
+	}
+
+	@Override
 	public long getFileSize() {
 		try (PerformanceMonitor m = new PerformanceMonitor("BlockDb.getFileSize")) {
 			return delegate.getFileSize();
@@ -124,6 +132,13 @@ public final class PerformanceMonitoringBlockDb implements BlockDb {
 	}
 
 	@Override
+	public List<Transaction> getTransactionWithAccountList(final UInt160 account) {
+		try (PerformanceMonitor m = new PerformanceMonitor("BlockDb.getTransactionWithAccountList")) {
+			return delegate.getTransactionWithAccountList(account);
+		}
+	}
+
+	@Override
 	public Transaction getTransactionWithHash(final UInt256 hash) {
 		try (PerformanceMonitor m = new PerformanceMonitor("BlockDb.getTransactionWithHash")) {
 			return delegate.getTransactionWithHash(hash);
@@ -131,7 +146,8 @@ public final class PerformanceMonitoringBlockDb implements BlockDb {
 	}
 
 	@Override
-	public Map<UInt256, List<TransactionOutput>> getUnspentTransactionOutputListMap(final UInt160 account) {
+	public Map<UInt256, Map<TransactionOutput, CoinReference>> getUnspentTransactionOutputListMap(
+			final UInt160 account) {
 		try (PerformanceMonitor m = new PerformanceMonitor("BlockDb.getUnspentTransactionOutputListMap")) {
 			return delegate.getUnspentTransactionOutputListMap(account);
 		}

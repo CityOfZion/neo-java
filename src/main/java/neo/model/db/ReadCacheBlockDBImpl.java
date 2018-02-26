@@ -16,6 +16,7 @@ import neo.model.bytes.UInt160;
 import neo.model.bytes.UInt256;
 import neo.model.core.AbstractBlockBase;
 import neo.model.core.Block;
+import neo.model.core.CoinReference;
 import neo.model.core.Transaction;
 import neo.model.core.TransactionOutput;
 import neo.model.db.mapdb.BlockDbMapDbImpl;
@@ -136,6 +137,11 @@ public final class ReadCacheBlockDBImpl implements BlockDb {
 		return blockCount;
 	}
 
+	@Override
+	public Long getBlockIndexFromTransactionHash(final UInt256 hash) {
+		return delegate.getBlockIndexFromTransactionHash(hash);
+	}
+
 	/**
 	 * return the cached block count.
 	 *
@@ -176,12 +182,18 @@ public final class ReadCacheBlockDBImpl implements BlockDb {
 	}
 
 	@Override
+	public List<Transaction> getTransactionWithAccountList(final UInt160 account) {
+		return delegate.getTransactionWithAccountList(account);
+	}
+
+	@Override
 	public Transaction getTransactionWithHash(final UInt256 hash) {
 		return delegate.getTransactionWithHash(hash);
 	}
 
 	@Override
-	public Map<UInt256, List<TransactionOutput>> getUnspentTransactionOutputListMap(final UInt160 account) {
+	public Map<UInt256, Map<TransactionOutput, CoinReference>> getUnspentTransactionOutputListMap(
+			final UInt160 account) {
 		return delegate.getUnspentTransactionOutputListMap(account);
 	}
 

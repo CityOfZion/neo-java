@@ -4,6 +4,7 @@ import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
+import java.io.EOFException;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -13,6 +14,8 @@ import java.io.PrintWriter;
 import java.nio.ByteBuffer;
 import java.sql.Timestamp;
 import java.text.NumberFormat;
+import java.util.Set;
+import java.util.TreeSet;
 
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.time.FastDateFormat;
@@ -20,8 +23,12 @@ import org.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import neo.model.bytes.UInt160;
 import neo.model.bytes.UInt32;
 import neo.model.core.Block;
+import neo.model.core.Transaction;
+import neo.model.core.TransactionOutput;
+import neo.model.core.TransactionType;
 import neo.model.db.BlockDb;
 import neo.network.LocalControllerNode;
 
@@ -82,79 +89,119 @@ public final class BlockImportExportUtil {
 	 *            the controller.
 	 */
 	public static void importBlocks(final LocalControllerNode controller) {
-		try (InputStream fileIn = new FileInputStream(CHAIN_ACC_FILE_NM);
-				BufferedInputStream buffIn = new BufferedInputStream(fileIn, 1024 * 1024 * 32);
-				DataInputStream in = new DataInputStream(buffIn);
-				OutputStream statsFileOut = new FileOutputStream(CHAIN_STATS_FILE_NM);
+		final NumberFormat integerFormat = NumberFormat.getIntegerInstance();
+		final BlockDb blockDb = controller.getLocalNodeData().getBlockDb();
+
+		try (OutputStream statsFileOut = new FileOutputStream(CHAIN_STATS_FILE_NM);
 				PrintWriter statsWriter = new PrintWriter(statsFileOut, true);) {
+			long maxIndex = 0;
+			try (InputStream fileIn = new FileInputStream(CHAIN_ACC_FILE_NM);
+					BufferedInputStream buffIn = new BufferedInputStream(fileIn, 1024 * 1024 * 32);
+					DataInputStream in = new DataInputStream(buffIn);) {
 
-			statsWriter.println("[");
+				statsWriter.println("[");
 
-			final byte[] maxIndexBa = new byte[UInt32.SIZE];
-			in.read(maxIndexBa);
-			ArrayUtils.reverse(maxIndexBa);
-			final long maxIndex = new UInt32(maxIndexBa).asLong();
+				final byte[] maxIndexBa = new byte[UInt32.SIZE];
+				in.read(maxIndexBa);
+				ArrayUtils.reverse(maxIndexBa);
+				maxIndex = new UInt32(maxIndexBa).asLong();
 
-			final NumberFormat integerFormat = NumberFormat.getIntegerInstance();
-			LOG.info("started import {}", integerFormat.format(maxIndex));
-			final BlockDb blockDb = controller.getLocalNodeData().getBlockDb();
+				LOG.info("started import {}", integerFormat.format(maxIndex));
 
-			final FastDateFormat dateFormat = FastDateFormat.getInstance("yyyy.MM.dd");
-			long startMs = -1;
-			long interimBlocks = 0;
-			long interimTx = 0;
-			long totalTx = 0;
+				final FastDateFormat dateFormat = FastDateFormat.getInstance("yyyy.MM.dd");
+				long startMs = -1;
+				long interimBlocks = 0;
+				final long[] interimTx = new long[TransactionType.values().length];
+				final long[] totalTx = new long[TransactionType.values().length];
+				final Set<UInt160> activeAccountSet = new TreeSet<>();
 
-			for (long blockIx = 0; blockIx <= maxIndex; blockIx++) {
-				final int length = Integer.reverseBytes(in.readInt());
-				LOG.debug("STARTED import {} of {} length {}", integerFormat.format(blockIx),
-						integerFormat.format(maxIndex), integerFormat.format(length));
-				final byte[] ba = new byte[length];
-				in.read(ba);
-				final Block block = new Block(ByteBuffer.wrap(ba));
-				final boolean forceSynch = (blockIx % 500) == 0;
-				blockDb.put(forceSynch, block);
+				long procStartMs = System.currentTimeMillis();
 
-				final int txListSize = block.getTransactionList().size();
-				interimBlocks++;
-				interimTx += txListSize;
-				totalTx += txListSize;
+				for (long blockIx = 0; blockIx <= maxIndex; blockIx++) {
+					final int length = Integer.reverseBytes(in.readInt());
+					LOG.debug("STARTED import {} of {} length {}", integerFormat.format(blockIx),
+							integerFormat.format(maxIndex), integerFormat.format(length));
+					final byte[] ba = new byte[length];
+					in.read(ba);
+					final Block block = new Block(ByteBuffer.wrap(ba));
+					final boolean forceSynch = (blockIx % 500) == 0;
+					blockDb.put(forceSynch, block);
 
-				LOG.debug("SUCCESS import {} of {} hash {}", integerFormat.format(blockIx),
-						integerFormat.format(maxIndex), block.hash);
-				final Timestamp blockTs = block.getTimestamp();
+					interimBlocks++;
 
-				if (startMs < 0) {
-					startMs = blockTs.getTime();
-				}
-
-				final long ms = blockTs.getTime() - startMs;
-				if (ms > (86400 * 1000)) {
-					final Block maxBlockHeader = blockDb.getHeaderOfBlockWithMaxIndex();
-
-					final String dateStr = dateFormat.format(blockTs);
-					final JSONObject stats = new JSONObject();
-					stats.put("date", dateStr);
-					stats.put("accounts", blockDb.getAccountCount());
-					stats.put("transactions", interimTx);
-					stats.put("blocks", interimBlocks);
-					if (blockIx > 0) {
-						statsWriter.println(",");
+					for (final Transaction tx : block.getTransactionList()) {
+						interimTx[tx.type.ordinal()]++;
+						totalTx[tx.type.ordinal()]++;
+						for (final TransactionOutput txOut : tx.outputs) {
+							activeAccountSet.add(txOut.scriptHash);
+						}
 					}
-					statsWriter.println(stats);
 
-					LOG.info("INTERIM import {} of {}, bx {}, tx {} json {}", integerFormat.format(blockIx),
-							integerFormat.format(maxIndex), integerFormat.format(maxBlockHeader.getIndexAsLong()),
-							integerFormat.format(totalTx), stats);
-					startMs = blockTs.getTime();
-					interimTx = 0;
-					interimBlocks = 0;
+					LOG.debug("SUCCESS import {} of {} hash {}", integerFormat.format(blockIx),
+							integerFormat.format(maxIndex), block.hash);
+					final Timestamp blockTs = block.getTimestamp();
+
+					if (startMs < 0) {
+						startMs = blockTs.getTime();
+					}
+
+					final long ms = blockTs.getTime() - startMs;
+					if (ms > (86400 * 1000)) {
+						final Block maxBlockHeader = blockDb.getHeaderOfBlockWithMaxIndex();
+
+						final String dateStr = dateFormat.format(blockTs);
+						final JSONObject stats = new JSONObject();
+						stats.put("date", dateStr);
+
+						final long procMs = System.currentTimeMillis() - procStartMs;
+						stats.put("processing-time-ms", procMs);
+
+						final JSONObject accounts = new JSONObject();
+						accounts.put("active", activeAccountSet.size());
+						accounts.put("total", blockDb.getAccountCount());
+						stats.put("accounts", accounts);
+
+						final JSONObject transactions = new JSONObject();
+						for (final TransactionType tType : TransactionType.values()) {
+							transactions.put(tType.name().toLowerCase(), interimTx[tType.ordinal()]);
+						}
+						stats.put("transactions", transactions);
+
+						stats.put("blocks", interimBlocks);
+						if (blockIx > 0) {
+							statsWriter.println(",");
+						}
+						statsWriter.println(stats);
+
+						LOG.info("INTERIM import {} of {}, bx {}, tx {} json {}", integerFormat.format(blockIx),
+								integerFormat.format(maxIndex), integerFormat.format(maxBlockHeader.getIndexAsLong()),
+								integerFormat.format(totalTx), stats);
+						startMs = blockTs.getTime();
+
+						for (int ix = 0; ix < interimTx.length; ix++) {
+							interimTx[ix] = 0;
+						}
+						interimBlocks = 0;
+						activeAccountSet.clear();
+						procStartMs = System.currentTimeMillis();
+					}
 				}
-			}
-			blockDb.put(true);
-			statsWriter.println("]");
+				blockDb.put(true);
 
-			LOG.info("SUCCESS import {}, synched", integerFormat.format(maxIndex));
+				LOG.info("SUCCESS import {}, synched", integerFormat.format(maxIndex));
+			} catch (final IOException e) {
+				if (e instanceof EOFException) {
+					blockDb.put(true);
+					final Block maxBlockHeader = blockDb.getHeaderOfBlockWithMaxIndex();
+					LOG.error("FAILURE import {} of {}, synched", integerFormat.format(maxBlockHeader.getIndexAsLong()),
+							maxIndex);
+					return;
+				} else {
+					throw new RuntimeException(e);
+				}
+			} finally {
+				statsWriter.println("]");
+			}
 		} catch (final IOException e) {
 			throw new RuntimeException(e);
 		}

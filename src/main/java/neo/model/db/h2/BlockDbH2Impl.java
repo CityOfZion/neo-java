@@ -373,6 +373,13 @@ public final class BlockDbH2Impl implements BlockDb {
 		return t.queryForObject(sql, Integer.class);
 	}
 
+	@Override
+	public Long getBlockIndexFromTransactionHash(final UInt256 hash) {
+		final JdbcTemplate t = new JdbcTemplate(ds);
+		final String sql = getSql("getBlockIndexFromTransactionHash");
+		return t.queryForObject(sql, new Object[] { hash.toByteArray() }, Long.class);
+	}
+
 	/**
 	 * return the file size.
 	 *
@@ -580,6 +587,21 @@ public final class BlockDbH2Impl implements BlockDb {
 	}
 
 	@Override
+	public List<Transaction> getTransactionWithAccountList(final UInt160 account) {
+		final JdbcTemplate t = new JdbcTemplate(ds);
+		final String sql = getSql("getTransactionWithAccountList");
+		final byte[] accountBa = account.toByteArray();
+		final List<byte[]> dataList = t.queryForList(sql, byte[].class, accountBa);
+
+		final List<Transaction> transactionList = new ArrayList<>();
+		for (final byte[] data : dataList) {
+			final Transaction transaction = new Transaction(ByteBuffer.wrap(data));
+			transactionList.add(transaction);
+		}
+		return transactionList;
+	}
+
+	@Override
 	public Transaction getTransactionWithHash(final UInt256 hash) {
 		final JdbcTemplate t = new JdbcTemplate(ds);
 		final String sql = getSql("getTransactionWithHash");
@@ -617,7 +639,8 @@ public final class BlockDbH2Impl implements BlockDb {
 	}
 
 	@Override
-	public Map<UInt256, List<TransactionOutput>> getUnspentTransactionOutputListMap(final UInt160 account) {
+	public Map<UInt256, Map<TransactionOutput, CoinReference>> getUnspentTransactionOutputListMap(
+			final UInt160 account) {
 		synchronized (this) {
 			if (closed) {
 				return null;
@@ -627,17 +650,20 @@ public final class BlockDbH2Impl implements BlockDb {
 		final String sql = getSql("getUnspentTransactionOutputListMap");
 		final List<Map<String, Object>> mapList = t.queryForList(sql, account.toByteArray());
 
-		final AbstractMapToObject<TransactionOutput> mapToObject = new TransactionOutputMapToObject();
-		final Map<UInt256, List<TransactionOutput>> assetIdTxoMapList = new TreeMap<>();
+		final AbstractMapToObject<TransactionOutput> toMapToObject = new TransactionOutputMapToObject();
+		final AbstractMapToObject<CoinReference> crMapToObject = new CoinReferenceMapToObject();
+
+		final Map<UInt256, Map<TransactionOutput, CoinReference>> assetIdTxoMap = new TreeMap<>();
 		for (final Map<String, Object> map : mapList) {
-			final TransactionOutput to = mapToObject.toObject(map);
-			if (!assetIdTxoMapList.containsKey(to.assetId)) {
-				assetIdTxoMapList.put(to.assetId, new ArrayList<>());
+			final TransactionOutput to = toMapToObject.toObject(map);
+			final CoinReference cr = crMapToObject.toObject(map);
+			if (!assetIdTxoMap.containsKey(to.assetId)) {
+				assetIdTxoMap.put(to.assetId, new TreeMap<>());
 			}
-			assetIdTxoMapList.get(to.assetId).add(to);
+			assetIdTxoMap.get(to.assetId).put(to, cr);
 		}
 
-		return assetIdTxoMapList;
+		return assetIdTxoMap;
 	}
 
 	@Override

@@ -10,9 +10,11 @@ import org.json.JSONArray;
 import org.json.JSONObject;
 
 import neo.model.bytes.Fixed8;
+import neo.model.bytes.UInt16;
 import neo.model.bytes.UInt160;
 import neo.model.bytes.UInt256;
 import neo.model.core.Block;
+import neo.model.core.CoinReference;
 import neo.model.core.Transaction;
 import neo.model.core.TransactionOutput;
 import neo.model.db.BlockDb;
@@ -171,6 +173,21 @@ public abstract class AbstractJsonMockBlockDb implements BlockDb {
 		return getMockBlockDb().length();
 	}
 
+	@Override
+	public final Long getBlockIndexFromTransactionHash(final UInt256 hash) {
+		final JSONArray mockBlockDb = getMockBlockDb();
+		for (int ix = 0; ix < mockBlockDb.length(); ix++) {
+			final JSONObject mockBlock = mockBlockDb.getJSONObject(ix);
+			final Block block = getBlock(mockBlock, true);
+			for (final Transaction transaction : block.getTransactionList()) {
+				if (transaction.getHash().equals(hash)) {
+					return block.getIndexAsLong();
+				}
+			}
+		}
+		throw new RuntimeException("no transaction with hash:" + hash);
+	}
+
 	/**
 	 * return the block with the maximum value in the index column.
 	 *
@@ -232,6 +249,28 @@ public abstract class AbstractJsonMockBlockDb implements BlockDb {
 	public abstract JSONArray getMockBlockDb();
 
 	@Override
+	public List<Transaction> getTransactionWithAccountList(final UInt160 account) {
+		final List<Transaction> transactionList = new ArrayList<>();
+		final JSONArray mockBlockDb = getMockBlockDb();
+		for (int ix = 0; ix < mockBlockDb.length(); ix++) {
+			final JSONObject mockBlock = mockBlockDb.getJSONObject(ix);
+			final Block block = getBlock(mockBlock, true);
+			for (final Transaction transaction : block.getTransactionList()) {
+				boolean transactionHasAccount = false;
+				for (final TransactionOutput output : transaction.outputs) {
+					if (output.scriptHash.equals(account)) {
+						transactionHasAccount = true;
+					}
+				}
+				if (transactionHasAccount) {
+					transactionList.add(transaction);
+				}
+			}
+		}
+		return transactionList;
+	}
+
+	@Override
 	public final Transaction getTransactionWithHash(final UInt256 hash) {
 		final JSONArray mockBlockDb = getMockBlockDb();
 		for (int ix = 0; ix < mockBlockDb.length(); ix++) {
@@ -247,25 +286,27 @@ public abstract class AbstractJsonMockBlockDb implements BlockDb {
 	}
 
 	@Override
-	public Map<UInt256, List<TransactionOutput>> getUnspentTransactionOutputListMap(final UInt160 account) {
-		final Map<UInt256, List<TransactionOutput>> assetIdTxoMapList = new TreeMap<>();
-
+	public Map<UInt256, Map<TransactionOutput, CoinReference>> getUnspentTransactionOutputListMap(
+			final UInt160 account) {
+		final Map<UInt256, Map<TransactionOutput, CoinReference>> assetIdTxoMap = new TreeMap<>();
 		final JSONArray mockBlockDb = getMockBlockDb();
 		for (int ix = 0; ix < mockBlockDb.length(); ix++) {
 			final JSONObject mockBlock = mockBlockDb.getJSONObject(ix);
 			final Block block = getBlock(mockBlock, true);
-			for (final Transaction transaction : block.getTransactionList()) {
+			for (int txIx = 0; txIx < block.getTransactionList().size(); txIx++) {
+				final Transaction transaction = block.getTransactionList().get(txIx);
 				for (final TransactionOutput output : transaction.outputs) {
 					if (output.scriptHash.equals(account)) {
-						if (!assetIdTxoMapList.containsKey(output.assetId)) {
-							assetIdTxoMapList.put(output.assetId, new ArrayList<>());
+						if (!assetIdTxoMap.containsKey(output.assetId)) {
+							assetIdTxoMap.put(output.assetId, new TreeMap<>());
 						}
-						assetIdTxoMapList.get(output.assetId).add(output);
+						final CoinReference cr = new CoinReference(transaction.getHash(), new UInt16(txIx));
+						assetIdTxoMap.get(output.assetId).put(output, cr);
 					}
 				}
 			}
 		}
-		return assetIdTxoMapList;
+		return assetIdTxoMap;
 	}
 
 	@Override

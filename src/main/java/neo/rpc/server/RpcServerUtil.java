@@ -21,6 +21,7 @@ import neo.model.core.Block;
 import neo.model.core.CoinReference;
 import neo.model.core.Transaction;
 import neo.model.core.TransactionOutput;
+import neo.model.db.BlockDb;
 import neo.model.util.MapUtil;
 import neo.model.util.ModelUtil;
 import neo.network.LocalControllerNode;
@@ -52,8 +53,35 @@ import neo.network.model.RemoteNodeData;
  *
  * @author coranos
  *
+ *         TODO: rename CoZ API to REST api, as it's REST vs RPC not CORE vs
+ *         COZ.
  */
 public final class RpcServerUtil {
+
+	/**
+	 * the JSON key, "value".
+	 */
+	private static final String VALUE = "value";
+
+	/**
+	 * the JSON key, "index".
+	 */
+	private static final String INDEX = "index";
+
+	/**
+	 * the JSON key, "txid".
+	 */
+	private static final String TXID = "txid";
+
+	/**
+	 * the JSON key, "address".
+	 */
+	private static final String ADDRESS = "address";
+
+	/**
+	 * the JSON key, "history".
+	 */
+	private static final String HISTORY = "history";
 
 	/**
 	 * the JSON key, "unspent".
@@ -607,8 +635,8 @@ public final class RpcServerUtil {
 			final Map<UInt256, Fixed8> assetValueMap = controller.getLocalNodeData().getBlockDb()
 					.getAssetValueMap(scriptHash);
 
-			final Map<UInt256, List<TransactionOutput>> transactionOutputListMap = controller.getLocalNodeData()
-					.getBlockDb().getUnspentTransactionOutputListMap(scriptHash);
+			final Map<UInt256, Map<TransactionOutput, CoinReference>> transactionOutputListMap = controller
+					.getLocalNodeData().getBlockDb().getUnspentTransactionOutputListMap(scriptHash);
 
 			if (assetValueMap == null) {
 				final JSONObject response = new JSONObject();
@@ -618,21 +646,17 @@ public final class RpcServerUtil {
 				return response;
 			}
 
-			final boolean ifNullReturnEmpty = true;
-
 			final Fixed8 neo = assetValueMap.get(ModelUtil.NEO_HASH);
 			final Fixed8 gas = assetValueMap.get(ModelUtil.GAS_HASH);
 
 			final JSONObject response = new JSONObject();
 			final JSONObject neoJo = new JSONObject();
 
-			neoJo.put(UNSPENT,
-					ModelUtil.toJSONArray(ifNullReturnEmpty, transactionOutputListMap.get(ModelUtil.NEO_HASH)));
+			neoJo.put(UNSPENT, toUnspentJSONArray(transactionOutputListMap.get(ModelUtil.NEO_HASH), false));
 			neoJo.put(BALANCE, neo);
 
 			final JSONObject gasJo = new JSONObject();
-			neoJo.put(UNSPENT,
-					ModelUtil.toJSONArray(ifNullReturnEmpty, transactionOutputListMap.get(ModelUtil.GAS_HASH)));
+			gasJo.put(UNSPENT, toUnspentJSONArray(transactionOutputListMap.get(ModelUtil.GAS_HASH), true));
 			gasJo.put(BALANCE, gas);
 
 			response.put(GAS, gasJo);
@@ -641,6 +665,70 @@ public final class RpcServerUtil {
 			return response;
 		} catch (final RuntimeException e) {
 			LOG.error("onGetCityOfZionBalance", e);
+			final JSONObject response = new JSONObject();
+			if (e.getMessage() == null) {
+				response.put(ERROR, e.getClass().getName());
+			} else {
+				response.put(ERROR, e.getMessage());
+			}
+			response.put(EXPECTED, EXPECTED_GENERIC_HEX);
+			response.put(ACTUAL, address);
+			return response;
+		}
+	}
+
+	/**
+	 * return the transaction history of the address.
+	 *
+	 * @param controller
+	 *            the controller to use.
+	 * @param address
+	 *            the address to use.
+	 * @return the balance of the address.
+	 */
+	private static JSONObject onGetCityOfZionHistory(final LocalControllerNode controller, final String address) {
+		final UInt160 scriptHash = ModelUtil.addressToScriptHash(address);
+		if (LOG.isTraceEnabled()) {
+			LOG.trace("onGetCityOfZionHistory.scriptHash:{}", scriptHash);
+		}
+
+		try {
+			final BlockDb blockDb = controller.getLocalNodeData().getBlockDb();
+			final List<Transaction> transactionList = blockDb.getTransactionWithAccountList(scriptHash);
+
+			final JSONArray historyJa = new JSONArray();
+			if (transactionList != null) {
+				for (final Transaction transaction : transactionList) {
+					Fixed8 neo = ModelUtil.FIXED8_ZERO;
+					Fixed8 gas = ModelUtil.FIXED8_ZERO;
+					for (final TransactionOutput to : transaction.outputs) {
+						if (to.scriptHash.equals(scriptHash)) {
+							if (to.assetId.equals(ModelUtil.NEO_HASH)) {
+								neo = ModelUtil.add(neo, to.value);
+							}
+							if (to.assetId.equals(ModelUtil.GAS_HASH)) {
+								gas = ModelUtil.add(gas, to.value);
+							}
+						}
+					}
+					final JSONObject transactionResponse = new JSONObject();
+
+					transactionResponse.put(GAS, ModelUtil.toRoundedDouble(gas.value));
+					transactionResponse.put(NEO, ModelUtil.toRoundedLong(neo.value));
+
+					final Long blockIndex = blockDb.getBlockIndexFromTransactionHash(transaction.getHash());
+					transactionResponse.put("block_index", blockIndex);
+					transactionResponse.put(TXID, transaction.getHash().toString());
+					historyJa.put(transactionResponse);
+				}
+			}
+			final JSONObject response = new JSONObject();
+			response.put(ADDRESS, address);
+			response.put(HISTORY, historyJa);
+			response.put(NET, controller.getLocalNodeData().getNetworkName());
+			return response;
+		} catch (final RuntimeException e) {
+			LOG.error("onGetCityOfZionHistory", e);
 			final JSONObject response = new JSONObject();
 			if (e.getMessage() == null) {
 				response.put(ERROR, e.getClass().getName());
@@ -1068,8 +1156,7 @@ public final class RpcServerUtil {
 				throw new NotImplementedException(cityOfZionCommand.getUriPrefix());
 			}
 			case HISTORY: {
-				// TODO : implement.
-				throw new NotImplementedException(cityOfZionCommand.getUriPrefix());
+				return onGetCityOfZionHistory(controller, remainder);
 			}
 			case TRANSACTION: {
 				return onGetCityOfZionTransaction(controller, remainder);
@@ -1086,6 +1173,42 @@ public final class RpcServerUtil {
 			}
 			}
 		}
+	}
+
+	/**
+	 * converts a map of TransactionOutputs and CoinReferences to a json array of
+	 * unspent transaction outputs.
+	 *
+	 * @param map
+	 *            the map to use.
+	 * @param withDecimals
+	 *            if true, the value should have decimals.
+	 * @return the json array of unspent transaction outputs.
+	 */
+	private static JSONArray toUnspentJSONArray(final Map<TransactionOutput, CoinReference> map,
+			final boolean withDecimals) {
+
+		if (map == null) {
+			return null;
+		}
+
+		final JSONArray array = new JSONArray();
+
+		for (final TransactionOutput output : map.keySet()) {
+			final CoinReference cr = map.get(output);
+			final JSONObject elt = new JSONObject();
+			elt.put(INDEX, cr.prevIndex.asInt());
+			elt.put(TXID, cr.prevHash.toHexString());
+
+			if (withDecimals) {
+				elt.put(VALUE, ModelUtil.toRoundedDouble(output.value.value));
+			} else {
+				elt.put(VALUE, ModelUtil.toRoundedLong(output.value.value));
+			}
+			array.put(elt);
+		}
+
+		return array;
 	}
 
 	/**

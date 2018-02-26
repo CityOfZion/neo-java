@@ -27,6 +27,12 @@ if the blockchain appears to be corrupt, run the following command:
 java -jar target/neo-java-0.0.1-SNAPSHOT-jar-with-dependencies.jar /validate
 ```
 
+uploading to an ec2 instance 
+
+```
+scp -i "t2.micro.neo-cli.pem" chain.acc ubuntu@HOST.amazonaws.com:chain.acc
+```
+
 todo:
 1) check message checksum
 2) use VM to check scripts
