@@ -16,6 +16,7 @@ import java.text.NumberFormat;
 
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.time.FastDateFormat;
+import org.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -95,7 +96,6 @@ public final class BlockImportExportUtil {
 			final long maxIndex = new UInt32(maxIndexBa).asLong();
 
 			final NumberFormat integerFormat = NumberFormat.getIntegerInstance();
-			final NumberFormat doubleFormat = NumberFormat.getNumberInstance();
 			LOG.info("started import {}", integerFormat.format(maxIndex));
 			final BlockDb blockDb = controller.getLocalNodeData().getBlockDb();
 
@@ -130,14 +130,22 @@ public final class BlockImportExportUtil {
 
 				final long ms = blockTs.getTime() - startMs;
 				if (ms > (86400 * 1000)) {
-					final double tps = interimTx / (ms / 1000.0);
-					final double bps = interimBlocks / (ms / 1000.0);
 					final Block maxBlockHeader = blockDb.getHeaderOfBlockWithMaxIndex();
-					LOG.info("INTERIM import {} of {}, synched, height {}, accounts {}, tx {}, bpd {} tpd {}, ts {}",
-							integerFormat.format(blockIx), integerFormat.format(maxIndex),
-							integerFormat.format(maxBlockHeader.getIndexAsLong()),
-							integerFormat.format(blockDb.getAccountCount()), integerFormat.format(totalTx),
-							doubleFormat.format(bps), doubleFormat.format(tps), dateFormat.format(blockTs));
+
+					final String dateStr = dateFormat.format(blockTs);
+					final JSONObject stats = new JSONObject();
+					stats.put("date", dateStr);
+					stats.put("accounts", blockDb.getAccountCount());
+					stats.put("transactions", interimTx);
+					stats.put("blocks", interimBlocks);
+					if (blockIx > 0) {
+						statsWriter.println(",");
+					}
+					statsWriter.println(stats);
+
+					LOG.info("INTERIM import {} of {}, bx {}, tx {} json {}", integerFormat.format(blockIx),
+							integerFormat.format(maxIndex), integerFormat.format(maxBlockHeader.getIndexAsLong()),
+							integerFormat.format(totalTx), stats);
 					startMs = blockTs.getTime();
 					interimTx = 0;
 					interimBlocks = 0;
