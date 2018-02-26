@@ -1,5 +1,15 @@
 # neo-java
 
+
+
+to check versions of plugins and dependencies, run the following command:
+
+```
+mvn versions:display-dependency-updates
+
+mvn versions:display-plugin-updates
+```
+
 to build and do code coverage run the following command:
 
 ```

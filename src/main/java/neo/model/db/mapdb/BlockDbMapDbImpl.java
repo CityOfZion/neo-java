@@ -53,7 +53,7 @@ public final class BlockDbMapDbImpl implements BlockDb {
 	/**
 	 * the allocation increment size.
 	 */
-	private static final int ALLOCATION_INCREMENT_SIZE = 8 * 1024 * 1024;
+	private static final int ALLOCATION_INCREMENT_SIZE = 1024 * 1024;
 
 	/**
 	 * the logger.
@@ -157,6 +157,17 @@ public final class BlockDbMapDbImpl implements BlockDb {
 		LOG.debug("STARTED shutdown");
 		db.close();
 		LOG.debug("SUCCESS shutdown");
+	}
+
+	/**
+	 * commit the validation so far.
+	 *
+	 * @param lastGoodBlockIndex
+	 *            the last good block index.
+	 */
+	private void commitValidation(final long lastGoodBlockIndex) {
+		setBlockIndex(lastGoodBlockIndex);
+		db.commit();
 	}
 
 	/**
@@ -1141,16 +1152,25 @@ public final class BlockDbMapDbImpl implements BlockDb {
 
 					lastGoodBlockIndex = block.getIndexAsLong();
 				}
+
+				final boolean forceSynch = (lastGoodBlockIndex % 500) == 0;
+				if (forceSynch) {
+					LOG.info("INTERIM validate, partial commit STARTED index {}", lastGoodBlockIndex);
+					commitValidation(lastGoodBlockIndex);
+					LOG.info("INTERIM validate, partial commit SUCCESS index {}", lastGoodBlockIndex);
+				}
+
 				blockHeight++;
 			}
-			setBlockIndex(lastGoodBlockIndex);
 
-			LOG.info("INTERIM validate, commit STARTED");
-			db.commit();
-			LOG.info("INTERIM validate, commit SUCCESS");
+			LOG.info("INTERIM validate, commit STARTED index {}", lastGoodBlockIndex);
+			commitValidation(lastGoodBlockIndex);
+			LOG.info("INTERIM validate, commit SUCCESS index {}", lastGoodBlockIndex);
 
 			LOG.info("SUCCESS validate");
-		} catch (final Exception e) {
+		} catch (
+
+		final Exception e) {
 			LOG.error("FAILURE validate", e);
 			db.rollback();
 			throw new RuntimeException(e);
