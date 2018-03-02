@@ -84,7 +84,7 @@
       <property name="max" value="200"/>
     </module>
     <module name="ParameterNumber">
-      <property name="max" value="15"/>
+      <property name="max" value="16"/>
     </module>
     <module name="OuterTypeNumber"/>
     <module name="MethodCount">

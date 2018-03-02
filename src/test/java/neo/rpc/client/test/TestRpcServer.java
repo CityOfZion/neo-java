@@ -535,7 +535,7 @@ public class TestRpcServer {
 	}
 
 	/**
-	 * test CoZ getbalance.
+	 * test CoZ gethistory.
 	 */
 	@Test
 	public void test021CityOfZionGetHistory() {
@@ -548,6 +548,32 @@ public class TestRpcServer {
 		final String method = CoreRpcCommandEnum.UNKNOWN.getName();
 		final String expectedStrRaw = TestUtil.getJsonTestResourceAsString(TEST_PACKAGE, getClass().getSimpleName(),
 				"test021CityOfZionGetHistory");
+
+		CityOfZionCommandEnum.getCommandStartingWith(uri);
+
+		final String actualStrRaw = TestRpcServerUtil.getResponse(CONTROLLER, uri, RpcServerUtil.VERSION_2_0, params,
+				method);
+
+		final String expectedStr = new JSONObject(expectedStrRaw).toString(2);
+		final String actualStr = new JSONObject(actualStrRaw).toString(2);
+
+		Assert.assertEquals(TestUtil.RESPONSES_MUST_MATCH, expectedStr, actualStr);
+	}
+
+	/**
+	 * test CoZ gethistory.
+	 */
+	@Test
+	public void test022CityOfZionGetClaims() {
+		final JSONArray params = new JSONArray();
+		final Block block = CONTROLLER.getLocalNodeData().getBlockDb().getFullBlockFromHeight(0);
+		final Transaction transaction = block.getTransactionList().get(block.getTransactionList().size() - 1);
+		final TransactionOutput to = transaction.outputs.get(0);
+		final String address = ModelUtil.scriptHashToAddress(to.scriptHash);
+		final String uri = CityOfZionCommandEnum.CLAIMS.getUriPrefix() + address;
+		final String method = CoreRpcCommandEnum.UNKNOWN.getName();
+		final String expectedStrRaw = TestUtil.getJsonTestResourceAsString(TEST_PACKAGE, getClass().getSimpleName(),
+				"test022CityOfZionGetClaims");
 
 		CityOfZionCommandEnum.getCommandStartingWith(uri);
 

@@ -1,5 +1,14 @@
 {
 	"local": {
+		"system-fee": {
+			"ENROLLMENT_TRANSACTION": 1000,
+			"ISSUE_TRANSACTION": 500,
+			"PUBLISH_TRANSACTION": 500,
+			"REGISTER_TRANSACTION": 10000,
+			"MINER_TRANSACTION": 0,
+			"CLAIM_TRANSACTION": 0,
+			"INVOCATION_TRANSACTION": 0
+		},
 		"seed-node-file": "seedNodes.json",
 		"good-node-file": "goodNodes.json",
 		"magic": 7630401,

@@ -2,10 +2,12 @@ package neo.network;
 
 import java.io.File;
 import java.io.IOException;
+import java.math.BigInteger;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
+import java.util.EnumMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -20,8 +22,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import neo.model.IndexedSet;
+import neo.model.bytes.Fixed8;
 import neo.model.core.Block;
 import neo.model.core.Header;
+import neo.model.core.TransactionType;
 import neo.model.db.BlockDb;
 import neo.model.network.AddrPayload;
 import neo.model.network.HeadersPayload;
@@ -32,6 +36,7 @@ import neo.model.network.VersionPayload;
 import neo.model.util.ConfigurationUtil;
 import neo.model.util.JsonUtil;
 import neo.model.util.MapUtil;
+import neo.model.util.ModelUtil;
 import neo.model.util.threadpool.ThreadPool;
 import neo.network.model.LocalNodeData;
 import neo.network.model.NodeConnectionPhaseEnum;
@@ -166,9 +171,17 @@ public class LocalControllerNode {
 		final File seedNodeFile = new File(localJson.getString(ConfigurationUtil.SEED_NODE_FILE));
 		final File goodNodeFile = new File(localJson.getString(ConfigurationUtil.GOOD_NODE_FILE));
 
+		final Map<TransactionType, Fixed8> transactionSystemFeeMap = new EnumMap<>(TransactionType.class);
+		final JSONObject transactionSystemFeeJson = localJson.getJSONObject(ConfigurationUtil.SYSTEM_FEE);
+		for (final String key : transactionSystemFeeJson.keySet()) {
+			final long value = transactionSystemFeeJson.getLong(key);
+			final TransactionType txType = TransactionType.valueOf(key);
+			transactionSystemFeeMap.put(txType, ModelUtil.getFixed8(BigInteger.valueOf(value)));
+		}
+
 		localNodeData = new LocalNodeData(magic, activeThreadCount, rpcClientTimeoutMillis, rpcServerTimeoutMillis,
 				blockDbImplClass, timersMap, nonce, tcpPort, seedNodeFile, goodNodeFile, socketFactoryClass,
-				blockDbJson, rpcDisabledCalls, rpcPort, networkName);
+				blockDbJson, rpcDisabledCalls, rpcPort, networkName, transactionSystemFeeMap);
 		LocalNodeDataSynchronizedUtil.refreshCityOfZionBlockHeight(localNodeData);
 
 		threadPool = new ThreadPool(localJson.getInt(ConfigurationUtil.THREAD_POOL_COUNT));

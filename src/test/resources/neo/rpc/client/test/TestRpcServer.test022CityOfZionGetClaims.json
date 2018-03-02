@@ -1,0 +1,15 @@
+{
+	"address": "AQVh2pG732YvtNaxEGkQUei3YA4cvo7d2i",
+	"claims": [
+		{
+			"sysfee": 20500,
+			"start": 0,
+			"txid": "da7c124f33b051fb04f95a02304837433499eb09087e3d035b6fca2460f63136",
+			"index": 3,
+			"claim": 1602050000000000,
+			"end": 0,
+			"value": 100000000
+		}
+	],
+	"net": "MainNet"
+}

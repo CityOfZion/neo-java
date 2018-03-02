@@ -8,7 +8,6 @@ import java.util.Set;
 import java.util.TreeMap;
 
 import org.apache.commons.codec.binary.Hex;
-import org.apache.commons.lang.NotImplementedException;
 import org.json.JSONArray;
 import org.json.JSONObject;
 import org.slf4j.Logger;
@@ -21,6 +20,7 @@ import neo.model.core.Block;
 import neo.model.core.CoinReference;
 import neo.model.core.Transaction;
 import neo.model.core.TransactionOutput;
+import neo.model.core.TransactionType;
 import neo.model.db.BlockDb;
 import neo.model.util.MapUtil;
 import neo.model.util.ModelUtil;
@@ -57,6 +57,26 @@ import neo.network.model.RemoteNodeData;
  *         COZ.
  */
 public final class RpcServerUtil {
+
+	/**
+	 * the JSON key, "sysfee".
+	 */
+	private static final String SYSFEE = "sysfee";
+
+	/**
+	 * the JSON key, "start".
+	 */
+	private static final String START = "start";
+
+	/**
+	 * the JSON key, "end".
+	 */
+	private static final String END = "end";
+
+	/**
+	 * the JSON key, "claims".
+	 */
+	private static final String CLAIMS = "claims";
 
 	/**
 	 * the JSON key, "value".
@@ -207,6 +227,90 @@ public final class RpcServerUtil {
 	 * the method request tag.
 	 */
 	public static final String METHOD = "method";
+
+	/**
+	 * gas generation amount.
+	 */
+	private static final long[] GENERATION_AMOUNT = new long[] { 8, 7, 6, 5, 4, 3, 2, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+			1, 1, 1, 1 };
+
+	/**
+	 * gas generation length.
+	 */
+	private static final long GENERATION_LENGTH = 22;
+
+	/**
+	 * gas generation decrement interval.
+	 */
+	private static final long DECREMENT_INTERVAL = 2000000;
+
+	/**
+	 * calculates the bonus for the given claim.
+	 *
+	 * @param claim
+	 *            the claim to use.
+	 * @return the bonus.
+	 */
+	private static long calculateBonus(final JSONObject claim) {
+		long amountClaimed = 0;
+		final long startHeight = claim.getLong(START);
+		final long endHeight = claim.getLong(END);
+		long amount = 0;
+		long ustart = startHeight / DECREMENT_INTERVAL;
+		if (ustart < GENERATION_LENGTH) {
+			long istart = startHeight % DECREMENT_INTERVAL;
+			long uend = endHeight / DECREMENT_INTERVAL;
+			long iend = endHeight % DECREMENT_INTERVAL;
+			if (uend >= GENERATION_LENGTH) {
+				uend = GENERATION_LENGTH;
+				iend = 0;
+			}
+			if (iend == 0) {
+				uend = uend - 1;
+				iend = DECREMENT_INTERVAL;
+			}
+			while (ustart < uend) {
+				amount += (DECREMENT_INTERVAL - istart) * GENERATION_AMOUNT[(int) ustart];
+				ustart += 1;
+				istart = 0;
+			}
+
+			amount += (iend - istart) * GENERATION_AMOUNT[(int) ustart];
+		}
+
+		amount += claim.getLong(SYSFEE);
+		amountClaimed += claim.getInt(VALUE) * amount;
+		return amountClaimed;
+	}
+
+	/**
+	 * calculates the system fee for the given blocks.
+	 *
+	 * @param systemFeeMap
+	 *            the map of system fees by transaction type.
+	 *
+	 * @param blockDb
+	 *            the block database.
+	 * @param startBlockIx
+	 *            the start block index.
+	 *
+	 * @param endBlockIx
+	 *            the end block index.
+	 *
+	 * @return the system fee.
+	 */
+	private static long computeSysFee(final Map<TransactionType, Fixed8> systemFeeMap, final BlockDb blockDb,
+			final long startBlockIx, final long endBlockIx) {
+		long sysFee = 0;
+
+		for (long blockIx = startBlockIx; blockIx <= endBlockIx; blockIx++) {
+			final Block block = blockDb.getFullBlockFromHeight(blockIx);
+			for (final Transaction tx : block.getTransactionList()) {
+				sysFee += systemFeeMap.get(tx.type).value;
+			}
+		}
+		return sysFee;
+	}
 
 	/**
 	 * finds a block with a given timestamp.
@@ -665,6 +769,86 @@ public final class RpcServerUtil {
 			return response;
 		} catch (final RuntimeException e) {
 			LOG.error("onGetCityOfZionBalance", e);
+			final JSONObject response = new JSONObject();
+			if (e.getMessage() == null) {
+				response.put(ERROR, e.getClass().getName());
+			} else {
+				response.put(ERROR, e.getMessage());
+			}
+			response.put(EXPECTED, EXPECTED_GENERIC_HEX);
+			response.put(ACTUAL, address);
+			return response;
+		}
+	}
+
+	/**
+	 * return the available claims of the address.
+	 *
+	 * @param controller
+	 *            the controller to use.
+	 * @param address
+	 *            the address to use.
+	 * @return the balance of the address.
+	 */
+	private static JSONObject onGetCityOfZionClaims(final LocalControllerNode controller, final String address) {
+		final UInt160 scriptHash = ModelUtil.addressToScriptHash(address);
+		if (LOG.isTraceEnabled()) {
+			LOG.trace("onGetCityOfZionClaims.scriptHash:{}", scriptHash);
+		}
+
+		try {
+			final BlockDb blockDb = controller.getLocalNodeData().getBlockDb();
+			final Map<UInt256, Map<TransactionOutput, CoinReference>> transactionOutputListMap = controller
+					.getLocalNodeData().getBlockDb().getUnspentTransactionOutputListMap(scriptHash);
+
+			final JSONArray claimJa = new JSONArray();
+
+			if (transactionOutputListMap != null) {
+				final Map<TransactionOutput, CoinReference> neoTransactionOutputListMap = transactionOutputListMap
+						.get(ModelUtil.NEO_HASH);
+
+				final Map<TransactionOutput, Long> blockIxByTxoMap = new TreeMap<>();
+
+				final List<Transaction> transactionList = blockDb.getTransactionWithAccountList(scriptHash);
+				for (final Transaction transaction : transactionList) {
+					final long blockIx = blockDb.getBlockIndexFromTransactionHash(transaction.getHash());
+					for (final TransactionOutput to : transaction.outputs) {
+						if (neoTransactionOutputListMap.containsKey(to)) {
+							blockIxByTxoMap.put(to, blockIx);
+						}
+					}
+				}
+
+				for (final TransactionOutput output : neoTransactionOutputListMap.keySet()) {
+					final CoinReference cr = neoTransactionOutputListMap.get(output);
+					final JSONObject unspent = toUnspentJSONObject(false, output, cr);
+
+					final JSONObject claim = new JSONObject();
+					final String txHashStr = unspent.getString(TXID);
+					claim.put(TXID, txHashStr);
+					claim.put(INDEX, unspent.getLong(INDEX));
+					claim.put(VALUE, unspent.getLong(VALUE));
+
+					final UInt256 txHash = ModelUtil.getUInt256(ByteBuffer.wrap(ModelUtil.decodeHex(txHashStr)), true);
+					final long start = blockDb.getBlockIndexFromTransactionHash(txHash);
+					claim.put(START, start);
+
+					final long end = blockIxByTxoMap.get(output);
+					claim.put(END, end);
+					claim.put(SYSFEE, computeSysFee(controller.getLocalNodeData().getTransactionSystemFeeMap(), blockDb,
+							start, end));
+					claim.put("claim", calculateBonus(claim));
+
+					claimJa.put(claim);
+				}
+			}
+			final JSONObject response = new JSONObject();
+			response.put(ADDRESS, address);
+			response.put(CLAIMS, claimJa);
+			response.put(NET, controller.getLocalNodeData().getNetworkName());
+			return response;
+		} catch (final RuntimeException e) {
+			LOG.error("onGetCityOfZionClaims", e);
 			final JSONObject response = new JSONObject();
 			if (e.getMessage() == null) {
 				response.put(ERROR, e.getClass().getName());
@@ -1152,8 +1336,7 @@ public final class RpcServerUtil {
 				return onGetCityOfZionBalance(controller, remainder);
 			}
 			case CLAIMS: {
-				// TODO : implement.
-				throw new NotImplementedException(cityOfZionCommand.getUriPrefix());
+				return onGetCityOfZionClaims(controller, remainder);
 			}
 			case HISTORY: {
 				return onGetCityOfZionHistory(controller, remainder);
@@ -1196,19 +1379,37 @@ public final class RpcServerUtil {
 
 		for (final TransactionOutput output : map.keySet()) {
 			final CoinReference cr = map.get(output);
-			final JSONObject elt = new JSONObject();
-			elt.put(INDEX, cr.prevIndex.asInt());
-			elt.put(TXID, cr.prevHash.toHexString());
-
-			if (withDecimals) {
-				elt.put(VALUE, ModelUtil.toRoundedDouble(output.value.value));
-			} else {
-				elt.put(VALUE, ModelUtil.toRoundedLong(output.value.value));
-			}
+			final JSONObject elt = toUnspentJSONObject(withDecimals, output, cr);
 			array.put(elt);
 		}
 
 		return array;
+	}
+
+	/**
+	 * converts a TransactionOutput and CoinReference to a json object of the
+	 * unspent transaction output.
+	 *
+	 * @param output
+	 *            the TransactionOutput to use.
+	 * @param cr
+	 *            the CoinReference to use.
+	 * @param withDecimals
+	 *            if true, the value should have decimals.
+	 * @return the json object of the unspent transaction output.
+	 */
+	public static JSONObject toUnspentJSONObject(final boolean withDecimals, final TransactionOutput output,
+			final CoinReference cr) {
+		final JSONObject elt = new JSONObject();
+		elt.put(INDEX, cr.prevIndex.asInt());
+		elt.put(TXID, cr.prevHash.toHexString());
+
+		if (withDecimals) {
+			elt.put(VALUE, ModelUtil.toRoundedDouble(output.value.value));
+		} else {
+			elt.put(VALUE, ModelUtil.toRoundedLong(output.value.value));
+		}
+		return elt;
 	}
 
 	/**

@@ -17,6 +17,11 @@ import org.json.JSONObject;
 public final class ConfigurationUtil {
 
 	/**
+	 * the system fee.
+	 */
+	public static final String SYSTEM_FEE = "system-fee";
+
+	/**
 	 * the sleep interval.
 	 */
 	public static final String SLEEP_INTERVAL = "sleep-interval";
