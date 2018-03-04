@@ -19,6 +19,7 @@ import java.util.TreeSet;
 
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.time.FastDateFormat;
+import org.apache.kerby.util.Hex;
 import org.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -41,16 +42,6 @@ import neo.network.LocalControllerNode;
 public final class BlockImportExportUtil {
 
 	/**
-	 * the name for the exported chain file.
-	 */
-	private static final String CHAIN_ACC_FILE_NM = "chain.acc";
-
-	/**
-	 * the name for the exported chain file's stats file.
-	 */
-	private static final String CHAIN_STATS_FILE_NM = "chain-stats.json";
-
-	/**
 	 * the logger.
 	 */
 	private static final Logger LOG = LoggerFactory.getLogger(BlockImportExportUtil.class);
@@ -62,21 +53,27 @@ public final class BlockImportExportUtil {
 	 *            the controller.
 	 */
 	public static void exportBlocks(final LocalControllerNode controller) {
-		try (DataOutputStream out = new DataOutputStream(
-				new BufferedOutputStream(new FileOutputStream(CHAIN_ACC_FILE_NM), 1024 * 1024 * 32))) {
+		try (DataOutputStream out = new DataOutputStream(new BufferedOutputStream(
+				new FileOutputStream(controller.getLocalNodeData().getChainExportDataFileName()), 1024 * 1024 * 32))) {
 			final long maxIndex = controller.getLocalNodeData().getBlockDb().getHeaderOfBlockWithMaxIndex()
 					.getIndexAsLong();
 			final byte[] maxIndexBa = new UInt32(maxIndex + 1).toByteArray();
-			ArrayUtils.reverse(maxIndexBa);
 			out.write(maxIndexBa);
+
+			if (LOG.isTraceEnabled()) {
+				LOG.trace("export maxIndexBa aswritten {}", Hex.encode(maxIndexBa));
+			}
+
 			for (long blockIx = 0; blockIx <= maxIndex; blockIx++) {
 				LOG.info("STARTED export {} of {} ", blockIx, maxIndex);
 				final byte[] ba = controller.getLocalNodeData().getBlockDb().getFullBlockFromHeight(blockIx)
 						.toByteArray();
-				out.writeInt(Integer.reverseBytes(ba.length));
+				final int length = Integer.reverseBytes(ba.length);
+				out.writeInt(length);
 				out.write(ba);
-				LOG.info("SUCCESS export {} of {} ", blockIx, maxIndex);
+				LOG.info("SUCCESS export {} of {} length {}", blockIx, maxIndex, ba.length);
 			}
+			out.flush();
 		} catch (final IOException e) {
 			throw new RuntimeException(e);
 		}
@@ -92,10 +89,11 @@ public final class BlockImportExportUtil {
 		final NumberFormat integerFormat = NumberFormat.getIntegerInstance();
 		final BlockDb blockDb = controller.getLocalNodeData().getBlockDb();
 
-		try (OutputStream statsFileOut = new FileOutputStream(CHAIN_STATS_FILE_NM);
+		try (OutputStream statsFileOut = new FileOutputStream(
+				controller.getLocalNodeData().getChainExportStatsFileName());
 				PrintWriter statsWriter = new PrintWriter(statsFileOut, true);) {
 			long maxIndex = 0;
-			try (InputStream fileIn = new FileInputStream(CHAIN_ACC_FILE_NM);
+			try (InputStream fileIn = new FileInputStream(controller.getLocalNodeData().getChainExportDataFileName());
 					BufferedInputStream buffIn = new BufferedInputStream(fileIn, 1024 * 1024 * 32);
 					DataInputStream in = new DataInputStream(buffIn);) {
 
@@ -103,6 +101,11 @@ public final class BlockImportExportUtil {
 
 				final byte[] maxIndexBa = new byte[UInt32.SIZE];
 				in.read(maxIndexBa);
+
+				if (LOG.isTraceEnabled()) {
+					LOG.info("import maxIndexBa asread {}", Hex.encode(maxIndexBa));
+				}
+
 				ArrayUtils.reverse(maxIndexBa);
 				maxIndex = new UInt32(maxIndexBa).asLong();
 
@@ -111,15 +114,16 @@ public final class BlockImportExportUtil {
 				final FastDateFormat dateFormat = FastDateFormat.getInstance("yyyy.MM.dd");
 				long startMs = -1;
 				long interimBlocks = 0;
+				long interimBytes = 0;
 				final long[] interimTx = new long[TransactionType.values().length];
-				final long[] totalTx = new long[TransactionType.values().length];
+				long totalTx = 0;
 				final Set<UInt160> activeAccountSet = new TreeSet<>();
 
 				long procStartMs = System.currentTimeMillis();
 
-				for (long blockIx = 0; blockIx <= maxIndex; blockIx++) {
+				for (long blockIx = 0; blockIx < maxIndex; blockIx++) {
 					final int length = Integer.reverseBytes(in.readInt());
-					LOG.debug("STARTED import {} of {} length {}", integerFormat.format(blockIx),
+					LOG.info("STARTED import {} of {} length {}", integerFormat.format(blockIx),
 							integerFormat.format(maxIndex), integerFormat.format(length));
 					final byte[] ba = new byte[length];
 					in.read(ba);
@@ -128,10 +132,11 @@ public final class BlockImportExportUtil {
 					blockDb.put(forceSynch, block);
 
 					interimBlocks++;
+					interimBytes += ba.length;
 
 					for (final Transaction tx : block.getTransactionList()) {
 						interimTx[tx.type.ordinal()]++;
-						totalTx[tx.type.ordinal()]++;
+						totalTx++;
 						for (final TransactionOutput txOut : tx.outputs) {
 							activeAccountSet.add(txOut.scriptHash);
 						}
@@ -168,6 +173,7 @@ public final class BlockImportExportUtil {
 						stats.put("transactions", transactions);
 
 						stats.put("blocks", interimBlocks);
+						stats.put("bytes", interimBytes);
 						if (blockIx > 0) {
 							statsWriter.println(",");
 						}
@@ -182,6 +188,7 @@ public final class BlockImportExportUtil {
 							interimTx[ix] = 0;
 						}
 						interimBlocks = 0;
+						interimBytes = 0;
 						activeAccountSet.clear();
 						procStartMs = System.currentTimeMillis();
 					}
@@ -193,8 +200,9 @@ public final class BlockImportExportUtil {
 				if (e instanceof EOFException) {
 					blockDb.put(true);
 					final Block maxBlockHeader = blockDb.getHeaderOfBlockWithMaxIndex();
-					LOG.error("FAILURE import {} of {}, synched", integerFormat.format(maxBlockHeader.getIndexAsLong()),
-							maxIndex);
+					LOG.error("FAILURE import {} of {}, synched, EOFException",
+							integerFormat.format(maxBlockHeader.getIndexAsLong()), maxIndex);
+					LOG.error("EOFException", e);
 					return;
 				} else {
 					throw new RuntimeException(e);

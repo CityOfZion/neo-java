@@ -17,6 +17,21 @@ import org.json.JSONObject;
 public final class ConfigurationUtil {
 
 	/**
+	 * the data file name section.
+	 */
+	public static final String DATA_FILE_NAME = "data-file-name";
+
+	/**
+	 * the stats file name section.
+	 */
+	public static final String STATS_FILE_NAME = "stats-file-name";
+
+	/**
+	 * the import-export section.
+	 */
+	public static final String IMPORT_EXPORT = "import-export";
+
+	/**
 	 * the system fee.
 	 */
 	public static final String SYSTEM_FEE = "system-fee";

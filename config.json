@@ -9,6 +9,10 @@
 			"CLAIM_TRANSACTION": 0,
 			"INVOCATION_TRANSACTION": 0
 		},
+		"import-export": {
+			"data-file-name": "chain.acc",
+			"stats-file-name": "chain-stats.json"
+		},
 		"seed-node-file": "seedNodes.json",
 		"good-node-file": "goodNodes.json",
 		"magic": 7630401,

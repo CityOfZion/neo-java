@@ -171,17 +171,16 @@ public class LocalControllerNode {
 		final File seedNodeFile = new File(localJson.getString(ConfigurationUtil.SEED_NODE_FILE));
 		final File goodNodeFile = new File(localJson.getString(ConfigurationUtil.GOOD_NODE_FILE));
 
-		final Map<TransactionType, Fixed8> transactionSystemFeeMap = new EnumMap<>(TransactionType.class);
-		final JSONObject transactionSystemFeeJson = localJson.getJSONObject(ConfigurationUtil.SYSTEM_FEE);
-		for (final String key : transactionSystemFeeJson.keySet()) {
-			final long value = transactionSystemFeeJson.getLong(key);
-			final TransactionType txType = TransactionType.valueOf(key);
-			transactionSystemFeeMap.put(txType, ModelUtil.getFixed8(BigInteger.valueOf(value)));
-		}
+		final Map<TransactionType, Fixed8> transactionSystemFeeMap = getTransactionSystemFeeMap(localJson);
+
+		final JSONObject importExportJson = localJson.getJSONObject(ConfigurationUtil.IMPORT_EXPORT);
+		final String chainExportDataFileName = importExportJson.getString(ConfigurationUtil.DATA_FILE_NAME);
+		final String chainExportStatsFileName = importExportJson.getString(ConfigurationUtil.STATS_FILE_NAME);
 
 		localNodeData = new LocalNodeData(magic, activeThreadCount, rpcClientTimeoutMillis, rpcServerTimeoutMillis,
 				blockDbImplClass, timersMap, nonce, tcpPort, seedNodeFile, goodNodeFile, socketFactoryClass,
-				blockDbJson, rpcDisabledCalls, rpcPort, networkName, transactionSystemFeeMap);
+				blockDbJson, rpcDisabledCalls, rpcPort, networkName, transactionSystemFeeMap, chainExportDataFileName,
+				chainExportStatsFileName);
 		LocalNodeDataSynchronizedUtil.refreshCityOfZionBlockHeight(localNodeData);
 
 		threadPool = new ThreadPool(localJson.getInt(ConfigurationUtil.THREAD_POOL_COUNT));
@@ -314,6 +313,24 @@ public class LocalControllerNode {
 			throw new RuntimeException(e);
 		}
 		return socketFactoryClass;
+	}
+
+	/**
+	 * return the map of system fees to transaction types.
+	 *
+	 * @param localJson
+	 *            the local json to use.
+	 * @return the map of system fees to transaction types.
+	 */
+	private Map<TransactionType, Fixed8> getTransactionSystemFeeMap(final JSONObject localJson) {
+		final Map<TransactionType, Fixed8> transactionSystemFeeMap = new EnumMap<>(TransactionType.class);
+		final JSONObject transactionSystemFeeJson = localJson.getJSONObject(ConfigurationUtil.SYSTEM_FEE);
+		for (final String key : transactionSystemFeeJson.keySet()) {
+			final long value = transactionSystemFeeJson.getLong(key);
+			final TransactionType txType = TransactionType.valueOf(key);
+			transactionSystemFeeMap.put(txType, ModelUtil.getFixed8(BigInteger.valueOf(value)));
+		}
+		return transactionSystemFeeMap;
 	}
 
 	/**

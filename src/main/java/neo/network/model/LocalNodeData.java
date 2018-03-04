@@ -141,6 +141,16 @@ public class LocalNodeData {
 	private final Map<TransactionType, Fixed8> transactionSystemFeeMap;
 
 	/**
+	 * the name for the exported chain file.
+	 */
+	private final String chainExportDataFileName;
+
+	/**
+	 * the name for the exported chain file's stats file.
+	 */
+	private final String chainExportStatsFileName;
+
+	/**
 	 * the map of verified headers, by blockchain height.
 	 */
 	private final SortedMap<Long, Header> verifiedHeaderPoolMap = new TreeMap<>();
@@ -199,13 +209,18 @@ public class LocalNodeData {
 	 *            the network name.
 	 * @param transactionSystemFeeMap
 	 *            the map of system fees by transaction.
+	 * @param chainExportDataFileName
+	 *            the file name for the exported chain data.
+	 * @param chainExportStatsFileName
+	 *            the file name for the exported chain statistics.
 	 */
 	public LocalNodeData(final long magic, final int activeThreadCount, final long rpcClientTimeoutMillis,
 			final long rpcServerTimeoutMillis, final Class<BlockDb> blockDbClass,
 			final Map<String, TimerData> timersMap, final int nonce, final int tcpPort, final File seedNodeFile,
 			final File goodNodeFile, final Class<SocketFactory> socketFactoryClass, final JSONObject blockDbConfig,
 			final Set<String> rpcDisabledCalls, final int rpcPort, final String networkName,
-			final Map<TransactionType, Fixed8> transactionSystemFeeMap) {
+			final Map<TransactionType, Fixed8> transactionSystemFeeMap, final String chainExportDataFileName,
+			final String chainExportStatsFileName) {
 		startTime = System.currentTimeMillis();
 		this.magic = magic;
 		this.activeThreadCount = activeThreadCount;
@@ -219,6 +234,8 @@ public class LocalNodeData {
 		this.seedNodeFile = seedNodeFile;
 		this.goodNodeFile = goodNodeFile;
 		this.transactionSystemFeeMap = transactionSystemFeeMap;
+		this.chainExportDataFileName = chainExportDataFileName;
+		this.chainExportStatsFileName = chainExportStatsFileName;
 		this.rpcDisabledCalls = Collections.unmodifiableSet(rpcDisabledCalls);
 		try {
 			blockDb = blockDbClass.getConstructor(JSONObject.class).newInstance(blockDbConfig);
@@ -268,6 +285,24 @@ public class LocalNodeData {
 	 */
 	public long getBlockFileSize() {
 		return blockFileSize;
+	}
+
+	/**
+	 * return the name for the exported chain file.
+	 *
+	 * @return the name for the exported chain file.
+	 */
+	public String getChainExportDataFileName() {
+		return chainExportDataFileName;
+	}
+
+	/**
+	 * return the name for the exported chain file's stats file.
+	 *
+	 * @return the name for the exported chain file's stats file.
+	 */
+	public String getChainExportStatsFileName() {
+		return chainExportStatsFileName;
 	}
 
 	/**
