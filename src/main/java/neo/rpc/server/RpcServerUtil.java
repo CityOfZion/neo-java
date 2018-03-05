@@ -55,6 +55,8 @@ import neo.network.model.RemoteNodeData;
  *
  *         TODO: rename CoZ API to REST api, as it's REST vs RPC not CORE vs
  *         COZ.
+ *
+ *         TODO: rename account to address.
  */
 public final class RpcServerUtil {
 
@@ -134,6 +136,11 @@ public final class RpcServerUtil {
 	private static final String FIRST_TS = "first_ts";
 
 	/**
+	 * last timestamp.
+	 */
+	private static final String LAST_TS = "last_ts";
+
+	/**
 	 * gas transaction.
 	 */
 	private static final String GAS_TX = "gas_tx";
@@ -142,6 +149,11 @@ public final class RpcServerUtil {
 	 * neo transaction.
 	 */
 	private static final String NEO_TX = "neo_tx";
+
+	/**
+	 * claim transaction.
+	 */
+	private static final String CLAIM_TX = "claim_tx";
 
 	/**
 	 * gas out.
@@ -313,6 +325,43 @@ public final class RpcServerUtil {
 	}
 
 	/**
+	 * returns the address asset map.
+	 *
+	 * @param blockDb
+	 *            the block database to use.
+	 * @param transaction
+	 *            the transaction to use.
+	 * @return the address asset map.
+	 */
+	public static Map<UInt160, Map<UInt256, Long>> getAddressAssetMap(final BlockDb blockDb,
+			final Transaction transaction) {
+		final Map<UInt160, Map<UInt256, Long>> friendAssetMap = new TreeMap<>();
+
+		for (final CoinReference cr : transaction.inputs) {
+			final UInt256 prevHashReversed = cr.prevHash.reverse();
+			final Transaction tiTx = blockDb.getTransactionWithHash(prevHashReversed);
+
+			if (tiTx == null) {
+				throw new RuntimeException("no transaction with prevHash:" + prevHashReversed);
+			}
+
+			final TransactionOutput ti = tiTx.outputs.get(cr.prevIndex.asInt());
+			final UInt160 input = ti.scriptHash;
+			if ((ti.assetId.equals(ModelUtil.NEO_HASH)) || (ti.assetId.equals(ModelUtil.GAS_HASH))) {
+				MapUtil.increment(friendAssetMap, input, ti.assetId, ti.value.value, TreeMap.class);
+			}
+		}
+
+		for (final TransactionOutput to : transaction.outputs) {
+			final UInt160 output = to.scriptHash;
+			if ((to.assetId.equals(ModelUtil.NEO_HASH)) || (to.assetId.equals(ModelUtil.GAS_HASH))) {
+				MapUtil.increment(friendAssetMap, output, to.assetId, -to.value.value, TreeMap.class);
+			}
+		}
+		return friendAssetMap;
+	}
+
+	/**
 	 * finds a block with a given timestamp.
 	 *
 	 * @param controller
@@ -369,10 +418,11 @@ public final class RpcServerUtil {
 		try {
 			LOG.trace("getaccountlist 0");
 
+			final BlockDb blockDb = controller.getLocalNodeData().getBlockDb();
 			final long fromTs = params.getLong(0);
 			final long toTs = params.getLong(1);
 			final long minHeight = 0;
-			final long maxHeight = controller.getLocalNodeData().getBlockDb().getBlockCount();
+			final long maxHeight = blockDb.getBlockCount();
 			final long fromHeight = getHeightOfTs(controller, 0, minHeight, maxHeight, fromTs);
 			final long toHeight = getHeightOfTs(controller, 0, fromHeight, maxHeight, toTs);
 
@@ -380,71 +430,54 @@ public final class RpcServerUtil {
 
 			LOG.trace("getaccountlist 2 accountStateCache STARTED");
 
-			final Map<UInt160, Map<UInt256, Fixed8>> accountStateCache = controller.getLocalNodeData().getBlockDb()
-					.getAccountAssetValueMap();
-			LOG.trace("getaccountlist 2 accountStateCache SUCCESS, count:{}", accountStateCache.size());
+			final Map<UInt160, Map<UInt256, Fixed8>> addressStateCache = blockDb.getAccountAssetValueMap();
+			LOG.trace("getaccountlist 2 accountStateCache SUCCESS, count:{}", addressStateCache.size());
 
-			final Map<UInt160, Long> neoTxByAccount = new TreeMap<>();
-			final Map<UInt160, Long> gasTxByAccount = new TreeMap<>();
+			final Map<UInt160, Long> neoTxByAddress = new TreeMap<>();
+			final Map<UInt160, Long> gasTxByAddress = new TreeMap<>();
+			final Map<UInt160, Long> claimTxByAddress = new TreeMap<>();
 
-			final Map<UInt160, Long> neoInByAccount = new TreeMap<>();
-			final Map<UInt160, Long> gasInByAccount = new TreeMap<>();
+			final Map<UInt160, Long> neoInByAddress = new TreeMap<>();
+			final Map<UInt160, Long> gasInByAddress = new TreeMap<>();
 
-			final Map<UInt160, Long> neoOutByAccount = new TreeMap<>();
-			final Map<UInt160, Long> gasOutByAccount = new TreeMap<>();
-			final Map<UInt160, Long> firstTsByAccount = new TreeMap<>();
+			final Map<UInt160, Long> neoOutByAddress = new TreeMap<>();
+			final Map<UInt160, Long> gasOutByAddress = new TreeMap<>();
+			final Map<UInt160, Long> firstTsByAddress = new TreeMap<>();
+			final Map<UInt160, Long> lastTsByAddress = new TreeMap<>();
 
 			for (long index = fromHeight; index < toHeight; index++) {
 				LOG.trace("getaccountlist 3 fromHeight:{};toHeight:{};index:{};", fromHeight, toHeight, index);
-				final Block block = controller.getLocalNodeData().getBlockDb().getFullBlockFromHeight(index);
+				final Block block = blockDb.getFullBlockFromHeight(index);
 
 				for (final Transaction t : block.getTransactionList()) {
-					final Map<UInt160, Map<UInt256, Long>> friendAssetMap = new TreeMap<>();
+					final Map<UInt160, Map<UInt256, Long>> addressAssetMap = getAddressAssetMap(blockDb, t);
 
-					for (final CoinReference cr : t.inputs) {
-						final UInt256 prevHashReversed = cr.prevHash.reverse();
-						final Transaction tiTx = controller.getLocalNodeData().getBlockDb()
-								.getTransactionWithHash(prevHashReversed);
-
-						if (tiTx == null) {
-							throw new RuntimeException("no transaction with prevHash:" + prevHashReversed);
+					for (final UInt160 friend : addressAssetMap.keySet()) {
+						if (!firstTsByAddress.containsKey(friend)) {
+							firstTsByAddress.put(friend, block.timestamp.asLong());
 						}
+						lastTsByAddress.put(friend, block.timestamp.asLong());
 
-						final TransactionOutput ti = tiTx.outputs.get(cr.prevIndex.asInt());
-						final UInt160 input = ti.scriptHash;
-						if ((ti.assetId.equals(ModelUtil.NEO_HASH)) || (ti.assetId.equals(ModelUtil.GAS_HASH))) {
-							MapUtil.increment(friendAssetMap, input, ti.assetId, ti.value.value, TreeMap.class);
-						}
-					}
+						if (addressAssetMap.get(friend).containsKey(ModelUtil.NEO_HASH)) {
+							MapUtil.increment(neoTxByAddress, friend);
+							if (t.type.equals(TransactionType.CLAIM_TRANSACTION)) {
+								MapUtil.increment(claimTxByAddress, friend);
+							}
 
-					for (final TransactionOutput to : t.outputs) {
-						final UInt160 output = to.scriptHash;
-						if ((to.assetId.equals(ModelUtil.NEO_HASH)) || (to.assetId.equals(ModelUtil.GAS_HASH))) {
-							MapUtil.increment(friendAssetMap, output, to.assetId, -to.value.value, TreeMap.class);
-						}
-					}
-
-					for (final UInt160 friend : friendAssetMap.keySet()) {
-						if (!firstTsByAccount.containsKey(friend)) {
-							firstTsByAccount.put(friend, block.timestamp.asLong());
-						}
-
-						if (friendAssetMap.get(friend).containsKey(ModelUtil.NEO_HASH)) {
-							MapUtil.increment(neoTxByAccount, friend);
-							final long value = friendAssetMap.get(friend).get(ModelUtil.NEO_HASH);
+							final long value = addressAssetMap.get(friend).get(ModelUtil.NEO_HASH);
 							if (value < 0) {
-								MapUtil.increment(neoInByAccount, friend, -value);
+								MapUtil.increment(neoInByAddress, friend, -value);
 							} else {
-								MapUtil.increment(neoOutByAccount, friend, value);
+								MapUtil.increment(neoOutByAddress, friend, value);
 							}
 						}
-						if (friendAssetMap.get(friend).containsKey(ModelUtil.GAS_HASH)) {
-							MapUtil.increment(gasTxByAccount, friend);
-							final long value = friendAssetMap.get(friend).get(ModelUtil.GAS_HASH);
+						if (addressAssetMap.get(friend).containsKey(ModelUtil.GAS_HASH)) {
+							MapUtil.increment(gasTxByAddress, friend);
+							final long value = addressAssetMap.get(friend).get(ModelUtil.GAS_HASH);
 							if (value < 0) {
-								MapUtil.increment(gasInByAccount, friend, -value);
+								MapUtil.increment(gasInByAddress, friend, -value);
 							} else {
-								MapUtil.increment(gasOutByAccount, friend, value);
+								MapUtil.increment(gasOutByAddress, friend, value);
 							}
 						}
 					}
@@ -453,80 +486,92 @@ public final class RpcServerUtil {
 
 			LOG.trace("getaccountlist 4 addressByAccount STARTED");
 
-			final Map<UInt160, String> addressByAccount = new TreeMap<>();
+			final Map<UInt160, String> addressByScriptHash = new TreeMap<>();
 
-			for (final UInt160 key : accountStateCache.keySet()) {
+			for (final UInt160 key : addressStateCache.keySet()) {
 				final String address = ModelUtil.scriptHashToAddress(key);
-				addressByAccount.put(key, address);
+				addressByScriptHash.put(key, address);
 			}
-			LOG.trace("getaccountlist 4 addressByAccount SUCCESS, address count:{};", addressByAccount.size());
+			LOG.trace("getaccountlist 4 addressByAccount SUCCESS, address count:{};", addressByScriptHash.size());
 
 			LOG.trace("getaccountlist 5 returnList STARTED");
 			final JSONArray returnList = new JSONArray();
 
-			for (final UInt160 key : accountStateCache.keySet()) {
+			for (final UInt160 key : addressStateCache.keySet()) {
 				LOG.trace("getaccountlist 6 key:{};", key);
-				if (addressByAccount.containsKey(key)) {
-					final Map<UInt256, Fixed8> accountState = accountStateCache.get(key);
-					final String address = addressByAccount.get(key);
+				if (addressByScriptHash.containsKey(key)) {
+					final Map<UInt256, Fixed8> addressState = addressStateCache.get(key);
+					final String address = addressByScriptHash.get(key);
 
 					LOG.trace("getaccountlist 7 key:{}; address:{};", key, address);
 
 					final JSONObject entry = new JSONObject();
 					entry.put("account", address);
 
-					if (accountState.containsKey(ModelUtil.NEO_HASH)) {
-						entry.put(ModelUtil.NEO, ModelUtil.toRoundedLong(accountState.get(ModelUtil.NEO_HASH).value));
+					if (addressState.containsKey(ModelUtil.NEO_HASH)) {
+						entry.put(ModelUtil.NEO, ModelUtil.toRoundedLong(addressState.get(ModelUtil.NEO_HASH).value));
 					} else {
 						entry.put(ModelUtil.NEO, 0);
 					}
 
-					if (accountState.containsKey(ModelUtil.GAS_HASH)) {
-						entry.put(ModelUtil.GAS, ModelUtil.toRoundedDouble(accountState.get(ModelUtil.GAS_HASH).value));
+					if (addressState.containsKey(ModelUtil.GAS_HASH)) {
+						entry.put(ModelUtil.GAS, ModelUtil.toRoundedDouble(addressState.get(ModelUtil.GAS_HASH).value));
 					} else {
 						entry.put(ModelUtil.GAS, 0);
 					}
 
-					if (neoInByAccount.containsKey(key)) {
-						entry.put(NEO_IN, ModelUtil.toRoundedLong(neoInByAccount.get(key)));
+					if (neoInByAddress.containsKey(key)) {
+						entry.put(NEO_IN, ModelUtil.toRoundedLong(neoInByAddress.get(key)));
 					} else {
 						entry.put(NEO_IN, 0);
 					}
 
-					if (neoOutByAccount.containsKey(key)) {
-						entry.put(NEO_OUT, ModelUtil.toRoundedLong(neoOutByAccount.get(key)));
+					if (neoOutByAddress.containsKey(key)) {
+						entry.put(NEO_OUT, ModelUtil.toRoundedLong(neoOutByAddress.get(key)));
 					} else {
 						entry.put(NEO_OUT, 0);
 					}
 
-					if (gasInByAccount.containsKey(key)) {
-						entry.put(GAS_IN, ModelUtil.toRoundedDouble(gasInByAccount.get(key)));
+					if (gasInByAddress.containsKey(key)) {
+						entry.put(GAS_IN, ModelUtil.toRoundedDouble(gasInByAddress.get(key)));
 					} else {
 						entry.put(GAS_IN, 0);
 					}
 
-					if (gasOutByAccount.containsKey(key)) {
-						entry.put(GAS_OUT, ModelUtil.toRoundedDouble(gasOutByAccount.get(key)));
+					if (gasOutByAddress.containsKey(key)) {
+						entry.put(GAS_OUT, ModelUtil.toRoundedDouble(gasOutByAddress.get(key)));
 					} else {
 						entry.put(GAS_OUT, 0);
 					}
 
-					if (neoTxByAccount.containsKey(key)) {
-						entry.put(NEO_TX, neoTxByAccount.get(key));
+					if (neoTxByAddress.containsKey(key)) {
+						entry.put(NEO_TX, neoTxByAddress.get(key));
 					} else {
 						entry.put(NEO_TX, 0);
 					}
 
-					if (gasTxByAccount.containsKey(key)) {
-						entry.put(GAS_TX, gasTxByAccount.get(key));
+					if (gasTxByAddress.containsKey(key)) {
+						entry.put(GAS_TX, gasTxByAddress.get(key));
 					} else {
 						entry.put(GAS_TX, 0);
 					}
 
-					if (firstTsByAccount.containsKey(key)) {
-						entry.put(FIRST_TS, firstTsByAccount.get(key));
+					if (claimTxByAddress.containsKey(key)) {
+						entry.put(CLAIM_TX, claimTxByAddress.get(key));
+					} else {
+						entry.put(CLAIM_TX, 0);
+					}
+
+					if (firstTsByAddress.containsKey(key)) {
+						entry.put(FIRST_TS, firstTsByAddress.get(key));
 					} else {
 						entry.put(FIRST_TS, 0);
+					}
+
+					if (lastTsByAddress.containsKey(key)) {
+						entry.put(LAST_TS, lastTsByAddress.get(key));
+					} else {
+						entry.put(LAST_TS, 0);
 					}
 
 					returnList.put(entry);
@@ -611,12 +656,13 @@ public final class RpcServerUtil {
 			}
 
 			final Block block;
+			final BlockDb blockDb = controller.getLocalNodeData().getBlockDb();
 			if (params.get(0) instanceof String) {
 				final String hashStr = params.getString(0);
 				final byte[] ba = ModelUtil.decodeHex(hashStr);
 				final UInt256 hash = new UInt256(ByteBuffer.wrap(ba));
 				try {
-					block = controller.getLocalNodeData().getBlockDb().getFullBlockFromHash(hash);
+					block = blockDb.getFullBlockFromHash(hash);
 				} catch (final RuntimeException e) {
 					final JSONObject response = new JSONObject();
 					response.put(ERROR, e.getMessage());
@@ -627,7 +673,7 @@ public final class RpcServerUtil {
 			} else if (params.get(0) instanceof Number) {
 				final long index = params.getLong(0);
 				try {
-					block = controller.getLocalNodeData().getBlockDb().getFullBlockFromHeight(index);
+					block = blockDb.getFullBlockFromHeight(index);
 				} catch (final RuntimeException e) {
 					final JSONObject response = new JSONObject();
 					response.put(ERROR, e.getMessage());
@@ -736,11 +782,11 @@ public final class RpcServerUtil {
 		}
 
 		try {
-			final Map<UInt256, Fixed8> assetValueMap = controller.getLocalNodeData().getBlockDb()
-					.getAssetValueMap(scriptHash);
+			final BlockDb blockDb = controller.getLocalNodeData().getBlockDb();
+			final Map<UInt256, Fixed8> assetValueMap = blockDb.getAssetValueMap(scriptHash);
 
-			final Map<UInt256, Map<TransactionOutput, CoinReference>> transactionOutputListMap = controller
-					.getLocalNodeData().getBlockDb().getUnspentTransactionOutputListMap(scriptHash);
+			final Map<UInt256, Map<TransactionOutput, CoinReference>> transactionOutputListMap = blockDb
+					.getUnspentTransactionOutputListMap(scriptHash);
 
 			if (assetValueMap == null) {
 				final JSONObject response = new JSONObject();

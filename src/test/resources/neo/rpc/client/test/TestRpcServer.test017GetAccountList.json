@@ -2,6 +2,7 @@
 	"result": [
 		{
 			"gas_out": 0,
+			"claim_tx": 0,
 			"neo_tx": 0,
 			"neo_in": 0,
 			"gas_in": 0,
@@ -10,6 +11,7 @@
 			"gas": 0,
 			"neo_out": 0,
 			"neo": 100000000,
+			"last_ts": 0,
 			"account": "AQVh2pG732YvtNaxEGkQUei3YA4cvo7d2i"
 		}
 	],
