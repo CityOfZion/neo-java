@@ -1,6 +1,6 @@
 # neo-java
 
-
+currently only works with `java 8` as java 9 has some maven incompatabilites due to `--add-modules`
 
 to check versions of plugins and dependencies, run the following command:
 
