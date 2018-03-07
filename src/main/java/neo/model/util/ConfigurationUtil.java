@@ -17,6 +17,26 @@ import org.json.JSONObject;
 public final class ConfigurationUtil {
 
 	/**
+	 * the data file name section.
+	 */
+	public static final String DATA_FILE_NAME = "data-file-name";
+
+	/**
+	 * the stats file name section.
+	 */
+	public static final String STATS_FILE_NAME = "stats-file-name";
+
+	/**
+	 * the import-export section.
+	 */
+	public static final String IMPORT_EXPORT = "import-export";
+
+	/**
+	 * the system fee.
+	 */
+	public static final String SYSTEM_FEE = "system-fee";
+
+	/**
 	 * the sleep interval.
 	 */
 	public static final String SLEEP_INTERVAL = "sleep-interval";
@@ -135,6 +155,11 @@ public final class ConfigurationUtil {
 	 * the name of the config file.
 	 */
 	private static final File CONFIG_FILE = new File("config.json");
+
+	/**
+	 * the JSON key, "network-name".
+	 */
+	public static final String NETWORK_NAME = "network-name";
 
 	/**
 	 * return the configuration JSON object.

@@ -20,7 +20,8 @@ import neo.model.util.NetworkUtil;
  * @author coranos
  *
  */
-public final class TransactionOutput implements ToJsonObject, ByteArraySerializable, Serializable {
+public final class TransactionOutput
+		implements ToJsonObject, ByteArraySerializable, Serializable, Comparable<TransactionOutput> {
 
 	private static final long serialVersionUID = 1L;
 
@@ -65,6 +66,23 @@ public final class TransactionOutput implements ToJsonObject, ByteArraySerializa
 		this.assetId = assetId;
 		this.value = value;
 		this.scriptHash = scriptHash;
+	}
+
+	@Override
+	public int compareTo(final TransactionOutput that) {
+		final int scriptHashC = scriptHash.compareTo(that.scriptHash);
+		if (scriptHashC != 0) {
+			return scriptHashC;
+		}
+		final int assetIdC = assetId.compareTo(that.assetId);
+		if (assetIdC != 0) {
+			return scriptHashC;
+		}
+		final int valueC = value.compareTo(that.value);
+		if (valueC != 0) {
+			return scriptHashC;
+		}
+		return 0;
 	}
 
 	@Override

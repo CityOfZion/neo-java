@@ -39,6 +39,11 @@ import neo.model.bytes.UInt64;
 public final class ModelUtil {
 
 	/**
+	 * a fixed8 representation of zero.
+	 */
+	public static final Fixed8 FIXED8_ZERO = ModelUtil.getFixed8(BigInteger.ZERO);
+
+	/**
 	 * the UTF-8 charset.
 	 */
 	private static final String UTF_8 = "UTF-8";
@@ -133,6 +138,29 @@ public final class ModelUtil {
 		final BigInteger newBi = oldBi.add(valBi);
 		final Fixed8 newValue = getFixed8(newBi);
 		return newValue;
+	}
+
+	/**
+	 * return the scripthash of the address.
+	 *
+	 * @param address
+	 *            the address to use.
+	 * @return the scripthash of the address.
+	 */
+	public static UInt160 addressToScriptHash(final String address) {
+		if (LOG.isTraceEnabled()) {
+			LOG.trace("addressToScriptHash.address:{}", address);
+		}
+		final byte[] dataAndChecksum = Base58Util.decode(address);
+		if (LOG.isTraceEnabled()) {
+			LOG.trace("addressToScriptHash.dataAndChecksum:{}", Hex.encodeHexString(dataAndChecksum));
+		}
+		final byte[] data = new byte[20];
+		System.arraycopy(dataAndChecksum, 4, data, 0, data.length);
+		if (LOG.isTraceEnabled()) {
+			LOG.trace("addressToScriptHash.data:{}", Hex.encodeHexString(data));
+		}
+		return new UInt160(data);
 	}
 
 	/**
@@ -493,34 +521,13 @@ public final class ModelUtil {
 	}
 
 	/**
-	 * subtracts two Fixed8 values.
-	 *
-	 * @param left
-	 *            the left value
-	 * @param right
-	 *            the right value.
-	 * @return left minus right
-	 */
-	public static Fixed8 subtract(final Fixed8 left, final Fixed8 right) {
-		final BigInteger leftBi = left.toPositiveBigInteger();
-		final BigInteger rightBi = right.toPositiveBigInteger();
-		final BigInteger newBi = leftBi.subtract(rightBi);
-		if (newBi.signum() < 0) {
-			throw new RuntimeException("tried to subtract " + leftBi + "(Fixed8:" + left + ")  from " + rightBi
-					+ " (Fixed8:" + right + ")" + " cannot have a negative fixed8 with value " + newBi + ".");
-		}
-		final Fixed8 newValue = getFixed8(newBi);
-		return newValue;
-	}
-
-	/**
 	 * coverts a scriptHash to an address.
 	 *
 	 * @param scriptHash
 	 *            the scriptHash to use.
 	 * @return the address.
 	 */
-	public static String toAddress(final UInt160 scriptHash) {
+	public static String scriptHashToAddress(final UInt160 scriptHash) {
 		final byte[] data = new byte[21];
 
 		if (LOG.isTraceEnabled()) {
@@ -532,7 +539,7 @@ public final class ModelUtil {
 
 		data[data.length - 1] = ADDRESS_VERSION;
 		if (LOG.isTraceEnabled()) {
-			LOG.info("toAddress data {}", ModelUtil.toHexString(data));
+			LOG.trace("toAddress data {}", ModelUtil.toHexString(data));
 		}
 
 		final byte[] dataAndChecksum = new byte[25];
@@ -545,11 +552,32 @@ public final class ModelUtil {
 		ArrayUtils.reverse(hash4);
 		System.arraycopy(hash4, 0, dataAndChecksum, 0, 4);
 		if (LOG.isTraceEnabled()) {
-			LOG.info("toAddress dataAndChecksum {}", ModelUtil.toHexString(dataAndChecksum));
+			LOG.trace("toAddress dataAndChecksum {}", ModelUtil.toHexString(dataAndChecksum));
 		}
 
 		final String address = toBase58String(dataAndChecksum);
 		return address;
+	}
+
+	/**
+	 * subtracts two Fixed8 values.
+	 *
+	 * @param left
+	 *            the left value
+	 * @param right
+	 *            the right value.
+	 * @return left minus right
+	 */
+	public static Fixed8 subtract(final Fixed8 left, final Fixed8 right) {
+		final BigInteger leftBi = left.toPositiveBigInteger();
+		final BigInteger rightBi = right.toPositiveBigInteger();
+		final BigInteger newBi = rightBi.subtract(leftBi);
+		if (newBi.signum() < 0) {
+			throw new RuntimeException("tried to subtract " + leftBi + "(Fixed8:" + left + ")  from " + rightBi
+					+ " (Fixed8:" + right + ")" + " cannot have a negative fixed8 with value " + newBi + ".");
+		}
+		final Fixed8 newValue = getFixed8(newBi);
+		return newValue;
 	}
 
 	/**
@@ -639,13 +667,23 @@ public final class ModelUtil {
 	 * converts a list of objects that implement the ToJsonObject interface into a
 	 * JSONArray of JSONObjects.
 	 *
+	 * @param ifNullReturnEmpty
+	 *            if the list is null, return an empty list. If this value is false,
+	 *            return null for a null list.
 	 * @param list
 	 *            the list of objects to use.
 	 * @param <T>
 	 *            the type of the objects that implements ToJsonObject .
 	 * @return the JSONArray of JSONObjects.
 	 */
-	public static <T extends ToJsonObject> JSONArray toJSONArray(final List<T> list) {
+	public static <T extends ToJsonObject> JSONArray toJSONArray(final boolean ifNullReturnEmpty, final List<T> list) {
+		if (list == null) {
+			if (ifNullReturnEmpty) {
+				return new JSONArray();
+			} else {
+				return null;
+			}
+		}
 		final JSONArray jsonArray = new JSONArray();
 
 		for (final T t : list) {

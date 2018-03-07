@@ -48,7 +48,8 @@ public final class ClaimExclusiveData implements ExclusiveData, ToJsonObject, By
 	public JSONObject toJSONObject() {
 		final JSONObject json = new JSONObject();
 
-		json.put("claims", ModelUtil.toJSONArray(claims));
+		final boolean ifNullReturnEmpty = false;
+		json.put("claims", ModelUtil.toJSONArray(ifNullReturnEmpty, claims));
 
 		return json;
 	}

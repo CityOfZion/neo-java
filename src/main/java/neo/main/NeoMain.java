@@ -15,6 +15,7 @@ import org.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import neo.export.BlockImportExportUtil;
 import neo.main.ui.ApiCallModel;
 import neo.main.ui.RemotePeerDataModel;
 import neo.main.ui.StatsModel;
@@ -129,10 +130,20 @@ public final class NeoMain {
 		LOG.info("INTERIM main number of accounts:{};", controller.getLocalNodeData().getBlockDb().getAccountCount());
 
 		for (final String arg : args) {
+			if (arg.equals("/import")) {
+				LOG.info("STARTED import");
+				BlockImportExportUtil.importBlocks(controller);
+				LOG.info("SUCCESS import");
+			}
 			if (arg.equals("/validate")) {
 				LOG.info("STARTED validate");
 				controller.getLocalNodeData().getBlockDb().validate();
 				LOG.info("SUCCESS validate");
+			}
+			if (arg.equals("/export")) {
+				LOG.info("STARTED export");
+				BlockImportExportUtil.exportBlocks(controller);
+				LOG.info("SUCCESS export");
 			}
 			if (arg.equals("/decapitate")) {
 				LOG.info("STARTED decapitate");

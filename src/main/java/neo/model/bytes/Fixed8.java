@@ -42,6 +42,33 @@ public final class Fixed8 implements ByteArraySerializable {
 		value = valueObj.toPositiveBigInteger().longValue();
 	}
 
+	/**
+	 * compares two fixed8 objects.
+	 *
+	 * @param that
+	 *            the other fixed8.
+	 * @return 0 if they are equal, otherwise the result of calling compareto on
+	 *         their corresponding valueObjs.
+	 */
+	public int compareTo(final Fixed8 that) {
+		return valueObj.compareTo(that.valueObj);
+	}
+
+	@Override
+	public boolean equals(final Object obj) {
+		if (obj instanceof Fixed8) {
+			final Fixed8 that = (Fixed8) obj;
+			return value == that.value;
+		} else {
+			return false;
+		}
+	}
+
+	@Override
+	public int hashCode() {
+		return Long.hashCode(value);
+	}
+
 	@Override
 	public byte[] toByteArray() {
 		final byte[] ba = valueObj.toByteArray();

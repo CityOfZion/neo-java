@@ -1,8 +1,22 @@
 {
 	"local": {
+		"system-fee": {
+			"ENROLLMENT_TRANSACTION": 1000,
+			"ISSUE_TRANSACTION": 500,
+			"PUBLISH_TRANSACTION": 500,
+			"REGISTER_TRANSACTION": 10000,
+			"MINER_TRANSACTION": 0,
+			"CLAIM_TRANSACTION": 0,
+			"INVOCATION_TRANSACTION": 0
+		},
+		"import-export": {
+			"data-file-name": "chain.acc",
+			"stats-file-name": "chain-stats.json"
+		},
 		"seed-node-file": "seedNodes.json",
 		"good-node-file": "goodNodes.json",
 		"magic": 7630401,
+		"network-name": "MainNet",
 		"tcp-port": 10333,
 		"rpc-port": 10332,
 		"rpc-client-timout": {

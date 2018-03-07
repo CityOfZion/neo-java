@@ -29,7 +29,7 @@ public final class CoinReference implements ToJsonObject, ByteArraySerializable,
 	private static final long serialVersionUID = 1L;
 
 	/**
-	 * the hash of the block that contains this coin reference.
+	 * the hash of the transaction that contains this coin reference.
 	 */
 	public final UInt256 prevHash;
 
@@ -73,8 +73,8 @@ public final class CoinReference implements ToJsonObject, ByteArraySerializable,
 	@Override
 	public JSONObject toJSONObject() {
 		final JSONObject json = new JSONObject();
-		json.put("previousblockhash", HASH_PREFIX + prevHash.toHexString());
-		json.put("previousindex", HASH_PREFIX + prevIndex.toHexString());
+		json.put("previoustxhash", HASH_PREFIX + prevHash.toHexString());
+		json.put("previousoutindex", HASH_PREFIX + prevIndex.toHexString());
 		return json;
 	}
 

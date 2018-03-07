@@ -20,8 +20,8 @@
 	},
 	"inputs": [
 		{
-			"previousindex": "0x0001",
-			"previousblockhash": "0x8047c84fb0b6ca7602a53ca434eb73b6e3af248cae99ca14117194c5f56eabce"
+			"previousoutindex": "0x0001",
+			"previoustxhash": "0x8047c84fb0b6ca7602a53ca434eb73b6e3af248cae99ca14117194c5f56eabce"
 		}
 	],
 	"attributes": [],

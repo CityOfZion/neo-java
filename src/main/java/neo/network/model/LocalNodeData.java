@@ -13,10 +13,12 @@ import java.util.TreeSet;
 
 import org.json.JSONObject;
 
+import neo.model.bytes.Fixed8;
 import neo.model.core.AbstractBlockBase;
 import neo.model.core.Block;
 import neo.model.core.Header;
 import neo.model.core.Transaction;
+import neo.model.core.TransactionType;
 import neo.model.db.BlockDb;
 import neo.network.model.socket.SocketFactory;
 
@@ -62,6 +64,11 @@ public class LocalNodeData {
 	 * the start block count.
 	 */
 	private final long startBlockCount;
+
+	/**
+	 * the network name.
+	 */
+	private final String networkName;
 
 	/**
 	 * the blockchain block count.
@@ -129,6 +136,21 @@ public class LocalNodeData {
 	private final SocketFactory socketFactory;
 
 	/**
+	 * the map of system fees by transaction type.
+	 */
+	private final Map<TransactionType, Fixed8> transactionSystemFeeMap;
+
+	/**
+	 * the name for the exported chain file.
+	 */
+	private final String chainExportDataFileName;
+
+	/**
+	 * the name for the exported chain file's stats file.
+	 */
+	private final String chainExportStatsFileName;
+
+	/**
 	 * the map of verified headers, by blockchain height.
 	 */
 	private final SortedMap<Long, Header> verifiedHeaderPoolMap = new TreeMap<>();
@@ -183,12 +205,22 @@ public class LocalNodeData {
 	 *            the RPC calls taht are disabled.
 	 * @param rpcPort
 	 *            the rpc port for the local server.
+	 * @param networkName
+	 *            the network name.
+	 * @param transactionSystemFeeMap
+	 *            the map of system fees by transaction.
+	 * @param chainExportDataFileName
+	 *            the file name for the exported chain data.
+	 * @param chainExportStatsFileName
+	 *            the file name for the exported chain statistics.
 	 */
 	public LocalNodeData(final long magic, final int activeThreadCount, final long rpcClientTimeoutMillis,
 			final long rpcServerTimeoutMillis, final Class<BlockDb> blockDbClass,
 			final Map<String, TimerData> timersMap, final int nonce, final int tcpPort, final File seedNodeFile,
 			final File goodNodeFile, final Class<SocketFactory> socketFactoryClass, final JSONObject blockDbConfig,
-			final Set<String> rpcDisabledCalls, final int rpcPort) {
+			final Set<String> rpcDisabledCalls, final int rpcPort, final String networkName,
+			final Map<TransactionType, Fixed8> transactionSystemFeeMap, final String chainExportDataFileName,
+			final String chainExportStatsFileName) {
 		startTime = System.currentTimeMillis();
 		this.magic = magic;
 		this.activeThreadCount = activeThreadCount;
@@ -198,8 +230,12 @@ public class LocalNodeData {
 		this.nonce = nonce;
 		this.tcpPort = tcpPort;
 		this.rpcPort = rpcPort;
+		this.networkName = networkName;
 		this.seedNodeFile = seedNodeFile;
 		this.goodNodeFile = goodNodeFile;
+		this.transactionSystemFeeMap = transactionSystemFeeMap;
+		this.chainExportDataFileName = chainExportDataFileName;
+		this.chainExportStatsFileName = chainExportStatsFileName;
 		this.rpcDisabledCalls = Collections.unmodifiableSet(rpcDisabledCalls);
 		try {
 			blockDb = blockDbClass.getConstructor(JSONObject.class).newInstance(blockDbConfig);
@@ -252,6 +288,24 @@ public class LocalNodeData {
 	}
 
 	/**
+	 * return the name for the exported chain file.
+	 *
+	 * @return the name for the exported chain file.
+	 */
+	public String getChainExportDataFileName() {
+		return chainExportDataFileName;
+	}
+
+	/**
+	 * return the name for the exported chain file's stats file.
+	 *
+	 * @return the name for the exported chain file's stats file.
+	 */
+	public String getChainExportStatsFileName() {
+		return chainExportStatsFileName;
+	}
+
+	/**
 	 * return the file of good nodes.
 	 *
 	 * @return the file of good nodes.
@@ -285,6 +339,15 @@ public class LocalNodeData {
 	 */
 	public long getMagic() {
 		return magic;
+	}
+
+	/**
+	 * return the network name.
+	 *
+	 * @return the network name.
+	 */
+	public String getNetworkName() {
+		return networkName;
 	}
 
 	/**
@@ -389,6 +452,15 @@ public class LocalNodeData {
 	}
 
 	/**
+	 * returns the map of transaction types to system fees.
+	 *
+	 * @return the map of transaction types to system fees.
+	 */
+	public Map<TransactionType, Fixed8> getTransactionSystemFeeMap() {
+		return transactionSystemFeeMap;
+	}
+
+	/**
 	 * return the pool of unverified blocks.
 	 *
 	 * @return the pool of unverified blocks.
@@ -457,5 +529,4 @@ public class LocalNodeData {
 	public void updateHighestHeaderTime() {
 		highestHeaderTime = new Date();
 	}
-
 }

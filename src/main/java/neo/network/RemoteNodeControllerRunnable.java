@@ -94,7 +94,9 @@ public final class RemoteNodeControllerRunnable implements StopRunnable {
 			data.setGoodPeer(false);
 			messageRecieved = null;
 		} catch (final IOException e) {
-			if (e.getMessage().equals("Connection reset by peer")) {
+			if (e.getMessage() == null) {
+				throw new RuntimeException(e);
+			} else if (e.getMessage().equals("Connection reset by peer")) {
 				LOG.trace("IOException[1] from {}, \"{}\" closing peer", e.getMessage(), data.getHostAddress());
 				LOG.trace("IOException[1]", e);
 				data.setGoodPeer(false);

@@ -57,8 +57,9 @@ public final class Block extends AbstractBlockBase implements ToJsonObject, Payl
 	@Override
 	public JSONObject toJSONObject() {
 		final JSONObject json = new JSONObject();
+		final boolean ifNullReturnEmpty = false;
 		addBaseToJSONObject(json);
-		json.put("tx", ModelUtil.toJSONArray(transactionList));
+		json.put("tx", ModelUtil.toJSONArray(ifNullReturnEmpty, transactionList));
 		return json;
 	}
 

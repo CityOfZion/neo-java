@@ -1,12 +1,15 @@
 package neo.model.db;
 
+import java.util.List;
 import java.util.Map;
 
 import neo.model.bytes.Fixed8;
 import neo.model.bytes.UInt160;
 import neo.model.bytes.UInt256;
 import neo.model.core.Block;
+import neo.model.core.CoinReference;
 import neo.model.core.Transaction;
+import neo.model.core.TransactionOutput;
 
 /**
  * the block database interface.
@@ -50,11 +53,31 @@ public interface BlockDb {
 	long getAccountCount();
 
 	/**
+	 * return a map of assetid and value for the given account.
+	 *
+	 * @param account
+	 *            the account to use.
+	 *
+	 * @return a map of assetid and value for the given account.
+	 */
+	Map<UInt256, Fixed8> getAssetValueMap(UInt160 account);
+
+	/**
 	 * return the block count.
 	 *
 	 * @return the block count.
 	 */
 	long getBlockCount();
+
+	/**
+	 * returns the index of the block that contains the given transaction.
+	 *
+	 * @param hash
+	 *            the transaction hash to use.
+	 *
+	 * @return the block height, or null if the transaction does not exist.
+	 */
+	Long getBlockIndexFromTransactionHash(UInt256 hash);
 
 	/**
 	 * return the filze size of the database.
@@ -107,6 +130,15 @@ public interface BlockDb {
 	Block getHeaderOfBlockWithMaxIndex();
 
 	/**
+	 * returns the list of transactions that output to the given address.
+	 *
+	 * @param account
+	 *            the account.
+	 * @return the list of transaction.
+	 */
+	List<Transaction> getTransactionWithAccountList(UInt160 account);
+
+	/**
 	 * return the transaction with the given hash.
 	 *
 	 * @param hash
@@ -114,6 +146,18 @@ public interface BlockDb {
 	 * @return the transaction with the given hash.
 	 */
 	Transaction getTransactionWithHash(UInt256 hash);
+
+	/**
+	 * return a list of TransactionOutputs for the given account that have not been
+	 * spent, by assetid.
+	 *
+	 * @param account
+	 *            the account to use.
+	 *
+	 * @return a list of CoinReferences and amounts for the given account that have
+	 *         not been spent, by assetid.
+	 */
+	Map<UInt256, Map<TransactionOutput, CoinReference>> getUnspentTransactionOutputListMap(UInt160 account);
 
 	/**
 	 * puts the given block into the database.

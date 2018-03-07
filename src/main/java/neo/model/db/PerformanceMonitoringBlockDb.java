@@ -1,5 +1,6 @@
 package neo.model.db;
 
+import java.util.List;
 import java.util.Map;
 
 import org.json.JSONObject;
@@ -8,7 +9,9 @@ import neo.model.bytes.Fixed8;
 import neo.model.bytes.UInt160;
 import neo.model.bytes.UInt256;
 import neo.model.core.Block;
+import neo.model.core.CoinReference;
 import neo.model.core.Transaction;
+import neo.model.core.TransactionOutput;
 import neo.perfmon.PerformanceMonitor;
 
 /**
@@ -66,9 +69,23 @@ public final class PerformanceMonitoringBlockDb implements BlockDb {
 	}
 
 	@Override
+	public Map<UInt256, Fixed8> getAssetValueMap(final UInt160 account) {
+		try (PerformanceMonitor m = new PerformanceMonitor("BlockDb.getAssetValueMap")) {
+			return delegate.getAssetValueMap(account);
+		}
+	}
+
+	@Override
 	public long getBlockCount() {
 		try (PerformanceMonitor m = new PerformanceMonitor("BlockDb.getBlockCount")) {
 			return delegate.getBlockCount();
+		}
+	}
+
+	@Override
+	public Long getBlockIndexFromTransactionHash(final UInt256 hash) {
+		try (PerformanceMonitor m = new PerformanceMonitor("BlockDb.getBlockIndexFromTransactionHash")) {
+			return delegate.getBlockIndexFromTransactionHash(hash);
 		}
 	}
 
@@ -115,9 +132,24 @@ public final class PerformanceMonitoringBlockDb implements BlockDb {
 	}
 
 	@Override
+	public List<Transaction> getTransactionWithAccountList(final UInt160 account) {
+		try (PerformanceMonitor m = new PerformanceMonitor("BlockDb.getTransactionWithAccountList")) {
+			return delegate.getTransactionWithAccountList(account);
+		}
+	}
+
+	@Override
 	public Transaction getTransactionWithHash(final UInt256 hash) {
 		try (PerformanceMonitor m = new PerformanceMonitor("BlockDb.getTransactionWithHash")) {
 			return delegate.getTransactionWithHash(hash);
+		}
+	}
+
+	@Override
+	public Map<UInt256, Map<TransactionOutput, CoinReference>> getUnspentTransactionOutputListMap(
+			final UInt160 account) {
+		try (PerformanceMonitor m = new PerformanceMonitor("BlockDb.getUnspentTransactionOutputListMap")) {
+			return delegate.getUnspentTransactionOutputListMap(account);
 		}
 	}
 
@@ -136,5 +168,4 @@ public final class PerformanceMonitoringBlockDb implements BlockDb {
 			delegate.validate();
 		}
 	}
-
 }

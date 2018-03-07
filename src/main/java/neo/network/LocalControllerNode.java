@@ -2,10 +2,12 @@ package neo.network;
 
 import java.io.File;
 import java.io.IOException;
+import java.math.BigInteger;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
+import java.util.EnumMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -20,8 +22,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import neo.model.IndexedSet;
+import neo.model.bytes.Fixed8;
 import neo.model.core.Block;
 import neo.model.core.Header;
+import neo.model.core.TransactionType;
 import neo.model.db.BlockDb;
 import neo.model.network.AddrPayload;
 import neo.model.network.HeadersPayload;
@@ -32,6 +36,7 @@ import neo.model.network.VersionPayload;
 import neo.model.util.ConfigurationUtil;
 import neo.model.util.JsonUtil;
 import neo.model.util.MapUtil;
+import neo.model.util.ModelUtil;
 import neo.model.util.threadpool.ThreadPool;
 import neo.network.model.LocalNodeData;
 import neo.network.model.NodeConnectionPhaseEnum;
@@ -154,6 +159,7 @@ public class LocalControllerNode {
 		final int nonce = config.getInt(ConfigurationUtil.NONCE);
 		final int tcpPort = localJson.getInt(ConfigurationUtil.TCP_PORT);
 		final int rpcPort = localJson.getInt(ConfigurationUtil.RPC_PORT);
+		final String networkName = localJson.getString(ConfigurationUtil.NETWORK_NAME);
 
 		final JSONObject rpcJson = localJson.getJSONObject(ConfigurationUtil.RPC);
 		final JSONArray rpcDisabledCallArray = rpcJson.getJSONArray(ConfigurationUtil.DISABLE);
@@ -165,9 +171,16 @@ public class LocalControllerNode {
 		final File seedNodeFile = new File(localJson.getString(ConfigurationUtil.SEED_NODE_FILE));
 		final File goodNodeFile = new File(localJson.getString(ConfigurationUtil.GOOD_NODE_FILE));
 
+		final Map<TransactionType, Fixed8> transactionSystemFeeMap = getTransactionSystemFeeMap(localJson);
+
+		final JSONObject importExportJson = localJson.getJSONObject(ConfigurationUtil.IMPORT_EXPORT);
+		final String chainExportDataFileName = importExportJson.getString(ConfigurationUtil.DATA_FILE_NAME);
+		final String chainExportStatsFileName = importExportJson.getString(ConfigurationUtil.STATS_FILE_NAME);
+
 		localNodeData = new LocalNodeData(magic, activeThreadCount, rpcClientTimeoutMillis, rpcServerTimeoutMillis,
 				blockDbImplClass, timersMap, nonce, tcpPort, seedNodeFile, goodNodeFile, socketFactoryClass,
-				blockDbJson, rpcDisabledCalls, rpcPort);
+				blockDbJson, rpcDisabledCalls, rpcPort, networkName, transactionSystemFeeMap, chainExportDataFileName,
+				chainExportStatsFileName);
 		LocalNodeDataSynchronizedUtil.refreshCityOfZionBlockHeight(localNodeData);
 
 		threadPool = new ThreadPool(localJson.getInt(ConfigurationUtil.THREAD_POOL_COUNT));
@@ -300,6 +313,24 @@ public class LocalControllerNode {
 			throw new RuntimeException(e);
 		}
 		return socketFactoryClass;
+	}
+
+	/**
+	 * return the map of system fees to transaction types.
+	 *
+	 * @param localJson
+	 *            the local json to use.
+	 * @return the map of system fees to transaction types.
+	 */
+	private Map<TransactionType, Fixed8> getTransactionSystemFeeMap(final JSONObject localJson) {
+		final Map<TransactionType, Fixed8> transactionSystemFeeMap = new EnumMap<>(TransactionType.class);
+		final JSONObject transactionSystemFeeJson = localJson.getJSONObject(ConfigurationUtil.SYSTEM_FEE);
+		for (final String key : transactionSystemFeeJson.keySet()) {
+			final long value = transactionSystemFeeJson.getLong(key);
+			final TransactionType txType = TransactionType.valueOf(key);
+			transactionSystemFeeMap.put(txType, ModelUtil.getFixed8(BigInteger.valueOf(value)));
+		}
+		return transactionSystemFeeMap;
 	}
 
 	/**
