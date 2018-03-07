@@ -786,8 +786,6 @@ public final class BlockDbMapDbImpl implements BlockDb {
 					LOG.error("duplicate block,blockIndex:{};maxBlockIndex:{};hash:{};", blockIndex, maxBlockIndex,
 							block.hash);
 				} else {
-					updateMaxBlockIndex(blockIndex);
-
 					final byte[] prevHashBa = block.prevHash.toByteArray();
 					ArrayUtils.reverse(prevHashBa);
 
@@ -826,6 +824,7 @@ public final class BlockDbMapDbImpl implements BlockDb {
 					} catch (final Exception e) {
 						throw new RuntimeException("put: error updating assets for block " + block.hash, e);
 					}
+					updateMaxBlockIndex(blockIndex);
 				}
 			}
 

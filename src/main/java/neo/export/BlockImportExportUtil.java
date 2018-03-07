@@ -280,6 +280,7 @@ public final class BlockImportExportUtil {
 
 					final long ms = blockTs.getTime() - startMs;
 					if (ms > (86400 * 1000)) {
+						blockDb.put(true);
 						final Block maxBlockHeader = blockDb.getHeaderOfBlockWithMaxIndex();
 
 						final String dateStr = DATE_FORMAT.format(blockTs);
@@ -307,8 +308,9 @@ public final class BlockImportExportUtil {
 						}
 						statsWriter.println(stats);
 
+						final long maxBlockHeaderIndex = maxBlockHeader.getIndexAsLong();
 						LOG.info("INTERIM import {} of {}, bx {}, tx {} json {}", INTEGER_FORMAT.format(blockIx),
-								INTEGER_FORMAT.format(maxIndex), INTEGER_FORMAT.format(maxBlockHeader.getIndexAsLong()),
+								INTEGER_FORMAT.format(maxIndex), INTEGER_FORMAT.format(maxBlockHeaderIndex),
 								INTEGER_FORMAT.format(totalTx), stats);
 						startMs = blockTs.getTime();
 
