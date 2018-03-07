@@ -128,7 +128,12 @@ public final class BlockImportExportUtil {
 				long interimBytes = 0;
 				final long[] interimTx = new long[TransactionType.values().length];
 				long totalTx = 0;
-				final Set<UInt160> activeAccountSet = new TreeSet<>();
+
+				@SuppressWarnings("unchecked")
+				final Set<UInt160>[] activeAccountSet = new Set[TransactionType.values().length];
+				for (int txOrdinal = 0; txOrdinal < activeAccountSet.length; txOrdinal++) {
+					activeAccountSet[txOrdinal] = new TreeSet<>();
+				}
 
 				long procStartMs = System.currentTimeMillis();
 
@@ -148,7 +153,7 @@ public final class BlockImportExportUtil {
 						interimTx[tx.type.ordinal()]++;
 						totalTx++;
 						for (final TransactionOutput txOut : tx.outputs) {
-							activeAccountSet.add(txOut.scriptHash);
+							activeAccountSet[tx.type.ordinal()].add(txOut.scriptHash);
 						}
 					}
 
@@ -168,8 +173,12 @@ public final class BlockImportExportUtil {
 						final long procMs = System.currentTimeMillis() - procStartMs;
 						stats.put(PROCESSING_TIME_MS, procMs);
 
+						final JSONObject active = new JSONObject();
+						for (final TransactionType tType : TransactionType.values()) {
+							active.put(tType.name().toLowerCase(), activeAccountSet[tType.ordinal()].size());
+						}
 						final JSONObject accounts = new JSONObject();
-						accounts.put(ACTIVE, activeAccountSet.size());
+						accounts.put(ACTIVE, active);
 						accounts.put(TOTAL, blockDb.getAccountCount());
 						stats.put(ACCOUNTS, accounts);
 
@@ -196,7 +205,10 @@ public final class BlockImportExportUtil {
 						}
 						interimBlocks = 0;
 						interimBytes = 0;
-						activeAccountSet.clear();
+						for (int txOrdinal = 0; txOrdinal < activeAccountSet.length; txOrdinal++) {
+							activeAccountSet[txOrdinal].clear();
+						}
+
 						procStartMs = System.currentTimeMillis();
 					}
 
