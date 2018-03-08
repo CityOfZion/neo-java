@@ -2,6 +2,8 @@
 
 currently only works with `java 8` as java 9 has some maven incompatabilites due to `--add-modules`
 
+may need to increase memory to build quicker: `export MAVEN_OPTS=-Xmx4g`
+
 to check versions of plugins and dependencies, run the following command:
 
 ```

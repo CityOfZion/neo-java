@@ -166,30 +166,8 @@ public final class BlockImportExportUtil {
 						out.flush();
 						final Block maxBlockHeader = blockDb.getHeaderOfBlockWithMaxIndex();
 
-						final String dateStr = DATE_FORMAT.format(blockTs);
-						final JSONObject stats = new JSONObject();
-						stats.put(DATE, dateStr);
-
-						final long procMs = System.currentTimeMillis() - procStartMs;
-						stats.put(PROCESSING_TIME_MS, procMs);
-
-						final JSONObject active = new JSONObject();
-						for (final TransactionType tType : TransactionType.values()) {
-							active.put(tType.name().toLowerCase(), activeAccountSet[tType.ordinal()].size());
-						}
-						final JSONObject accounts = new JSONObject();
-						accounts.put(ACTIVE, active);
-						accounts.put(TOTAL, blockDb.getAccountCount());
-						stats.put(ACCOUNTS, accounts);
-
-						final JSONObject transactions = new JSONObject();
-						for (final TransactionType tType : TransactionType.values()) {
-							transactions.put(tType.name().toLowerCase(), interimTx[tType.ordinal()]);
-						}
-						stats.put(TRANSACTIONS, transactions);
-
-						stats.put(BLOCKS, interimBlocks);
-						stats.put(BYTES, interimBytes);
+						final JSONObject stats = getStats(blockDb, interimBlocks, interimBytes, interimTx,
+								activeAccountSet, procStartMs, blockTs);
 						if (blockIx > 0) {
 							statsWriter.println(COMMA);
 						}
@@ -220,6 +198,58 @@ public final class BlockImportExportUtil {
 		} catch (final IOException e) {
 			throw new RuntimeException(e);
 		}
+	}
+
+	/**
+	 * gets stats.
+	 *
+	 * @param blockDb
+	 *            the block db to use.
+	 * @param interimBlocks
+	 *            the interim block count to use.
+	 * @param interimBytes
+	 *            the interim byte count to use.
+	 * @param interimTx
+	 *            the interim transaction count to use.
+	 * @param activeAccountSet
+	 *            the active account set to use.
+	 * @param procStartMs
+	 *            start milliseconds.
+	 * @param blockTs
+	 *            block timestamp.
+	 * @return the stats JSON.
+	 */
+	public static JSONObject getStats(final BlockDb blockDb, final long interimBlocks, final long interimBytes,
+			final long[] interimTx, final Set<UInt160>[] activeAccountSet, final long procStartMs,
+			final Timestamp blockTs) {
+		final String dateStr = DATE_FORMAT.format(blockTs);
+		final JSONObject stats = new JSONObject();
+		stats.put(DATE, dateStr);
+
+		final long procMs = System.currentTimeMillis() - procStartMs;
+		stats.put(PROCESSING_TIME_MS, procMs);
+
+		final JSONObject active = new JSONObject();
+		final Set<UInt160> totalActiveAccountSet = new TreeSet<>();
+		for (final TransactionType tType : TransactionType.values()) {
+			totalActiveAccountSet.addAll(activeAccountSet[tType.ordinal()]);
+			active.put(tType.name().toLowerCase(), activeAccountSet[tType.ordinal()].size());
+		}
+		active.put(TOTAL, totalActiveAccountSet.size());
+		final JSONObject accounts = new JSONObject();
+		accounts.put(ACTIVE, active);
+		accounts.put(TOTAL, blockDb.getAccountCount());
+		stats.put(ACCOUNTS, accounts);
+
+		final JSONObject transactions = new JSONObject();
+		for (final TransactionType tType : TransactionType.values()) {
+			transactions.put(tType.name().toLowerCase(), interimTx[tType.ordinal()]);
+		}
+		stats.put(TRANSACTIONS, transactions);
+
+		stats.put(BLOCKS, interimBlocks);
+		stats.put(BYTES, interimBytes);
+		return stats;
 	}
 
 	/**
@@ -257,7 +287,12 @@ public final class BlockImportExportUtil {
 				long interimBytes = 0;
 				final long[] interimTx = new long[TransactionType.values().length];
 				long totalTx = 0;
-				final Set<UInt160> activeAccountSet = new TreeSet<>();
+
+				@SuppressWarnings("unchecked")
+				final Set<UInt160>[] activeAccountSet = new Set[TransactionType.values().length];
+				for (int txOrdinal = 0; txOrdinal < activeAccountSet.length; txOrdinal++) {
+					activeAccountSet[txOrdinal] = new TreeSet<>();
+				}
 
 				long procStartMs = System.currentTimeMillis();
 
@@ -278,7 +313,7 @@ public final class BlockImportExportUtil {
 						interimTx[tx.type.ordinal()]++;
 						totalTx++;
 						for (final TransactionOutput txOut : tx.outputs) {
-							activeAccountSet.add(txOut.scriptHash);
+							activeAccountSet[tx.type.ordinal()].add(txOut.scriptHash);
 						}
 					}
 
@@ -295,26 +330,8 @@ public final class BlockImportExportUtil {
 						blockDb.put(true);
 						final Block maxBlockHeader = blockDb.getHeaderOfBlockWithMaxIndex();
 
-						final String dateStr = DATE_FORMAT.format(blockTs);
-						final JSONObject stats = new JSONObject();
-						stats.put(DATE, dateStr);
-
-						final long procMs = System.currentTimeMillis() - procStartMs;
-						stats.put(PROCESSING_TIME_MS, procMs);
-
-						final JSONObject accounts = new JSONObject();
-						accounts.put(ACTIVE, activeAccountSet.size());
-						accounts.put(TOTAL, blockDb.getAccountCount());
-						stats.put(ACCOUNTS, accounts);
-
-						final JSONObject transactions = new JSONObject();
-						for (final TransactionType tType : TransactionType.values()) {
-							transactions.put(tType.name().toLowerCase(), interimTx[tType.ordinal()]);
-						}
-						stats.put(TRANSACTIONS, transactions);
-
-						stats.put(BLOCKS, interimBlocks);
-						stats.put(BYTES, interimBytes);
+						final JSONObject stats = getStats(blockDb, interimBlocks, interimBytes, interimTx,
+								activeAccountSet, procStartMs, blockTs);
 						if (blockIx > 0) {
 							statsWriter.println(COMMA);
 						}
@@ -331,7 +348,9 @@ public final class BlockImportExportUtil {
 						}
 						interimBlocks = 0;
 						interimBytes = 0;
-						activeAccountSet.clear();
+						for (int txOrdinal = 0; txOrdinal < activeAccountSet.length; txOrdinal++) {
+							activeAccountSet[txOrdinal].clear();
+						}
 						procStartMs = System.currentTimeMillis();
 					}
 				}
