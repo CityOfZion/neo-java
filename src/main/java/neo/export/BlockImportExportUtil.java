@@ -43,6 +43,16 @@ import neo.network.model.LocalNodeData;
 public final class BlockImportExportUtil {
 
 	/**
+	 * close bracket.
+	 */
+	private static final String CLOSE_BRACKET = "]";
+
+	/**
+	 * open bracket.
+	 */
+	private static final String OPEN_BRACKET = "[";
+
+	/**
 	 * a comma.
 	 */
 	private static final String COMMA = ",";
@@ -113,8 +123,10 @@ public final class BlockImportExportUtil {
 		final BlockDb blockDb = localNodeData.getBlockDb();
 		try (OutputStream statsFileOut = new FileOutputStream(localNodeData.getChainExportStatsFileName());
 				PrintWriter statsWriter = new PrintWriter(statsFileOut, true);) {
+			statsWriter.println(OPEN_BRACKET);
 			try (DataOutputStream out = new DataOutputStream(new BufferedOutputStream(
 					new FileOutputStream(localNodeData.getChainExportDataFileName()), 1024 * 1024 * 32))) {
+
 				final long maxIndex = blockDb.getHeaderOfBlockWithMaxIndex().getIndexAsLong();
 				final byte[] maxIndexBa = new UInt32(maxIndex + 1).toByteArray();
 				out.write(maxIndexBa);
@@ -194,6 +206,8 @@ public final class BlockImportExportUtil {
 				out.flush();
 			} catch (final IOException e) {
 				throw new RuntimeException(e);
+			} finally {
+				statsWriter.println(CLOSE_BRACKET);
 			}
 		} catch (final IOException e) {
 			throw new RuntimeException(e);
@@ -264,12 +278,11 @@ public final class BlockImportExportUtil {
 		try (OutputStream statsFileOut = new FileOutputStream(
 				controller.getLocalNodeData().getChainExportStatsFileName());
 				PrintWriter statsWriter = new PrintWriter(statsFileOut, true);) {
+			statsWriter.println(OPEN_BRACKET);
 			long maxIndex = 0;
 			try (InputStream fileIn = new FileInputStream(controller.getLocalNodeData().getChainExportDataFileName());
 					BufferedInputStream buffIn = new BufferedInputStream(fileIn, 1024 * 1024 * 32);
 					DataInputStream in = new DataInputStream(buffIn);) {
-
-				statsWriter.println("[");
 
 				final byte[] maxIndexBa = new byte[UInt32.SIZE];
 				in.read(maxIndexBa);
@@ -369,7 +382,7 @@ public final class BlockImportExportUtil {
 					throw new RuntimeException(e);
 				}
 			} finally {
-				statsWriter.println("]");
+				statsWriter.println(CLOSE_BRACKET);
 			}
 		} catch (final IOException e) {
 			throw new RuntimeException(e);

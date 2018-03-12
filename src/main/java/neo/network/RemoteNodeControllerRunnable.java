@@ -14,6 +14,7 @@ import org.slf4j.LoggerFactory;
 
 import neo.model.CommandEnum;
 import neo.model.core.Block;
+import neo.model.core.Transaction;
 import neo.model.network.InvPayload;
 import neo.model.network.Message;
 import neo.model.util.MapUtil;
@@ -30,6 +31,11 @@ import neo.network.model.socket.SocketWrapper;
  *
  */
 public final class RemoteNodeControllerRunnable implements StopRunnable {
+
+	/**
+	 * a dash.
+	 */
+	private static final String DASH = "-";
 
 	/**
 	 * the logger.
@@ -106,6 +112,11 @@ public final class RemoteNodeControllerRunnable implements StopRunnable {
 			} else {
 				throw new RuntimeException(e);
 			}
+		} catch (final RuntimeException e) {
+			LOG.trace("RuntimeException from {}, closing peer", data.getHostAddress());
+			data.setGoodPeer(false);
+			messageRecieved = null;
+			throw e;
 		}
 		return messageRecieved;
 	}
@@ -134,10 +145,17 @@ public final class RemoteNodeControllerRunnable implements StopRunnable {
 				if (messageRecieved.commandEnum != null) {
 					final long apiCallCount;
 					final String apiCallRoot = "in-" + messageRecieved.commandEnum.name().toLowerCase();
-					if (messageRecieved.commandEnum.equals(CommandEnum.INV)) {
-						final InvPayload payload = messageRecieved.getPayload(InvPayload.class);
-						final String apiCall = apiCallRoot + "-" + payload.getType().name().toLowerCase();
+					if (messageRecieved.commandEnum.equals(CommandEnum.TX)) {
+						final Transaction tx = messageRecieved.getPayload(Transaction.class);
+						final String apiCall = apiCallRoot + DASH + tx.type.name().toLowerCase();
 						apiCallCount = MapUtil.increment(LocalNodeData.API_CALL_MAP, apiCall);
+					} else if (messageRecieved.commandEnum.equals(CommandEnum.INV)) {
+						final InvPayload payload = messageRecieved.getPayload(InvPayload.class);
+						final String apiCall = apiCallRoot + DASH + payload.getType().name().toLowerCase();
+						final String apiCallHash = apiCallRoot + DASH + payload.getType().name().toLowerCase()
+								+ "-hashes";
+						apiCallCount = MapUtil.increment(LocalNodeData.API_CALL_MAP, apiCall);
+						MapUtil.increment(LocalNodeData.API_CALL_MAP, apiCallHash, payload.getHashes().size());
 					} else {
 						apiCallCount = MapUtil.increment(LocalNodeData.API_CALL_MAP, apiCallRoot);
 					}

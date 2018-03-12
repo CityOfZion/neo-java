@@ -1,5 +1,6 @@
 package neo.main;
 
+import java.awt.GraphicsEnvironment;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 
@@ -161,11 +162,6 @@ public final class NeoMain {
 		final ApiCallModel apiCallModel = new ApiCallModel();
 		final RemotePeerDataModel remotePeerDataModel = new RemotePeerDataModel();
 
-		final JFrame frame = new JFrame("NEO Main");
-		frame.setDefaultCloseOperation(WindowConstants.DO_NOTHING_ON_CLOSE);
-		final WindowClosingAdapter windowClosingAdapter = getWindowClosingAdapter(controller, statsModel,
-				remotePeerDataModel, apiCallModel);
-		frame.addWindowListener(windowClosingAdapter);
 		final JPanel mainPanel = new JPanel();
 		final JTabbedPane tabbedPane = new JTabbedPane();
 		mainPanel.setLayout(new BoxLayout(mainPanel, BoxLayout.X_AXIS));
@@ -175,14 +171,20 @@ public final class NeoMain {
 		addRemotePeerDetailsPanel(controller, remotePeerDataModel, tabbedPane);
 		addApiStatsPanel(controller, apiCallModel, tabbedPane);
 
-		frame.getContentPane().add(mainPanel);
-
 		controller.startNodesInConfigFiles();
 		controller.startThreadPool();
 
-		frame.pack();
-		frame.setSize(640, 960);
-		frame.setVisible(true);
+		if (!GraphicsEnvironment.isHeadless()) {
+			final JFrame frame = new JFrame("NEO Main");
+			frame.setDefaultCloseOperation(WindowConstants.DO_NOTHING_ON_CLOSE);
+			final WindowClosingAdapter windowClosingAdapter = getWindowClosingAdapter(controller, statsModel,
+					remotePeerDataModel, apiCallModel);
+			frame.addWindowListener(windowClosingAdapter);
+			frame.getContentPane().add(mainPanel);
+			frame.pack();
+			frame.setSize(640, 960);
+			frame.setVisible(true);
+		}
 
 		controller.startRefreshThread();
 

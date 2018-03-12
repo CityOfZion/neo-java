@@ -201,7 +201,6 @@ public final class BlockDbMapDbImpl implements BlockDb {
 	private void deleteBlockAtHeight(final long blockHeight) {
 		final BTreeMap<Long, byte[]> map = getBlockHeaderByIndexMap();
 		map.remove(blockHeight);
-		// TODO: rollback the account information.
 	}
 
 	@Override
@@ -209,14 +208,22 @@ public final class BlockDbMapDbImpl implements BlockDb {
 		LOG.info("STARTED deleteHighestBlock");
 		try {
 			long blockHeight = getHeaderOfBlockWithMaxIndex().getIndexAsLong();
-			Block block = getBlock(blockHeight, false);
-			while (block == null) {
+			Block blockHeader = getBlock(blockHeight, false);
+			while (blockHeader == null) {
 				LOG.error("INTERIM INFO deleteHighestBlock height:{} block is null, decrementing by 1 and retrying");
 				blockHeight--;
-				block = getBlock(blockHeight, false);
+				blockHeader = getBlock(blockHeight, false);
 			}
-			LOG.info("INTERIM INFO deleteHighestBlock height:{};hash:{};", blockHeight, block.hash);
+			LOG.info("INTERIM INFO deleteHighestBlock height:{};hash:{};timestamp:{};", blockHeight, blockHeader.hash,
+					blockHeader.getTimestamp());
+			final Block fullBlock = getBlock(blockHeight, true);
 			deleteBlockAtHeight(blockHeight);
+			try {
+				updateAssetAndValueByAccountMap(fullBlock, true);
+			} catch (final Exception e) {
+				throw new RuntimeException("deleteHighestBlock: error updating assets for block " + blockHeader.hash,
+						e);
+			}
 			setBlockIndex(blockHeight - 1);
 			db.commit();
 		} catch (final Exception e) {
@@ -574,8 +581,6 @@ public final class BlockDbMapDbImpl implements BlockDb {
 
 	/**
 	 * return the map of transactions by account and index.
-
-	 *
 	 *
 	 * @return the map of transactions by account and index.
 	 */
@@ -822,7 +827,7 @@ public final class BlockDbMapDbImpl implements BlockDb {
 					putWithLongKey(TRANSACTION_KEYS_BY_BLOCK_INDEX, toByteBufferValue(txKeyByBlockIxMap));
 
 					try {
-						updateAssetAndValueByAccountMap(block);
+						updateAssetAndValueByAccountMap(block, false);
 					} catch (final Exception e) {
 						throw new RuntimeException("put: error updating assets for block " + block.hash, e);
 					}
@@ -947,14 +952,16 @@ public final class BlockDbMapDbImpl implements BlockDb {
 	 *
 	 * @param block
 	 *            the block to update.
+	 * @param reverse
+	 *            if true, reverse the update.
 	 */
-	private void updateAssetAndValueByAccountMap(final Block block) {
+	private void updateAssetAndValueByAccountMap(final Block block, final boolean reverse) {
 		final BTreeMap<byte[], byte[]> assetAndValueByAccountMap = getAssetAndValueByAccountMap();
 		final BTreeMap<byte[], byte[]> transactionByAccountAndIndexMap = getTransactionByAccountAndIndexMap();
 		final BTreeMap<byte[], Long> transactionByAccountMaxIndexMap = getTransactionByAccountMaxIndexMap();
 		final BTreeMap<byte[], Boolean> transactionOutputSpentStateMap = getTransactionOutputSpentStateMap();
-		LOG.debug("updateAssetAndValueByAccountMap STARTED block;{};numberOfAccounts:{}", block.getIndexAsLong(),
-				assetAndValueByAccountMap.size());
+		LOG.debug("updateAssetAndValueByAccountMap STARTED block;{};reverse;{};numberOfAccounts:{}",
+				block.getIndexAsLong(), reverse, assetAndValueByAccountMap.size());
 
 		for (final Transaction t : block.getTransactionList()) {
 			if (LOG.isDebugEnabled()) {
@@ -970,8 +977,18 @@ public final class BlockDbMapDbImpl implements BlockDb {
 					throw new RuntimeException("referenced transaction output was never a transaction input:" + cr);
 				}
 
-				if (transactionOutputSpentStateMap.get(crBa) == false) {
-					transactionOutputSpentStateMap.put(crBa, true);
+				final boolean oldSpendState;
+				final boolean newSpendState;
+				if (reverse) {
+					oldSpendState = true;
+					newSpendState = false;
+				} else {
+					oldSpendState = false;
+					newSpendState = true;
+				}
+
+				if (transactionOutputSpentStateMap.get(crBa) == oldSpendState) {
+					transactionOutputSpentStateMap.put(crBa, newSpendState);
 
 					final UInt256 prevHashReversed = cr.prevHash.reverse();
 					final Transaction tiTx = getTransactionWithHash(prevHashReversed);
@@ -1001,7 +1018,12 @@ public final class BlockDbMapDbImpl implements BlockDb {
 					}
 
 					final Fixed8 oldValue = accountAssetValueMap.get(ti.assetId);
-					final Fixed8 newValue = ModelUtil.subtract(ti.value, oldValue);
+					final Fixed8 newValue;
+					if (reverse) {
+						newValue = ModelUtil.add(ti.value, oldValue);
+					} else {
+						newValue = ModelUtil.subtract(ti.value, oldValue);
+					}
 					if (LOG.isDebugEnabled()) {
 						LOG.debug("updateAssetAndValueByAccountMap INTERIM input;{};",
 								ModelUtil.scriptHashToAddress(input));
@@ -1027,7 +1049,11 @@ public final class BlockDbMapDbImpl implements BlockDb {
 						LOG.debug("TI afterMap {}", ensureAccountExists(assetAndValueByAccountMap, inputBa));
 					}
 				} else {
-					throw new RuntimeException("referenced transaction output is already spent:" + cr);
+					if (reverse) {
+						throw new RuntimeException("referenced transaction output is not already spent:" + cr);
+					} else {
+						throw new RuntimeException("referenced transaction output is already spent:" + cr);
+					}
 				}
 
 			}
@@ -1059,9 +1085,20 @@ public final class BlockDbMapDbImpl implements BlockDb {
 						LOG.debug("updateAssetAndValueByAccountMap INTERIM to.assetId:{} to.value:{};", to.assetId,
 								to.value);
 					}
-					final Fixed8 newValue = ModelUtil.add(oldValue, to.value);
+
+					final Fixed8 newValue;
+					if (reverse) {
+						newValue = ModelUtil.subtract(to.value, oldValue);
+					} else {
+						newValue = ModelUtil.add(oldValue, to.value);
+					}
 					accountAssetValueMap.put(to.assetId, newValue);
-					putAssetValueMap(assetAndValueByAccountMap, outputBa, accountAssetValueMap);
+
+					if (accountAssetValueMap.isEmpty()) {
+						assetAndValueByAccountMap.remove(outputBa);
+					} else {
+						putAssetValueMap(assetAndValueByAccountMap, outputBa, accountAssetValueMap);
+					}
 
 					if (LOG.isDebugEnabled()) {
 						LOG.debug("updateAssetAndValueByAccountMap INTERIM to.assetId:{} newValue:{};", to.assetId,
@@ -1070,7 +1107,11 @@ public final class BlockDbMapDbImpl implements BlockDb {
 					}
 
 					final CoinReference cr = new CoinReference(t.getHash().reverse(), new UInt16(outputIx));
-					transactionOutputSpentStateMap.put(cr.toByteArray(), false);
+					if (reverse) {
+						transactionOutputSpentStateMap.remove(cr.toByteArray());
+					} else {
+						transactionOutputSpentStateMap.put(cr.toByteArray(), false);
+					}
 				}
 
 				final byte[] tBa = t.toByteArray();
@@ -1194,7 +1235,7 @@ public final class BlockDbMapDbImpl implements BlockDb {
 					putWithByteBufferKey(TRANSACTION_KEY_BY_HASH, txKeyByTxHashMap);
 
 					try {
-						updateAssetAndValueByAccountMap(block);
+						updateAssetAndValueByAccountMap(block, false);
 					} catch (final Exception e) {
 						throw new RuntimeException("validate: error updating assets for block ["
 								+ block.getIndexAsLong() + "]" + block.hash, e);

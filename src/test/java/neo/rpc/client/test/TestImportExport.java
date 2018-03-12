@@ -21,6 +21,7 @@ import neo.model.util.ConfigurationUtil;
 import neo.model.util.GenesisBlockUtil;
 import neo.model.util.JsonUtil;
 import neo.network.LocalControllerNode;
+import neo.rpc.client.test.util.MockUtil;
 
 /**
  * tests serializing blocks.
@@ -104,7 +105,7 @@ public class TestImportExport {
 	}
 
 	/**
-	 * test containsBlockWithHash.
+	 * test test001ExportImport.
 	 */
 	@Test
 	public void test001ExportImport() {
@@ -113,6 +114,44 @@ public class TestImportExport {
 
 			BlockImportExportUtil.exportBlocks(controller.getController());
 			BlockImportExportUtil.importBlocks(controller.getController());
+		}
+	}
+
+	/**
+	 * test test002DecapitateGenesis.
+	 */
+	@Test
+	public void test002DecapitateGenesis() {
+		try (TestLocalControllerNode controller = getTestLocalControllerNode()) {
+			controller.getBlockDb().put(true, GenesisBlockUtil.GENESIS_BLOCK);
+			controller.getBlockDb().deleteHighestBlock();
+			controller.getBlockDb().put(true, GenesisBlockUtil.GENESIS_BLOCK);
+		}
+	}
+
+	/**
+	 * test test003DecapitateMockBlock000.
+	 */
+	@Test
+	public void test003DecapitateMockBlock000() {
+		try (TestLocalControllerNode controller = getTestLocalControllerNode()) {
+			controller.getBlockDb().put(true, GenesisBlockUtil.GENESIS_BLOCK);
+			controller.getBlockDb().put(true, MockUtil.getMockBlock000());
+			controller.getBlockDb().deleteHighestBlock();
+			controller.getBlockDb().put(true, MockUtil.getMockBlock000());
+		}
+	}
+
+	/**
+	 * test test003DecapitateMockBlock003.
+	 */
+	@Test
+	public void test003DecapitateMockBlock003() {
+		try (TestLocalControllerNode controller = getTestLocalControllerNode()) {
+			controller.getBlockDb().put(true, GenesisBlockUtil.GENESIS_BLOCK);
+			controller.getBlockDb().put(true, MockUtil.getMockBlock003());
+			controller.getBlockDb().deleteHighestBlock();
+			controller.getBlockDb().put(true, MockUtil.getMockBlock003());
 		}
 	}
 

@@ -50,24 +50,28 @@ public final class MessageUtil {
 	 *            the remote node data to use.
 	 * @param localNodeData
 	 *            the local node data to use.
+	 * @param type
+	 *            the inventory type.
 	 * @param hashs
 	 *            the hashes to use.
 	 */
 	public static void sendGetData(final RemoteNodeData remoteNodeData, final LocalNodeData localNodeData,
-			final UInt256... hashs) {
-		boolean hasDuplicates = false;
-		for (final UInt256 hash : hashs) {
-			if (localNodeData.getBlockDb().containsBlockWithHash(hash)) {
-				hasDuplicates = true;
-				LOG.debug("sendGetData requesting duplicate block hash:{}", hash);
+			final InventoryType type, final UInt256... hashs) {
+		if (type.equals(InventoryType.BLOCK)) {
+			boolean hasDuplicates = false;
+			for (final UInt256 hash : hashs) {
+				if (localNodeData.getBlockDb().containsBlockWithHash(hash)) {
+					hasDuplicates = true;
+					LOG.debug("sendGetData requesting duplicate block hash:{}", hash);
+				}
+			}
+			if (hasDuplicates) {
+				MapUtil.increment(LocalNodeData.API_CALL_MAP, DUPLICATE_OUT_BLOCK);
 			}
 		}
-		if (hasDuplicates) {
-			MapUtil.increment(LocalNodeData.API_CALL_MAP, DUPLICATE_OUT_BLOCK);
-		}
 
-		remoteNodeData.send(new Message(localNodeData.getMagic(), CommandEnum.GETDATA,
-				new InvPayload(InventoryType.BLOCK, hashs).toByteArray()));
+		remoteNodeData.send(
+				new Message(localNodeData.getMagic(), CommandEnum.GETDATA, new InvPayload(type, hashs).toByteArray()));
 	}
 
 	/**

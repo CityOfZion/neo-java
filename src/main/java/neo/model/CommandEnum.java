@@ -29,6 +29,8 @@ public enum CommandEnum {
 	MEMPOOL("mempool"),
 	/** get getdata. */
 	GETDATA("getdata"),
+	/** tx response. */
+	TX("tx"),
 
 	/** trailing semicolon */
 	;

@@ -25,6 +25,11 @@ import org.slf4j.LoggerFactory;
 public final class CityOfZionUtil {
 
 	/**
+	 * the path to request the best node.
+	 */
+	private static final String V2_NETWORK_BEST_NODE = "/v2/network/best_node";
+
+	/**
 	 * the node.
 	 */
 	private static final String NODE = "node";
@@ -99,7 +104,7 @@ public final class CityOfZionUtil {
 	 * @return the mainnet RPC node.
 	 */
 	public static String getMainNetRpcNode() {
-		final JSONObject json = getMainNetApiJsonAtUrl("/v2/network/best_node");
+		final JSONObject json = getMainNetApiJsonAtUrl(V2_NETWORK_BEST_NODE);
 		if (json == null) {
 			return null;
 		}
@@ -137,7 +142,7 @@ public final class CityOfZionUtil {
 	 * @return the testnet RPC node.
 	 */
 	public static String getTestNetRpcNode() {
-		final JSONObject json = getTestNetApiJsonAtUrl("/v1/network/best_node");
+		final JSONObject json = getTestNetApiJsonAtUrl(V2_NETWORK_BEST_NODE);
 		final String rpcNode = json.getString(NODE);
 		LOG.info("test net rpcNode {}", rpcNode);
 		return rpcNode;

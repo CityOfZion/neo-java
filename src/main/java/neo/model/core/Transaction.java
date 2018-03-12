@@ -13,6 +13,7 @@ import org.json.JSONObject;
 import neo.model.ByteArraySerializable;
 import neo.model.ToJsonObject;
 import neo.model.bytes.UInt256;
+import neo.model.network.Payload;
 import neo.model.util.ModelUtil;
 import neo.model.util.NetworkUtil;
 import neo.model.util.SHA256HashUtil;
@@ -24,7 +25,7 @@ import neo.model.util.TransactionUtil;
  * @author coranos
  *
  */
-public final class Transaction implements ToJsonObject, ByteArraySerializable, Serializable {
+public final class Transaction implements ToJsonObject, ByteArraySerializable, Serializable, Payload {
 
 	private static final long serialVersionUID = 1L;
 

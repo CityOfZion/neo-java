@@ -16,6 +16,7 @@ import org.slf4j.LoggerFactory;
 import neo.model.CommandEnum;
 import neo.model.bytes.UInt32;
 import neo.model.core.Block;
+import neo.model.core.Transaction;
 import neo.model.util.InputStreamUtil;
 import neo.model.util.ModelUtil;
 import neo.model.util.NetworkUtil;
@@ -199,6 +200,8 @@ public final class Message {
 			payload = null;
 		} else if ("block".equals(command)) {
 			payload = new Block(ByteBuffer.wrap(payloadBa));
+		} else if ("tx".equals(command)) {
+			payload = new Transaction(ByteBuffer.wrap(payloadBa));
 		} else if (!command.matches("[a-z]+")) {
 			LOG.debug("unknown payload type for non alphabetic command \"{}\"", command);
 			payload = null;

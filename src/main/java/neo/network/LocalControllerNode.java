@@ -23,6 +23,7 @@ import org.slf4j.LoggerFactory;
 
 import neo.model.IndexedSet;
 import neo.model.bytes.Fixed8;
+import neo.model.bytes.UInt256;
 import neo.model.core.Block;
 import neo.model.core.Header;
 import neo.model.core.TransactionType;
@@ -594,6 +595,7 @@ public class LocalControllerNode {
 		}
 		// TODO: figure out what to do here.
 		final InvPayload invp = message.getPayload(InvPayload.class);
+		final List<UInt256> hashes = invp.getHashes();
 		switch (invp.getType()) {
 		case BLOCK:
 			break;
@@ -603,6 +605,7 @@ public class LocalControllerNode {
 			break;
 		}
 
+		MessageUtil.sendGetData(peer.getData(), localNodeData, invp.getType(), hashes.toArray(new UInt256[0]));
 	}
 
 	/**
@@ -683,6 +686,10 @@ public class LocalControllerNode {
 				peer.getData().setAcknowledgedPeer(true);
 				onGetHeaders(peer, message);
 				break;
+			case TX:
+				peer.getData().setAcknowledgedPeer(true);
+				onTx(peer, message);
+				break;
 			}
 
 			LOG.debug("STARTED responseReceived {}", message.commandEnum);
@@ -724,6 +731,21 @@ public class LocalControllerNode {
 			data.setLastMessageTimestamp(System.currentTimeMillis());
 		}
 		notifyNodeDataChangeListeners();
+	}
+
+	/**
+	 * does something on a "tx" message.
+	 *
+	 * @param peer
+	 *            the peer that sent the message.
+	 * @param message
+	 *            the message.
+	 */
+	private void onTx(final RemoteNodeControllerRunnable peer, final Message message) {
+		if (stopped) {
+			return;
+		}
+		// TODO: process the transaction.
 	}
 
 	/**

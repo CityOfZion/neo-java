@@ -15,6 +15,7 @@ import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
 import org.apache.http.util.EntityUtils;
+import org.json.JSONArray;
 import org.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -60,6 +61,34 @@ public final class RpcClientUtil {
 	}
 
 	/**
+	 * returns the transaction hash.
+	 *
+	 * @param timeoutMillis
+	 *            the timeout in milliseconds.
+	 * @param rpcNode
+	 *            the RPC node to use.
+	 * @param silentErrors
+	 *            if false, log all timeout errors.
+	 * @param txId
+	 *            the transaction id.
+	 * @return the transaction hash.
+	 */
+	public static JSONObject getTransactionByHash(final long timeoutMillis, final String rpcNode,
+			final boolean silentErrors, final String txId) {
+		final JSONArray paramsJson = new JSONArray();
+		paramsJson.put(txId);
+		paramsJson.put(0);
+		final JSONObject inputJson = new JSONObject();
+		inputJson.put("jsonrpc", "2.0");
+		inputJson.put("method", "getrawtransaction");
+		inputJson.put("params", paramsJson);
+		inputJson.put("id", 1);
+
+		final JSONObject outputJson = RpcClientUtil.post(1000, rpcNode, false, inputJson);
+		return outputJson;
+	}
+
+	/**
 	 * posts a request.
 	 *
 	 * @param timeoutMillis
@@ -73,7 +102,7 @@ public final class RpcClientUtil {
 	 *            the input JSON to use.
 	 * @return the response, or null if an error occurs due to a timeout.
 	 */
-	private static JSONObject post(final long timeoutMillis, final String rpcNode, final boolean silentErrors,
+	public static JSONObject post(final long timeoutMillis, final String rpcNode, final boolean silentErrors,
 			final JSONObject inputJson) {
 		LOG.debug("inputJson:{}", inputJson);
 		final StringEntity input = new StringEntity(inputJson.toString(), ContentType.APPLICATION_JSON);
