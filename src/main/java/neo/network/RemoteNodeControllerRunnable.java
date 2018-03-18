@@ -242,8 +242,8 @@ public final class RemoteNodeControllerRunnable implements StopRunnable {
 				LOG.trace("ConnectException", e);
 				data.setGoodPeer(false);
 			} catch (final MessageFormatException e) {
-				LOG.error("MessageFormatException from {}, closing peer", data.getHostAddress());
-				LOG.error("MessageFormatException", e);
+				LOG.trace("MessageFormatException from {}, closing peer", data.getHostAddress());
+				LOG.trace("MessageFormatException", e);
 				data.setGoodPeer(false);
 			} catch (final SocketException e) {
 				if (e.getMessage().equals("Broken pipe (Write failed)")) {
