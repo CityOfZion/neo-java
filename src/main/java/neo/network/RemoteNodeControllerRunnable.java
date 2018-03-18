@@ -17,6 +17,7 @@ import neo.model.core.Block;
 import neo.model.core.Transaction;
 import neo.model.network.InvPayload;
 import neo.model.network.Message;
+import neo.model.network.exception.MessageFormatException;
 import neo.model.util.MapUtil;
 import neo.model.util.PayloadUtil;
 import neo.model.util.threadpool.StopRunnable;
@@ -239,6 +240,10 @@ public final class RemoteNodeControllerRunnable implements StopRunnable {
 			} catch (final ConnectException e) {
 				LOG.trace("ConnectException from {}, closing peer", data.getHostAddress());
 				LOG.trace("ConnectException", e);
+				data.setGoodPeer(false);
+			} catch (final MessageFormatException e) {
+				LOG.error("MessageFormatException from {}, closing peer", data.getHostAddress());
+				LOG.error("MessageFormatException", e);
 				data.setGoodPeer(false);
 			} catch (final SocketException e) {
 				if (e.getMessage().equals("Broken pipe (Write failed)")) {

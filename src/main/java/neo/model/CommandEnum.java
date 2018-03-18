@@ -31,6 +31,8 @@ public enum CommandEnum {
 	GETDATA("getdata"),
 	/** tx response. */
 	TX("tx"),
+	/** consensus response. */
+	CONSENSUS("consensus"),
 
 	/** trailing semicolon */
 	;

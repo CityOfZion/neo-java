@@ -107,10 +107,10 @@
 				},
 				"getheaders": {
 					"send-interval": {
-						"seconds": 15
+						"seconds": 30
 					},
 					"response-wait-timeout": {
-						"seconds": 30
+						"seconds": 60
 					},
 					"response-command": "headers"
 				}

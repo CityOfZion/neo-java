@@ -20,6 +20,11 @@ import neo.model.core.TransactionOutput;
 public interface BlockDb {
 
 	/**
+	 * block force synch interval.
+	 */
+	int BLOCK_FORCE_SYNCH_INTERVAL = 50;
+
+	/**
 	 * close the database.
 	 */
 	void close();

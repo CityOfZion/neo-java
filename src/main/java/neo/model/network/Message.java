@@ -4,7 +4,6 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.UnsupportedEncodingException;
-import java.net.SocketTimeoutException;
 import java.nio.ByteBuffer;
 
 import org.apache.commons.codec.binary.Hex;
@@ -17,6 +16,7 @@ import neo.model.CommandEnum;
 import neo.model.bytes.UInt32;
 import neo.model.core.Block;
 import neo.model.core.Transaction;
+import neo.model.network.exception.MessageFormatException;
 import neo.model.util.InputStreamUtil;
 import neo.model.util.ModelUtil;
 import neo.model.util.NetworkUtil;
@@ -31,9 +31,29 @@ import neo.model.util.SHA256HashUtil;
 public final class Message {
 
 	/**
+	 * the lowercase alphabet.
+	 */
+	private static final String LOWERCASE_ALPHABET = "[a-z]+";
+
+	/**
 	 * the logger.
 	 */
 	private static final Logger LOG = LoggerFactory.getLogger(Message.class);
+
+	/**
+	 * returns the value checksum.
+	 *
+	 * @param payload
+	 *            the payload to check.
+	 * @return the checksum.
+	 */
+	private static UInt32 calculateChecksum(final byte[] payload) {
+		final byte[] checksumFull = SHA256HashUtil.getDoubleSHA256Hash(payload);
+		final byte[] checksum = new byte[4];
+		System.arraycopy(checksumFull, 0, checksum, 0, 4);
+		ArrayUtils.reverse(checksum);
+		return new UInt32(checksum);
+	}
 
 	/**
 	 * the magic.
@@ -118,6 +138,12 @@ public final class Message {
 		magic = magicObj.toPositiveBigInteger().intValue();
 		LOG.trace("interim[2] inSocket magicObj:{} magic:{}", magicObj, magic);
 		command = ModelUtil.getFixedLengthString(headerBb, 12).trim();
+
+		if (!command.matches(LOWERCASE_ALPHABET)) {
+			throw new MessageFormatException("commandEnum is not alphabetical for command \""
+					+ Hex.encodeHexString(command.getBytes()) + "\"  .");
+		}
+
 		commandEnum = CommandEnum.fromName(command);
 		LOG.trace("interim[2] inSocket command:{}", command);
 		final UInt32 lengthObj = ModelUtil.getUInt32(headerBb);
@@ -131,9 +157,10 @@ public final class Message {
 		}
 		final UInt32 checksum = ModelUtil.getUInt32(headerBb);
 		LOG.trace("interim[2] inSocket checksum:{}", checksum);
+
 		final byte[] payloadBa;
 		if (commandEnum == null) {
-			throw new SocketTimeoutException();
+			throw new MessageFormatException("commandEnum is null for command \"" + command + "\".");
 		} else {
 			try {
 				payloadBa = new byte[length];
@@ -143,6 +170,14 @@ public final class Message {
 			}
 			InputStreamUtil.readUntilFull(readTimeOut, in, payloadBa);
 		}
+		final UInt32 calcChecksum = calculateChecksum(payloadBa);
+		LOG.trace("interim[3] inSocket checksum:{}", checksum);
+
+		if (!calcChecksum.equals(checksum)) {
+			throw new MessageFormatException(
+					"calcChecksum \"" + calcChecksum + "\" does not match checksum\"" + checksum + "\"");
+		}
+
 		final ByteBuffer payloadBb = ByteBuffer.wrap(payloadBa);
 		this.payloadBa = ModelUtil.getFixedLengthByteArray(payloadBb, length, false);
 		payload = createPayload();
@@ -175,39 +210,57 @@ public final class Message {
 			LOG.trace("initPayload payloadBa {}", Hex.encodeHexString(payloadBa));
 		}
 		final Payload payload;
-		// TODO: make a case statement.
-		if ("version".equals(command)) {
+		switch (command) {
+		case "version":
 			payload = new VersionPayload(ByteBuffer.wrap(payloadBa));
-		} else if ("inv".equals(command)) {
+			break;
+		case "inv":
 			payload = new InvPayload(ByteBuffer.wrap(payloadBa));
-		} else if ("addr".equals(command)) {
+			break;
+		case "addr":
 			payload = new AddrPayload(ByteBuffer.wrap(payloadBa));
-		} else if ("headers".equals(command)) {
+			break;
+		case "headers":
 			payload = new HeadersPayload(ByteBuffer.wrap(payloadBa));
-		} else if ("verack".equals(command)) {
+			break;
+		case "verack":
 			payload = null;
-		} else if ("getaddr".equals(command)) {
+			break;
+		case "getaddr":
 			payload = null;
-		} else if ("getdata".equals(command)) {
+			break;
+		case "getdata":
 			payload = null;
-		} else if ("getblocks".equals(command)) {
+			break;
+		case "getblocks":
 			payload = null;
-		} else if ("mempool".equals(command)) {
+			break;
+		case "mempool":
 			payload = null;
-		} else if ("".equals(command)) {
+			break;
+		case "":
 			payload = null;
-		} else if ("getheaders".equals(command)) {
+			break;
+		case "getheaders":
 			payload = null;
-		} else if ("block".equals(command)) {
+			break;
+		case "consensus":
+			payload = null;
+			break;
+		case "block":
 			payload = new Block(ByteBuffer.wrap(payloadBa));
-		} else if ("tx".equals(command)) {
+			break;
+		case "tx":
 			payload = new Transaction(ByteBuffer.wrap(payloadBa));
-		} else if (!command.matches("[a-z]+")) {
-			LOG.debug("unknown payload type for non alphabetic command \"{}\"", command);
-			payload = null;
-		} else {
-			LOG.error("unknown payload type for command \"{}\"", command);
-			payload = null;
+			break;
+		default:
+			if (!command.matches(LOWERCASE_ALPHABET)) {
+				LOG.debug("unknown payload type for non alphabetic command \"{}\"", command);
+				payload = null;
+			} else {
+				LOG.error("unknown payload type for command \"{}\"", command);
+				payload = null;
+			}
 		}
 		return (T) payload;
 	}
@@ -248,9 +301,8 @@ public final class Message {
 		final byte[] magicBa = NetworkUtil.getIntByteArray(magic);
 		ArrayUtils.reverse(magicBa);
 		final UInt32 magicObj = new UInt32(magicBa);
-		final byte[] checksumFull = SHA256HashUtil.getDoubleSHA256Hash(payloadBa);
-		final byte[] checksum = new byte[4];
-		System.arraycopy(checksumFull, 0, checksum, 0, 4);
+		final byte[] checksum = calculateChecksum(payloadBa).toByteArray();
+		ArrayUtils.reverse(checksum);
 		final ByteArrayOutputStream bout = new ByteArrayOutputStream();
 		bout.write(magicObj.getBytesCopy());
 		NetworkUtil.writeString(bout, 12, command);

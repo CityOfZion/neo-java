@@ -279,9 +279,10 @@ public final class ReadCacheBlockDBImpl implements BlockDb {
 						}
 					}
 					synchronized (blockSet) {
-						// if we put more than 500 blocks into the database, or no blocks came while we
+						// if we put more than BLOCK_FORCE_SYNCH_INTERVAL blocks into the database, or
+						// no blocks came while we
 						// were comitting, clear cache (which refrehes the stats).
-						if (blockSet.isEmpty() || (putCount > 500)) {
+						if (blockSet.isEmpty() || (putCount > BLOCK_FORCE_SYNCH_INTERVAL)) {
 							try (PerformanceMonitor m1 = new PerformanceMonitor("ReadCacheBlockDBImpl.clearCache")) {
 								clearCache();
 								putCount = 0;

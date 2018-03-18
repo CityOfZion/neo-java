@@ -316,7 +316,7 @@ public final class BlockImportExportUtil {
 					final byte[] ba = new byte[length];
 					in.read(ba);
 					final Block block = new Block(ByteBuffer.wrap(ba));
-					final boolean forceSynch = (blockIx % 500) == 0;
+					final boolean forceSynch = (blockIx % BlockDb.BLOCK_FORCE_SYNCH_INTERVAL) == 0;
 					blockDb.put(forceSynch, block);
 
 					interimBlocks++;

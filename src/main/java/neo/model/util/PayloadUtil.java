@@ -22,7 +22,8 @@ public final class PayloadUtil {
 	 * @return the new VersionPayload.
 	 */
 	public static VersionPayload getVersionPayload(final int port, final int nonce, final long startHeight) {
-		return new VersionPayload(System.currentTimeMillis() / 1000, port, nonce, "/NEO-JAVA:1.0.0/", startHeight);
+		// TODO: user agent check.
+		return new VersionPayload(System.currentTimeMillis() / 1000, port, nonce, "/NEO:2.7.3/", startHeight);
 	}
 
 	/**

@@ -89,6 +89,10 @@
     <level value="error" />
   </logger>
 
+  <logger name="neo.model.network.Message">
+    <level value="error" />
+  </logger>
+
   <logger name="neo">
     <level value="error" />
   </logger>

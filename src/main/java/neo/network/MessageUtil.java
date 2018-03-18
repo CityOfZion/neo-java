@@ -86,6 +86,7 @@ public final class MessageUtil {
 	 */
 	public static void sendGetHeaders(final RemoteNodeData remoteNodeData, final LocalNodeData localNodeData,
 			final UInt256 hash) {
+		LOG.debug("sendGetHeaders requesting hash:{};", hash);
 		remoteNodeData.send(new Message(localNodeData.getMagic(), CommandEnum.GETHEADERS,
 				new GetBlocksPayload(hash, null).toByteArray()));
 	}

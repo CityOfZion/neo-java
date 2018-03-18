@@ -1244,7 +1244,7 @@ public final class BlockDbMapDbImpl implements BlockDb {
 					lastGoodBlockIndex = block.getIndexAsLong();
 				}
 
-				final boolean forceSynch = (lastGoodBlockIndex % 500) == 0;
+				final boolean forceSynch = (lastGoodBlockIndex % BLOCK_FORCE_SYNCH_INTERVAL) == 0;
 				if (forceSynch) {
 					LOG.info("INTERIM validate, partial commit STARTED index {}", lastGoodBlockIndex);
 					commitValidation(lastGoodBlockIndex);

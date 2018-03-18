@@ -458,12 +458,11 @@ public final class RpcServerUtil {
 						}
 						lastTsByAddress.put(friend, block.timestamp.asLong());
 
+						if (t.type.equals(TransactionType.CLAIM_TRANSACTION)) {
+							MapUtil.increment(claimTxByAddress, friend);
+						}
 						if (addressAssetMap.get(friend).containsKey(ModelUtil.NEO_HASH)) {
 							MapUtil.increment(neoTxByAddress, friend);
-							if (t.type.equals(TransactionType.CLAIM_TRANSACTION)) {
-								MapUtil.increment(claimTxByAddress, friend);
-							}
-
 							final long value = addressAssetMap.get(friend).get(ModelUtil.NEO_HASH);
 							if (value < 0) {
 								MapUtil.increment(neoInByAddress, friend, -value);
