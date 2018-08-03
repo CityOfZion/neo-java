@@ -61,9 +61,9 @@ public class LocalNodeData {
 	private final long startTime;
 
 	/**
-	 * the start block count.
+	 * the start block height.
 	 */
-	private final long startBlockCount;
+	private final long startBlockHeight;
 
 	/**
 	 * the network name.
@@ -71,9 +71,9 @@ public class LocalNodeData {
 	private final String networkName;
 
 	/**
-	 * the blockchain block count.
+	 * the blockchain block height.
 	 */
-	private long blockchainBlockCount;
+	private long blockchainBlockHeight;
 
 	/**
 	 * the block file size.
@@ -248,7 +248,12 @@ public class LocalNodeData {
 		} catch (InstantiationException | IllegalAccessException e) {
 			throw new RuntimeException(e);
 		}
-		startBlockCount = blockDb.getBlockCount();
+		final Block maxHeader = blockDb.getHeaderOfBlockWithMaxIndex();
+		if (maxHeader == null) {
+			startBlockHeight = 0;
+		} else {
+			startBlockHeight = maxHeader.getIndexAsLong();
+		}
 	}
 
 	/**
@@ -261,12 +266,12 @@ public class LocalNodeData {
 	}
 
 	/**
-	 * return the blockchain block count.
+	 * return the blockchain block height.
 	 *
-	 * @return the blockchain block count.
+	 * @return the blockchain block height.
 	 */
-	public long getBlockchainBlockCount() {
-		return blockchainBlockCount;
+	public long getBlockchainBlockHeight() {
+		return blockchainBlockHeight;
 	}
 
 	/**
@@ -414,12 +419,12 @@ public class LocalNodeData {
 	}
 
 	/**
-	 * return the start block count.
+	 * return the start block height.
 	 *
-	 * @return the start block count.
+	 * @return the start block height.
 	 */
-	public long getStartBlockCount() {
-		return startBlockCount;
+	public long getStartBlockHeight() {
+		return startBlockHeight;
 	}
 
 	/**
@@ -497,13 +502,13 @@ public class LocalNodeData {
 	}
 
 	/**
-	 * sets the block count as read from the blockchain CityOfZion web service.
+	 * sets the block height as read from the blockchain CityOfZion web service.
 	 *
-	 * @param blockchainBlockCount
-	 *            the block count to use.
+	 * @param blockchainBlockHeight
+	 *            the block height to use.
 	 */
-	public void setBlockchainBlockCount(final long blockchainBlockCount) {
-		this.blockchainBlockCount = blockchainBlockCount;
+	public void setBlockchainBlockHeight(final long blockchainBlockHeight) {
+		this.blockchainBlockHeight = blockchainBlockHeight;
 	}
 
 	/**

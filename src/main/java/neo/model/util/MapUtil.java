@@ -102,6 +102,21 @@ public final class MapUtil {
 	}
 
 	/**
+	 * ensures there is a value in the map. zets to 0 if it isnt there..
+	 *
+	 * @param map
+	 *            the map to use.
+	 * @param key
+	 *            the key to use.
+	 * @param <T>
+	 *            the key type.
+	 * @return the new amount
+	 */
+	public static <T> long touch(final Map<T, Long> map, final T key) {
+		return increment(map, key, 0L);
+	}
+
+	/**
 	 * the constructor.
 	 */
 	private MapUtil() {

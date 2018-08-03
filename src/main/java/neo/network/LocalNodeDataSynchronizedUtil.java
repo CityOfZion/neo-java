@@ -377,25 +377,31 @@ public final class LocalNodeDataSynchronizedUtil {
 					localNodeData.getVerifiedHeaderPoolMap().remove(blockIndex);
 				}
 			}
+			final Block highestBlock = localNodeData.getBlockDb().getHeaderOfBlockWithMaxIndex();
 			if (!putBlockList.isEmpty()) {
 				final boolean forceSynch;
-				final long localBlockCount = localNodeData.getBlockDb().getBlockCount();
-				final long blockchainBlockCount = localNodeData.getBlockchainBlockCount();
-				final long localBlockCountLowerBy = blockchainBlockCount - localBlockCount;
-				if (localBlockCountLowerBy < 10) {
+
+				final long localBlockHeight;
+				if (highestBlock != null) {
+					localBlockHeight = highestBlock.getIndexAsLong();
+				} else {
+					localBlockHeight = 0;
+				}
+				final long blockchainBlockHeight = localNodeData.getBlockchainBlockHeight();
+				final long localBlockHeightLowerBy = blockchainBlockHeight - localBlockHeight;
+				if (localBlockHeightLowerBy < 10) {
 					forceSynch = true;
 				} else {
 					forceSynch = false;
 				}
 				if (LOG.isDebugEnabled()) {
-					final String msg = "INTERIM put forceSynch={};localBlockCount:{};blockchainBlockCount:{};localBlockCountLowerBy:{};";
-					LOG.debug(msg, forceSynch, localBlockCount, blockchainBlockCount, localBlockCountLowerBy);
+					final String msg = "INTERIM put forceSynch={};localBlockHeight:{};blockchainBlockHeight:{};localBlockHeightLowerBy:{};";
+					LOG.debug(msg, forceSynch, localBlockHeight, blockchainBlockHeight, localBlockHeightLowerBy);
 				}
 
 				localNodeData.getBlockDb().put(forceSynch, putBlockList.toArray(new Block[0]));
 			}
 
-			final Block highestBlock = localNodeData.getBlockDb().getHeaderOfBlockWithMaxIndex();
 			if (highestBlock != null) {
 				final long highestIndex = highestBlock.getIndexAsLong();
 				final Iterator<Block> blockIt = localNodeData.getUnverifiedBlockPoolSet().iterator();

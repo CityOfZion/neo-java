@@ -182,6 +182,11 @@ public final class ReadCacheBlockDBImpl implements BlockDb {
 	}
 
 	@Override
+	public <K, V> Map<K, V> getStates(final Class<K> keyClass, final Class<V> valueClass) {
+		return delegate.getStates(keyClass, valueClass);
+	}
+
+	@Override
 	public List<Transaction> getTransactionWithAccountList(final UInt160 account) {
 		return delegate.getTransactionWithAccountList(account);
 	}
@@ -332,6 +337,5 @@ public final class ReadCacheBlockDBImpl implements BlockDb {
 			stopped = true;
 
 		}
-
 	}
 }

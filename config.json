@@ -7,7 +7,9 @@
 			"REGISTER_TRANSACTION": 10000,
 			"MINER_TRANSACTION": 0,
 			"CLAIM_TRANSACTION": 0,
-			"INVOCATION_TRANSACTION": 0
+			"INVOCATION_TRANSACTION": 0,
+			"CONTRACT_TRANSACTION": 0,
+			"STATE_TRANSACTION": 0
 		},
 		"import-export": {
 			"data-file-name": "chain.acc",

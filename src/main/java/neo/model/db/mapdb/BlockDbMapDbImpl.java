@@ -13,7 +13,8 @@ import java.util.Map;
 import java.util.TreeMap;
 
 import org.apache.commons.io.FileUtils;
-import org.apache.commons.lang.ArrayUtils;
+import org.apache.commons.lang3.ArrayUtils;
+import org.apache.commons.lang3.NotImplementedException;
 import org.json.JSONObject;
 import org.mapdb.BTreeMap;
 import org.mapdb.DB;
@@ -253,11 +254,11 @@ public final class BlockDbMapDbImpl implements BlockDb {
 
 	@Override
 	public Map<UInt160, Map<UInt256, Fixed8>> getAccountAssetValueMap() {
-		LOG.error("getAccountAssetValueMap STARTED");
+		LOG.info("getAccountAssetValueMap STARTED");
 		final Map<UInt160, Map<UInt256, Fixed8>> accountAssetValueMap = new TreeMap<>();
 
 		final BTreeMap<byte[], byte[]> assetAndValueByAccountMap = getAssetAndValueByAccountMap();
-		LOG.error("getAccountAssetValueMap INTERIM assetAndValueByAccountMap.size:{};",
+		LOG.info("getAccountAssetValueMap INTERIM assetAndValueByAccountMap.size:{};",
 				assetAndValueByAccountMap.size());
 
 		for (final byte[] key : assetAndValueByAccountMap.getKeys()) {
@@ -267,7 +268,7 @@ public final class BlockDbMapDbImpl implements BlockDb {
 			accountAssetValueMap.put(account, map);
 		}
 
-		LOG.error("getAccountAssetValueMap SUCCESS, count:{}", accountAssetValueMap.size());
+		LOG.info("getAccountAssetValueMap SUCCESS, count:{}", accountAssetValueMap.size());
 		return accountAssetValueMap;
 	}
 
@@ -577,6 +578,12 @@ public final class BlockDbMapDbImpl implements BlockDb {
 	private long getMaxBlockIndex() {
 		final long retval = db.atomicLong(MAX_BLOCK_INDEX, 0).createOrOpen().get();
 		return retval;
+	}
+
+	@Override
+	public <K, V> Map<K, V> getStates(final Class<K> keyClass, final Class<V> valueClass) {
+		// TODO: implement this.
+		throw new NotImplementedException("getStates");
 	}
 
 	/**

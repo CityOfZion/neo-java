@@ -6,18 +6,24 @@ import java.io.Serializable;
 import java.nio.ByteBuffer;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Set;
 
 import org.json.JSONObject;
 
 import neo.model.ByteArraySerializable;
 import neo.model.ToJsonObject;
+import neo.model.bytes.UInt160;
 import neo.model.bytes.UInt256;
+import neo.model.db.BlockDb;
 import neo.model.network.Payload;
 import neo.model.util.ModelUtil;
 import neo.model.util.NetworkUtil;
 import neo.model.util.SHA256HashUtil;
 import neo.model.util.TransactionUtil;
+import neo.vm.IInteropInterface;
+import neo.vm.IScriptContainer;
 
 /**
  * the transaction.
@@ -25,7 +31,7 @@ import neo.model.util.TransactionUtil;
  * @author coranos
  *
  */
-public final class Transaction implements ToJsonObject, ByteArraySerializable, Serializable, Payload {
+public final class Transaction implements ToJsonObject, ByteArraySerializable, Serializable, Payload, IScriptContainer {
 
 	private static final long serialVersionUID = 1L;
 
@@ -108,6 +114,12 @@ public final class Transaction implements ToJsonObject, ByteArraySerializable, S
 		return new UInt256(hashBa);
 	}
 
+	@Override
+	public int compareTo(final IInteropInterface object) {
+		final Transaction that = (Transaction) object;
+		return getComparator().compare(this, that);
+	}
+
 	/**
 	 * returns the hash.
 	 *
@@ -127,6 +139,48 @@ public final class Transaction implements ToJsonObject, ByteArraySerializable, S
 		writeHashData(bout);
 		final byte[] hashDataBa = bout.toByteArray();
 		return hashDataBa;
+	}
+
+	@Override
+	public byte[] getMessage() {
+		return getHashData();
+	}
+
+	/**
+	 * return the script hashes used for verification.
+	 *
+	 * @param blockDb
+	 *            the blockdb to use.
+	 * @return the script hashes used for verification.
+	 */
+	public UInt160[] getScriptHashesForVerifying(final BlockDb blockDb) {
+		final Set<UInt160> hashes = new LinkedHashSet<>();
+		for (final CoinReference cr : inputs) {
+			final TransactionOutput to = ModelUtil.getTransactionOutput(blockDb, cr);
+			hashes.add(to.scriptHash);
+		}
+		for (final TransactionAttribute attribute : attributes) {
+			if (attribute.usage.equals(TransactionAttributeUsage.SCRIPT)) {
+				hashes.add(new UInt160(attribute.getCopyOfData()));
+			}
+		}
+
+		if (type.equals(TransactionType.ISSUE_TRANSACTION)) {
+			// TODO: handle issue transactions.
+		}
+
+		// TODO: add AssetState duty flag code.
+		// foreach (var group in Outputs.GroupBy(p => p.AssetId))
+		// {
+		// AssetState asset = Blockchain.Default.GetAssetState(group.Key);
+		// if (asset == null) throw new InvalidOperationException();
+		// if (asset.AssetType.HasFlag(AssetType.DutyFlag))
+		// {
+		// hashes.UnionWith(group.Select(p => p.ScriptHash));
+		// }
+		// }
+
+		return hashes.toArray(new UInt160[0]);
 	}
 
 	/**
@@ -207,5 +261,4 @@ public final class Transaction implements ToJsonObject, ByteArraySerializable, S
 		NetworkUtil.write(out, inputs);
 		NetworkUtil.write(out, outputs);
 	}
-
 }

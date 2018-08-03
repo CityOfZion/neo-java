@@ -3,7 +3,8 @@ package neo.model.crypto.ecc;
 import java.math.BigInteger;
 import java.nio.ByteBuffer;
 
-import org.apache.commons.lang.ArrayUtils;
+import org.apache.commons.lang3.ArrayUtils;
+import org.apache.commons.lang3.NotImplementedException;
 
 public final class ECPoint {
 
@@ -165,6 +166,11 @@ public final class ECPoint {
 
 	public ECPoint(final byte[] buffer, final String error) {
 		this(buffer, null, null, ECCurve.Secp256r1, error);
+	}
+
+	public byte[] EncodePoint(final boolean b) {
+		// TODO Auto-generated method stub
+		throw new NotImplementedException("EncodePoint");
 	}
 
 	public boolean getIsInfinity() {

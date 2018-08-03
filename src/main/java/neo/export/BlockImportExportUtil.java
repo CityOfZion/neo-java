@@ -14,7 +14,9 @@ import java.io.PrintWriter;
 import java.nio.ByteBuffer;
 import java.sql.Timestamp;
 import java.text.NumberFormat;
+import java.util.Map;
 import java.util.Set;
+import java.util.TreeMap;
 import java.util.TreeSet;
 
 import org.apache.commons.lang3.ArrayUtils;
@@ -24,13 +26,18 @@ import org.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import neo.model.bytes.Fixed8;
 import neo.model.bytes.UInt160;
+import neo.model.bytes.UInt256;
 import neo.model.bytes.UInt32;
 import neo.model.core.Block;
+import neo.model.core.CoinReference;
 import neo.model.core.Transaction;
 import neo.model.core.TransactionOutput;
 import neo.model.core.TransactionType;
 import neo.model.db.BlockDb;
+import neo.model.util.MapUtil;
+import neo.model.util.ModelUtil;
 import neo.network.LocalControllerNode;
 import neo.network.model.LocalNodeData;
 
@@ -68,9 +75,19 @@ public final class BlockImportExportUtil {
 	private static final String BLOCKS = "blocks";
 
 	/**
+	 * JSON key "block_bins".
+	 */
+	private static final String BLOCK_BINS = "block_bins";
+
+	/**
 	 * JSON key "transactions".
 	 */
 	private static final String TRANSACTIONS = "transactions";
+
+	/**
+	 * JSON key "transaction_network_fees".
+	 */
+	private static final String TRANSACTION_NETWORK_FEES = "transaction_network_fees";
 
 	/**
 	 * JSON key "accounts".
@@ -139,7 +156,9 @@ public final class BlockImportExportUtil {
 				long interimBlocks = 0;
 				long interimBytes = 0;
 				final long[] interimTx = new long[TransactionType.values().length];
+				final long[] interimTxNetworkFees = new long[TransactionType.values().length];
 				long totalTx = 0;
+				final Map<String, Long> numBlocksByTxCountMap = new TreeMap<>();
 
 				@SuppressWarnings("unchecked")
 				final Set<UInt160>[] activeAccountSet = new Set[TransactionType.values().length];
@@ -163,11 +182,15 @@ public final class BlockImportExportUtil {
 					interimBytes += ba.length;
 					for (final Transaction tx : block.getTransactionList()) {
 						interimTx[tx.type.ordinal()]++;
+						final Fixed8 systemFee = localNodeData.getTransactionSystemFeeMap().get(tx.type);
+						interimTxNetworkFees[tx.type.ordinal()] += getNetworkFee(blockDb, tx, systemFee).value;
 						totalTx++;
 						for (final TransactionOutput txOut : tx.outputs) {
 							activeAccountSet[tx.type.ordinal()].add(txOut.scriptHash);
 						}
 					}
+
+					MapUtil.increment(numBlocksByTxCountMap, String.valueOf(block.getTransactionList().size()));
 
 					if (startMs < 0) {
 						startMs = blockTs.getTime();
@@ -179,7 +202,7 @@ public final class BlockImportExportUtil {
 						final Block maxBlockHeader = blockDb.getHeaderOfBlockWithMaxIndex();
 
 						final JSONObject stats = getStats(blockDb, interimBlocks, interimBytes, interimTx,
-								activeAccountSet, procStartMs, blockTs);
+								activeAccountSet, procStartMs, blockTs, interimTxNetworkFees, numBlocksByTxCountMap);
 						if (blockIx > 0) {
 							statsWriter.println(COMMA);
 						}
@@ -192,12 +215,15 @@ public final class BlockImportExportUtil {
 
 						for (int ix = 0; ix < interimTx.length; ix++) {
 							interimTx[ix] = 0;
+							interimTxNetworkFees[ix] = 0;
 						}
 						interimBlocks = 0;
 						interimBytes = 0;
 						for (int txOrdinal = 0; txOrdinal < activeAccountSet.length; txOrdinal++) {
 							activeAccountSet[txOrdinal].clear();
 						}
+
+						numBlocksByTxCountMap.clear();
 
 						procStartMs = System.currentTimeMillis();
 					}
@@ -212,6 +238,72 @@ public final class BlockImportExportUtil {
 		} catch (final IOException e) {
 			throw new RuntimeException(e);
 		}
+	}
+
+	/**
+	 * return the network fee.
+	 *
+	 * @param blockDb
+	 *            the block database.
+	 * @param tx
+	 *            the transaction.
+	 * @param systemFee
+	 *            the system fee.
+	 * @return the network fee.
+	 */
+	private static Fixed8 getNetworkFee(final BlockDb blockDb, final Transaction tx, final Fixed8 systemFee) {
+		switch (tx.type) {
+		case MINER_TRANSACTION:
+		case CLAIM_TRANSACTION:
+		case ENROLLMENT_TRANSACTION:
+		case ISSUE_TRANSACTION:
+		case REGISTER_TRANSACTION:
+			LOG.trace("txType:{}; No Network Fee", tx.type);
+			return ModelUtil.FIXED8_ZERO;
+		default:
+		}
+		Fixed8 totalInput = ModelUtil.FIXED8_ZERO;
+		for (final CoinReference cr : tx.inputs) {
+			final UInt256 prevHashReversed = cr.prevHash.reverse();
+			final Transaction tiTx = blockDb.getTransactionWithHash(prevHashReversed);
+			final int prevIndex = cr.prevIndex.asInt();
+			final TransactionOutput txOut = tiTx.outputs.get(prevIndex);
+			if (txOut.assetId.equals(ModelUtil.GAS_HASH)) {
+				totalInput = ModelUtil.add(totalInput, txOut.value);
+			}
+		}
+
+		Fixed8 totalOutput = ModelUtil.FIXED8_ZERO;
+		for (final TransactionOutput txOut : tx.outputs) {
+			if (txOut.assetId.equals(ModelUtil.GAS_HASH)) {
+				totalOutput = ModelUtil.add(totalOutput, txOut.value);
+			}
+		}
+
+		if (totalInput.equals(ModelUtil.FIXED8_ZERO) && totalOutput.equals(ModelUtil.FIXED8_ZERO)
+				&& systemFee.equals(ModelUtil.FIXED8_ZERO)) {
+			LOG.trace("txType:{}; Inout,Output, and System fees are all zero, No Network Fee", tx.type);
+			return ModelUtil.FIXED8_ZERO;
+		}
+
+		final Fixed8 totalFee;
+		try {
+			totalFee = ModelUtil.subtract(totalOutput, totalInput);
+		} catch (final RuntimeException e) {
+			LOG.error("txType:{}; totalInput:{}; totalOutput:{}; systemFee:{}; hash:{};", tx.type, totalInput,
+					totalOutput, systemFee, tx.getHash());
+			throw new RuntimeException("error calculating totalFee", e);
+		}
+		final Fixed8 networkFee;
+		;
+		try {
+			networkFee = ModelUtil.subtract(systemFee, totalFee);
+		} catch (final RuntimeException e) {
+			LOG.error("txType:{}; totalInput:{}; totalOutput:{}; systemFee:{}; totalFee:{}; hash:{};", tx.type,
+					totalInput, totalOutput, systemFee, totalFee, tx.getHash());
+			throw new RuntimeException("error calculating networkFee", e);
+		}
+		return networkFee;
 	}
 
 	/**
@@ -231,11 +323,15 @@ public final class BlockImportExportUtil {
 	 *            start milliseconds.
 	 * @param blockTs
 	 *            block timestamp.
+	 * @param interimTxNetworkFees
+	 *            the interim transaction network fees to use.
+	 * @param numBlocksByTxCountMap
+	 *            the bins of how many transactions were in each block.
 	 * @return the stats JSON.
 	 */
 	public static JSONObject getStats(final BlockDb blockDb, final long interimBlocks, final long interimBytes,
 			final long[] interimTx, final Set<UInt160>[] activeAccountSet, final long procStartMs,
-			final Timestamp blockTs) {
+			final Timestamp blockTs, final long[] interimTxNetworkFees, final Map<String, Long> numBlocksByTxCountMap) {
 		final String dateStr = DATE_FORMAT.format(blockTs);
 		final JSONObject stats = new JSONObject();
 		stats.put(DATE, dateStr);
@@ -260,6 +356,18 @@ public final class BlockImportExportUtil {
 			transactions.put(tType.name().toLowerCase(), interimTx[tType.ordinal()]);
 		}
 		stats.put(TRANSACTIONS, transactions);
+		final JSONObject transactionNetworkFees = new JSONObject();
+		for (final TransactionType tType : TransactionType.values()) {
+			transactionNetworkFees.put(tType.name().toLowerCase(), interimTxNetworkFees[tType.ordinal()]);
+		}
+		stats.put(TRANSACTION_NETWORK_FEES, transactionNetworkFees);
+
+		final JSONObject blockBins = new JSONObject();
+		for (final String binName : numBlocksByTxCountMap.keySet()) {
+			final long numBlocks = numBlocksByTxCountMap.get(binName);
+			blockBins.put(binName, numBlocks);
+		}
+		stats.put(BLOCK_BINS, blockBins);
 
 		stats.put(BLOCKS, interimBlocks);
 		stats.put(BYTES, interimBytes);
@@ -273,14 +381,14 @@ public final class BlockImportExportUtil {
 	 *            the controller.
 	 */
 	public static void importBlocks(final LocalControllerNode controller) {
-		final BlockDb blockDb = controller.getLocalNodeData().getBlockDb();
+		final LocalNodeData localNodeData = controller.getLocalNodeData();
+		final BlockDb blockDb = localNodeData.getBlockDb();
 
-		try (OutputStream statsFileOut = new FileOutputStream(
-				controller.getLocalNodeData().getChainExportStatsFileName());
+		try (OutputStream statsFileOut = new FileOutputStream(localNodeData.getChainExportStatsFileName());
 				PrintWriter statsWriter = new PrintWriter(statsFileOut, true);) {
 			statsWriter.println(OPEN_BRACKET);
 			long maxIndex = 0;
-			try (InputStream fileIn = new FileInputStream(controller.getLocalNodeData().getChainExportDataFileName());
+			try (InputStream fileIn = new FileInputStream(localNodeData.getChainExportDataFileName());
 					BufferedInputStream buffIn = new BufferedInputStream(fileIn, 1024 * 1024 * 32);
 					DataInputStream in = new DataInputStream(buffIn);) {
 
@@ -299,7 +407,9 @@ public final class BlockImportExportUtil {
 				long interimBlocks = 0;
 				long interimBytes = 0;
 				final long[] interimTx = new long[TransactionType.values().length];
+				final long[] interimTxNetworkFees = new long[TransactionType.values().length];
 				long totalTx = 0;
+				final Map<String, Long> numBlocksByTxCountMap = new TreeMap<>();
 
 				@SuppressWarnings("unchecked")
 				final Set<UInt160>[] activeAccountSet = new Set[TransactionType.values().length];
@@ -324,6 +434,8 @@ public final class BlockImportExportUtil {
 
 					for (final Transaction tx : block.getTransactionList()) {
 						interimTx[tx.type.ordinal()]++;
+						final Fixed8 systemFee = localNodeData.getTransactionSystemFeeMap().get(tx.type);
+						interimTxNetworkFees[tx.type.ordinal()] += getNetworkFee(blockDb, tx, systemFee).value;
 						totalTx++;
 						for (final TransactionOutput txOut : tx.outputs) {
 							activeAccountSet[tx.type.ordinal()].add(txOut.scriptHash);
@@ -332,6 +444,9 @@ public final class BlockImportExportUtil {
 
 					LOG.debug("SUCCESS import {} of {} hash {}", INTEGER_FORMAT.format(blockIx),
 							INTEGER_FORMAT.format(maxIndex), block.hash);
+
+					MapUtil.increment(numBlocksByTxCountMap, String.valueOf(block.getTransactionList().size()));
+
 					final Timestamp blockTs = block.getTimestamp();
 
 					if (startMs < 0) {
@@ -344,7 +459,7 @@ public final class BlockImportExportUtil {
 						final Block maxBlockHeader = blockDb.getHeaderOfBlockWithMaxIndex();
 
 						final JSONObject stats = getStats(blockDb, interimBlocks, interimBytes, interimTx,
-								activeAccountSet, procStartMs, blockTs);
+								activeAccountSet, procStartMs, blockTs, interimTxNetworkFees, numBlocksByTxCountMap);
 						if (blockIx > 0) {
 							statsWriter.println(COMMA);
 						}
@@ -358,12 +473,16 @@ public final class BlockImportExportUtil {
 
 						for (int ix = 0; ix < interimTx.length; ix++) {
 							interimTx[ix] = 0;
+							interimTxNetworkFees[ix] = 0;
 						}
 						interimBlocks = 0;
 						interimBytes = 0;
 						for (int txOrdinal = 0; txOrdinal < activeAccountSet.length; txOrdinal++) {
 							activeAccountSet[txOrdinal].clear();
 						}
+
+						numBlocksByTxCountMap.clear();
+
 						procStartMs = System.currentTimeMillis();
 					}
 				}

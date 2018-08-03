@@ -19,6 +19,8 @@ public enum TransactionType {
 	REGISTER_TRANSACTION(0x40),
 	/** Contract Transaction. */
 	CONTRACT_TRANSACTION(0x80),
+	/** State Transaction. */
+	STATE_TRANSACTION(0x90),
 	/** Publish Transaction. */
 	PUBLISH_TRANSACTION(0xd0),
 	/** Invocation Transaction. */

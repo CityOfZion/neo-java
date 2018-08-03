@@ -35,8 +35,8 @@ public final class CityOfZionBlockUtil {
 			final Integer blockchainHeight = RpcClientUtil.getBlockCount(localNodeData.getRpcClientTimeoutMillis(),
 					rpcNode, true);
 			if (blockchainHeight != null) {
-				if (blockchainHeight > localNodeData.getBlockchainBlockCount()) {
-					localNodeData.setBlockchainBlockCount(blockchainHeight);
+				if (blockchainHeight > localNodeData.getBlockchainBlockHeight()) {
+					localNodeData.setBlockchainBlockHeight(blockchainHeight);
 				}
 			}
 		} catch (final Exception e) {

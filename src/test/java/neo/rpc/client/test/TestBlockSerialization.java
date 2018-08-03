@@ -155,11 +155,19 @@ public class TestBlockSerialization {
 	// INVOCATION_TRANSACTION
 
 	/**
-	 * test reading a contract transaction.
+	 * test reading a invocation transaction.
 	 */
 	@Test
 	public void test008TxTypeInvocation() {
 		assertTransactionTypeEquals("test008TxTypeInvocation", 2, TransactionType.INVOCATION_TRANSACTION);
+	}
+
+	/**
+	 * test reading a state transaction.
+	 */
+	@Test
+	public void test009TxTypeState() {
+		assertTransactionTypeEquals("test009TxTypeState", 6, TransactionType.STATE_TRANSACTION);
 	}
 
 	/**

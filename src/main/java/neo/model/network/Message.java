@@ -209,60 +209,65 @@ public final class Message {
 		if (LOG.isTraceEnabled()) {
 			LOG.trace("initPayload payloadBa {}", Hex.encodeHexString(payloadBa));
 		}
-		final Payload payload;
-		switch (command) {
-		case "version":
-			payload = new VersionPayload(ByteBuffer.wrap(payloadBa));
-			break;
-		case "inv":
-			payload = new InvPayload(ByteBuffer.wrap(payloadBa));
-			break;
-		case "addr":
-			payload = new AddrPayload(ByteBuffer.wrap(payloadBa));
-			break;
-		case "headers":
-			payload = new HeadersPayload(ByteBuffer.wrap(payloadBa));
-			break;
-		case "verack":
-			payload = null;
-			break;
-		case "getaddr":
-			payload = null;
-			break;
-		case "getdata":
-			payload = null;
-			break;
-		case "getblocks":
-			payload = null;
-			break;
-		case "mempool":
-			payload = null;
-			break;
-		case "":
-			payload = null;
-			break;
-		case "getheaders":
-			payload = null;
-			break;
-		case "consensus":
-			payload = null;
-			break;
-		case "block":
-			payload = new Block(ByteBuffer.wrap(payloadBa));
-			break;
-		case "tx":
-			payload = new Transaction(ByteBuffer.wrap(payloadBa));
-			break;
-		default:
-			if (!command.matches(LOWERCASE_ALPHABET)) {
-				LOG.debug("unknown payload type for non alphabetic command \"{}\"", command);
+		try {
+			final Payload payload;
+			switch (command) {
+			case "version":
+				payload = new VersionPayload(ByteBuffer.wrap(payloadBa));
+				break;
+			case "inv":
+				payload = new InvPayload(ByteBuffer.wrap(payloadBa));
+				break;
+			case "addr":
+				payload = new AddrPayload(ByteBuffer.wrap(payloadBa));
+				break;
+			case "headers":
+				payload = new HeadersPayload(ByteBuffer.wrap(payloadBa));
+				break;
+			case "verack":
 				payload = null;
-			} else {
-				LOG.error("unknown payload type for command \"{}\"", command);
+				break;
+			case "getaddr":
 				payload = null;
+				break;
+			case "getdata":
+				payload = null;
+				break;
+			case "getblocks":
+				payload = null;
+				break;
+			case "mempool":
+				payload = null;
+				break;
+			case "":
+				payload = null;
+				break;
+			case "getheaders":
+				payload = null;
+				break;
+			case "consensus":
+				payload = null;
+				break;
+			case "block":
+				payload = new Block(ByteBuffer.wrap(payloadBa));
+				break;
+			case "tx":
+				payload = new Transaction(ByteBuffer.wrap(payloadBa));
+				break;
+			default:
+				if (!command.matches(LOWERCASE_ALPHABET)) {
+					LOG.debug("unknown payload type for non alphabetic command \"{}\"", command);
+					payload = null;
+				} else {
+					LOG.error("unknown payload type for command \"{}\"", command);
+					payload = null;
+				}
 			}
+			return (T) payload;
+		} catch (final RuntimeException e) {
+			throw new RuntimeException(
+					"error in command \"" + command + "\" payload :" + Hex.encodeHexString(payloadBa));
 		}
-		return (T) payload;
 	}
 
 	/**

@@ -151,11 +151,6 @@ public final class RpcServerUtil {
 	private static final String NEO_TX = "neo_tx";
 
 	/**
-	 * claim transaction.
-	 */
-	private static final String CLAIM_TX = "claim_tx";
-
-	/**
 	 * gas out.
 	 */
 	private static final String GAS_OUT = "gas_out";
@@ -435,7 +430,6 @@ public final class RpcServerUtil {
 
 			final Map<UInt160, Long> neoTxByAddress = new TreeMap<>();
 			final Map<UInt160, Long> gasTxByAddress = new TreeMap<>();
-			final Map<UInt160, Long> claimTxByAddress = new TreeMap<>();
 
 			final Map<UInt160, Long> neoInByAddress = new TreeMap<>();
 			final Map<UInt160, Long> gasInByAddress = new TreeMap<>();
@@ -458,9 +452,6 @@ public final class RpcServerUtil {
 						}
 						lastTsByAddress.put(friend, block.timestamp.asLong());
 
-						if (t.type.equals(TransactionType.CLAIM_TRANSACTION)) {
-							MapUtil.increment(claimTxByAddress, friend);
-						}
 						if (addressAssetMap.get(friend).containsKey(ModelUtil.NEO_HASH)) {
 							MapUtil.increment(neoTxByAddress, friend);
 							final long value = addressAssetMap.get(friend).get(ModelUtil.NEO_HASH);
@@ -553,12 +544,6 @@ public final class RpcServerUtil {
 						entry.put(GAS_TX, gasTxByAddress.get(key));
 					} else {
 						entry.put(GAS_TX, 0);
-					}
-
-					if (claimTxByAddress.containsKey(key)) {
-						entry.put(CLAIM_TX, claimTxByAddress.get(key));
-					} else {
-						entry.put(CLAIM_TX, 0);
 					}
 
 					if (firstTsByAddress.containsKey(key)) {

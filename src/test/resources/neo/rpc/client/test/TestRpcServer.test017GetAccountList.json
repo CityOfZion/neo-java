@@ -2,7 +2,6 @@
 	"result": [
 		{
 			"gas_out": 0,
-			"claim_tx": 0,
 			"neo_tx": 0,
 			"neo_in": 0,
 			"gas_in": 0,

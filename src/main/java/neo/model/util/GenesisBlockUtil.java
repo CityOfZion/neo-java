@@ -4,7 +4,7 @@ import java.nio.ByteBuffer;
 
 import org.apache.commons.codec.DecoderException;
 import org.apache.commons.codec.binary.Hex;
-import org.apache.commons.lang.ArrayUtils;
+import org.apache.commons.lang3.ArrayUtils;
 
 import neo.model.bytes.UInt256;
 import neo.model.core.Block;

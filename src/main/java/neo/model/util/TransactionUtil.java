@@ -10,6 +10,7 @@ import neo.model.core.MinerExclusiveData;
 import neo.model.core.NoExclusiveData;
 import neo.model.core.PublishExclusiveData;
 import neo.model.core.RegisterExclusiveData;
+import neo.model.core.StateExclusiveData;
 import neo.model.core.TransactionType;
 
 /**
@@ -52,6 +53,8 @@ public final class TransactionUtil {
 			return new PublishExclusiveData(version, bb);
 		case REGISTER_TRANSACTION:
 			return new RegisterExclusiveData(bb);
+		case STATE_TRANSACTION:
+			return new StateExclusiveData(bb);
 		default:
 			throw new RuntimeException("unknown type:" + type);
 		}

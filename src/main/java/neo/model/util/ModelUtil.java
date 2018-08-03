@@ -7,9 +7,11 @@ import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.math.BigInteger;
 import java.nio.ByteBuffer;
+import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Base64;
+import java.util.Iterator;
 import java.util.List;
 
 import org.apache.commons.codec.DecoderException;
@@ -21,6 +23,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import neo.model.ByteArraySerializable;
+import neo.model.ByteSizeable;
 import neo.model.ToJsonObject;
 import neo.model.bytes.Fixed8;
 import neo.model.bytes.UInt128;
@@ -29,6 +32,10 @@ import neo.model.bytes.UInt160;
 import neo.model.bytes.UInt256;
 import neo.model.bytes.UInt32;
 import neo.model.bytes.UInt64;
+import neo.model.core.CoinReference;
+import neo.model.core.Transaction;
+import neo.model.core.TransactionOutput;
+import neo.model.db.BlockDb;
 
 /**
  * the utilities for editing the neo model.
@@ -161,6 +168,94 @@ public final class ModelUtil {
 			LOG.trace("addressToScriptHash.data:{}", Hex.encodeHexString(data));
 		}
 		return new UInt160(data);
+	}
+
+	/**
+	 * compares two arrays.
+	 *
+	 * @param list1
+	 *            the first array.
+	 * @param list2
+	 *            the second array.
+	 * @return the comparison of the two arrays.
+	 */
+	public static int compareTo(final byte[] list1, final byte[] list2) {
+		if (list1.length != list2.length) {
+			final Integer size1 = list1.length;
+			final Integer size2 = list2.length;
+			return size1.compareTo(size2);
+		}
+
+		for (int ix = 0; ix < list1.length; ix++) {
+			final Byte obj1 = list1[ix];
+			final Byte obj2 = list2[ix];
+			final int c = obj1.compareTo(obj2);
+			if (c != 0) {
+				return c;
+			}
+		}
+		return 0;
+	}
+
+	/**
+	 * compares two lists.
+	 *
+	 * @param list1
+	 *            the first list.
+	 * @param list2
+	 *            the second list.
+	 * @param <T>
+	 *            the type of the element in the list.
+	 * @return the comparison of the two lists.
+	 */
+	public static <T extends Comparable<? super T>> int compareTo(final List<T> list1, final List<T> list2) {
+		if (list1.size() != list2.size()) {
+			final Integer size1 = list1.size();
+			final Integer size2 = list2.size();
+			return size1.compareTo(size2);
+		}
+
+		final Iterator<T> it1 = list1.iterator();
+		final Iterator<T> it2 = list2.iterator();
+
+		while (it1.hasNext() && it2.hasNext()) {
+			final T obj1 = it1.next();
+			final T obj2 = it2.next();
+			final int c = obj1.compareTo(obj2);
+			if (c != 0) {
+				return c;
+			}
+		}
+		return 0;
+	}
+
+	/**
+	 * compares two arrays.
+	 *
+	 * @param list1
+	 *            the first array.
+	 * @param list2
+	 *            the second array.
+	 * @param <T>
+	 *            the type of the element in the list.
+	 * @return the comparison of the two arrays.
+	 */
+	public static <T extends Comparable<? super T>> int compareTo(final T[] list1, final T[] list2) {
+		if (list1.length != list2.length) {
+			final Integer size1 = list1.length;
+			final Integer size2 = list2.length;
+			return size1.compareTo(size2);
+		}
+
+		for (int ix = 0; ix < list1.length; ix++) {
+			final T obj1 = list1[ix];
+			final T obj2 = list2[ix];
+			final int c = obj1.compareTo(obj2);
+			if (c != 0) {
+				return c;
+			}
+		}
+		return 0;
 	}
 
 	/**
@@ -354,6 +449,23 @@ public final class ModelUtil {
 	}
 
 	/**
+	 * returns the transaction output for this coin reference.
+	 *
+	 * @param blockDb
+	 *            the block database to ues.
+	 * @param coinReference
+	 *            the coin reference to use.
+	 * @return the TransactionOutput.
+	 */
+	public static TransactionOutput getTransactionOutput(final BlockDb blockDb, final CoinReference coinReference) {
+		final UInt256 prevHashReversed = coinReference.prevHash.reverse();
+		final Transaction tiTx = blockDb.getTransactionWithHash(prevHashReversed);
+		final int prevIndex = coinReference.prevIndex.asInt();
+		final TransactionOutput ti = tiTx.outputs.get(prevIndex);
+		return ti;
+	}
+
+	/**
 	 * returns a UInt128 read from the ByteBuffer.
 	 *
 	 * @param bb
@@ -480,6 +592,63 @@ public final class ModelUtil {
 	}
 
 	/**
+	 * return the size of the byteArray, if stored as a variable length byte array.
+	 *
+	 * @param byteArray
+	 *            the byteArray.
+	 * @return the size of the byteArray, if stored as a variable length byte array.
+	 */
+	public static int getVarSize(final byte[] byteArray) {
+		return getVarSize(byteArray.length) + byteArray.length;
+	}
+
+	/**
+	 * return the size of the value, if stored as a variable length int.
+	 *
+	 * @param value
+	 *            the value.
+	 * @return the size of the value, if stored as a variable length int.
+	 */
+	public static int getVarSize(final int value) {
+		if (value < 0xFD) {
+			return 1;
+		} else if (value <= 0xFFFF) {
+			return 1 + 2;
+		} else {
+			return 1 + 4;
+		}
+	}
+
+	/**
+	 * return the size of the value, if stored as a variable length string.
+	 *
+	 * @param value
+	 *            the value.
+	 * @return the size of the value, if stored as a variable length string.
+	 */
+	public static int getVarSize(final String value) {
+		final int size = value.getBytes(Charset.forName("UTF8")).length;
+		return getVarSize(size) + size;
+	}
+
+	/**
+	 * return the size of the list, if stored as a variable length list.
+	 *
+	 * @param list
+	 *            the list.
+	 * @param <T>
+	 *            the type of the elemnt in the list.
+	 * @return the size of the list, if stored as a variable length list.
+	 */
+	public static <T extends ByteSizeable> int getVarSize(final T[] list) {
+		int size = getVarSize(list.length);
+		for (final ByteSizeable elt : list) {
+			size += elt.getByteSize();
+		}
+		return size;
+	}
+
+	/**
 	 * reads a variable length list of byte array serializable objects.
 	 *
 	 * @param bb
@@ -528,6 +697,9 @@ public final class ModelUtil {
 	 * @return the address.
 	 */
 	public static String scriptHashToAddress(final UInt160 scriptHash) {
+		if (scriptHash == null) {
+			return null;
+		}
 		final byte[] data = new byte[21];
 
 		if (LOG.isTraceEnabled()) {
@@ -756,6 +928,17 @@ public final class ModelUtil {
 	public static String toRoundedLongAsString(final long value) {
 		final long input = toRoundedLong(value);
 		return Long.toString(input);
+	}
+
+	/**
+	 * return the RIPEMD160 hash of the script.
+	 *
+	 * @param script
+	 *            the script to hash.
+	 * @return the RIPEMD160 hash of the script.
+	 */
+	public static UInt160 toScriptHash(final byte[] script) {
+		return new UInt160(RIPEMD160HashUtil.getRIPEMD160Hash(script));
 	}
 
 	/**

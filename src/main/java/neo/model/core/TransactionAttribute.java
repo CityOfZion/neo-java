@@ -106,6 +106,15 @@ public final class TransactionAttribute implements ToJsonObject, ByteArraySerial
 		}
 	}
 
+	/**
+	 * return a copy of the data field.
+	 *
+	 * @return a copy of the data field.
+	 */
+	public byte[] getCopyOfData() {
+		return data.clone();
+	}
+
 	@Override
 	public byte[] toByteArray() {
 		final ByteArrayOutputStream bout = new ByteArrayOutputStream();

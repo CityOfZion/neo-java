@@ -8,7 +8,7 @@ import java.math.BigInteger;
 import java.nio.ByteBuffer;
 import java.sql.Timestamp;
 
-import org.apache.commons.lang.ArrayUtils;
+import org.apache.commons.lang3.ArrayUtils;
 
 import neo.model.ByteArraySerializable;
 import neo.model.util.ModelUtil;

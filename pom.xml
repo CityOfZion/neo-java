@@ -12,6 +12,11 @@
 
   <dependencies>
     <dependency>
+      <groupId>org.bouncycastle</groupId>
+      <artifactId>bcprov-jdk16</artifactId>
+      <version>1.46</version>
+    </dependency>
+    <dependency>
       <groupId>org.usb4java</groupId>
       <artifactId>usb4java</artifactId>
       <version>1.2.0</version>
@@ -29,6 +34,14 @@
         <exclusion>
           <groupId>net.minidev</groupId>
           <artifactId>json-smart</artifactId>
+        </exclusion>
+        <exclusion>
+          <groupId>commons-lang</groupId>
+          <artifactId>commons-lang</artifactId>
+        </exclusion>
+        <exclusion>
+          <groupId>commons-collections</groupId>
+          <artifactId>commons-collections</artifactId>
         </exclusion>
       </exclusions>
     </dependency>

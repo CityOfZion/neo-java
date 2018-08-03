@@ -132,6 +132,13 @@ public final class PerformanceMonitoringBlockDb implements BlockDb {
 	}
 
 	@Override
+	public <K, V> Map<K, V> getStates(final Class<K> keyClass, final Class<V> valueClass) {
+		try (PerformanceMonitor m = new PerformanceMonitor("BlockDb.getStates")) {
+			return delegate.getStates(keyClass, valueClass);
+		}
+	}
+
+	@Override
 	public List<Transaction> getTransactionWithAccountList(final UInt160 account) {
 		try (PerformanceMonitor m = new PerformanceMonitor("BlockDb.getTransactionWithAccountList")) {
 			return delegate.getTransactionWithAccountList(account);

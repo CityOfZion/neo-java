@@ -6,7 +6,7 @@ import java.io.UnsupportedEncodingException;
 import java.nio.ByteBuffer;
 import java.util.List;
 
-import org.apache.commons.lang.ArrayUtils;
+import org.apache.commons.lang3.ArrayUtils;
 
 import neo.model.ByteArraySerializable;
 
@@ -160,6 +160,21 @@ public final class NetworkUtil {
 			ArrayUtils.reverse(ba);
 		}
 		write(out, ba);
+	}
+
+	/**
+	 * writes the array to the output stream.
+	 *
+	 * @param out
+	 *            the output stream.
+	 * @param baList
+	 *            the list.
+	 */
+	public static void writeArray(final OutputStream out, final ByteArraySerializable[] baList) {
+		writeVarInt(out, baList.length);
+		for (final ByteArraySerializable ba : baList) {
+			write(out, ba.toByteArray());
+		}
 	}
 
 	/**

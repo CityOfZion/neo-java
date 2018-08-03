@@ -13,7 +13,8 @@ import java.util.TreeMap;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
-import org.apache.commons.lang.ArrayUtils;
+import org.apache.commons.lang3.ArrayUtils;
+import org.apache.commons.lang3.NotImplementedException;
 import org.h2.jdbcx.JdbcDataSource;
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -477,6 +478,11 @@ public final class BlockDbH2Impl implements BlockDb {
 	 */
 	private String getSql(final String sqlGroup) {
 		return sqlCache.getJSONObject(sqlGroup).getString(SQL);
+	}
+
+	@Override
+	public <K, V> Map<K, V> getStates(final Class<K> keyClass, final Class<V> valueClass) {
+		throw new NotImplementedException("getStates");
 	}
 
 	/**

@@ -135,6 +135,21 @@ public interface BlockDb {
 	Block getHeaderOfBlockWithMaxIndex();
 
 	/**
+	 * gets the contract states.
+	 *
+	 * @param keyClass
+	 *            the class of the key.
+	 * @param valueClass
+	 *            the class of the value.
+	 * @param <K>
+	 *            the key class.
+	 * @param <V>
+	 *            the value class.
+	 * @return the contract state.
+	 */
+	<K, V> Map<K, V> getStates(Class<K> keyClass, Class<V> valueClass);
+
+	/**
 	 * returns the list of transactions that output to the given address.
 	 *
 	 * @param account

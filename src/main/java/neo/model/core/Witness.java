@@ -9,6 +9,7 @@ import org.json.JSONObject;
 
 import neo.model.ByteArraySerializable;
 import neo.model.ToJsonObject;
+import neo.model.bytes.UInt160;
 import neo.model.util.ModelUtil;
 import neo.model.util.NetworkUtil;
 
@@ -86,6 +87,15 @@ public final class Witness implements ToJsonObject, ByteArraySerializable, Seria
 	 */
 	public byte[] getCopyOfVerificationScript() {
 		return verificationScript.clone();
+	}
+
+	/**
+	 * return the scripthash of the verification script.
+	 *
+	 * @return the scripthash of the verification script.
+	 */
+	public UInt160 getScriptHash() {
+		return ModelUtil.toScriptHash(verificationScript);
 	}
 
 	@Override

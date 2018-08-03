@@ -249,6 +249,11 @@ public abstract class AbstractJsonMockBlockDb implements BlockDb {
 	public abstract JSONArray getMockBlockDb();
 
 	@Override
+	public <K, V> Map<K, V> getStates(final Class<K> keyClass, final Class<V> valueClass) {
+		return new TreeMap<>();
+	}
+
+	@Override
 	public List<Transaction> getTransactionWithAccountList(final UInt160 account) {
 		final List<Transaction> transactionList = new ArrayList<>();
 		final JSONArray mockBlockDb = getMockBlockDb();

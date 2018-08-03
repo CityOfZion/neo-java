@@ -26,9 +26,9 @@ import neo.network.model.RemoteNodeData;
 public final class StatsModel extends AbstractRefreshingModel {
 
 	/**
-	 * remaining blockchain block count.
+	 * remaining blockchain block height.
 	 */
-	private static final String REMAINING_BLOCKCHAIN_BLOCK_COUNT = "Remaining Blockchain Block Count";
+	private static final String REMAINING_BLOCKCHAIN_BLOCK_HEIGHT = "Remaining Blockchain Block Height";
 
 	/**
 	 * duration of this session, in seconds.
@@ -48,7 +48,7 @@ public final class StatsModel extends AbstractRefreshingModel {
 	/**
 	 * number of blocks since this session started.
 	 */
-	private static final String ELAPSED_SINCE_START_BLOCK_COUNT = "Elapsed Since Start - Blocks";
+	private static final String ELAPSED_SINCE_START_BLOCK_HEIGHT = "Elapsed Since Start - Blocks";
 
 	/**
 	 * block height at session start.
@@ -86,9 +86,9 @@ public final class StatsModel extends AbstractRefreshingModel {
 	private static final String LAST_HEADER_HEIGHT_CHANGE = "Last Header Height Change";
 
 	/**
-	 * block count on the blockchain (as reported by the CityOfZion REST API).
+	 * block height on the blockchain (as reported by the CityOfZion REST API).
 	 */
-	private static final String BLOCKCHAIN_BLOCK_COUNT = "Blockchain Block Count";
+	private static final String BLOCKCHAIN_BLOCK_HEIGHT = "Blockchain Block Height";
 
 	/**
 	 * known block count.
@@ -142,14 +142,18 @@ public final class StatsModel extends AbstractRefreshingModel {
 		final long blockCount = localNodeData.getBlockDb().getBlockCount();
 		final long blockFileSize = localNodeData.getBlockFileSize();
 
-		final long allChainBlockCount = localNodeData.getBlockchainBlockCount();
-		addNameAndValue(BLOCKCHAIN_BLOCK_COUNT, allChainBlockCount);
+		final long allChainBlockHeight = localNodeData.getBlockchainBlockHeight();
+		addNameAndValue(BLOCKCHAIN_BLOCK_HEIGHT, allChainBlockHeight);
 		addNameAndValue(KNOWN_BLOCK_COUNT, blockCount);
 
+		final long blockHeight;
 		final Block highestBlock = localNodeData.getBlockDb().getHeaderOfBlockWithMaxIndex();
 		if (highestBlock != null) {
 			addNameAndValue(MAX_BLOCK_HEIGHT, highestBlock.getIndexAsLong());
 			addNameAndValue(MAX_BLOCK_TIMESTAMP, highestBlock.getTimestamp());
+			blockHeight = highestBlock.getIndexAsLong();
+		} else {
+			blockHeight = 0;
 		}
 		if (localNodeData.getHighestBlockTime() != null) {
 			addNameAndValue(LAST_BLOCK_HEIGHT_CHANGE, localNodeData.getHighestBlockTime());
@@ -168,15 +172,15 @@ public final class StatsModel extends AbstractRefreshingModel {
 		}
 
 		addNameAndValue(BLOCK_FILE_SIZE, blockFileSize);
-		if (blockCount > 0) {
-			addNameAndValue(AVG_FILE_SIZE_PER_BLOCK, blockFileSize / blockCount);
-			addNameAndValue(EST_FILE_SIZE_FOR_BLOCKCHAIN, (blockFileSize / blockCount) * allChainBlockCount);
+		if (blockHeight > 0) {
+			addNameAndValue(AVG_FILE_SIZE_PER_BLOCK, blockFileSize / blockHeight);
+			addNameAndValue(EST_FILE_SIZE_FOR_BLOCKCHAIN, (blockFileSize / blockHeight) * allChainBlockHeight);
 
-			final long startBlockCount = localNodeData.getStartBlockCount();
-			addNameAndValue(STARTING_BLOCK_HEIGHT, startBlockCount);
+			final long startBlockHeight = localNodeData.getStartBlockHeight();
+			addNameAndValue(STARTING_BLOCK_HEIGHT, startBlockHeight);
 
-			final long numBlocks = blockCount - startBlockCount;
-			addNameAndValue(ELAPSED_SINCE_START_BLOCK_COUNT, numBlocks);
+			final long numBlocks = blockHeight - startBlockHeight;
+			addNameAndValue(ELAPSED_SINCE_START_BLOCK_HEIGHT, numBlocks);
 
 			final long durationInSeconds = getDurationInSeconds(localNodeData);
 			addNameAndValue(ELAPSED_SINCE_START_SECONDS, durationInSeconds);
@@ -185,10 +189,10 @@ public final class StatsModel extends AbstractRefreshingModel {
 				final long millisecondsPerBlock = (durationInSeconds * 1000) / numBlocks;
 				addNameAndValue(EST_TIME_FOR_BLOCK_MS, millisecondsPerBlock);
 
-				final long remainingChainBlockCount = allChainBlockCount - blockCount;
-				addNameAndValue(REMAINING_BLOCKCHAIN_BLOCK_COUNT, remainingChainBlockCount);
+				final long remainingChainBlockHeight = allChainBlockHeight - blockHeight;
+				addNameAndValue(REMAINING_BLOCKCHAIN_BLOCK_HEIGHT, remainingChainBlockHeight);
 
-				final long secondsForChain = (remainingChainBlockCount * millisecondsPerBlock) / 1000;
+				final long secondsForChain = (remainingChainBlockHeight * millisecondsPerBlock) / 1000;
 				addNameAndValue(REMAINING_TIME_FOR_BLOCKCHAIN, secondsForChain);
 
 				final Date estEndTime = new Date(System.currentTimeMillis() + (secondsForChain * 1000));
